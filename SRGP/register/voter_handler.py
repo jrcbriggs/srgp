@@ -8,6 +8,7 @@ from collections import OrderedDict
 from csv import DictReader, DictWriter
 from datetime import datetime as dt, date, timedelta
 from imp import load_source, find_module, load_module
+from importlib import import_module
 from os import path
 from re import search
 from sys import stdout
@@ -22,7 +23,7 @@ class ConfigHandler(object):
     fieldmap_new: ordered dict mapping selected original fieldnames to fieldnames_new
     tagfields: fieldnames from original csv to add to tag_list
     '''
-    def __init__(self, 
+    def __init__(self,
                  address_fields,
                  date_fields,
                  doa_field,
@@ -31,7 +32,7 @@ class ConfigHandler(object):
                  ):
         self.fieldnames = tuple(fieldmap.keys())  # for reading csv
         
-        #Derive things from fieldmap
+        # Derive things from fieldmap
         self.tagfields = ()
         self.fieldmap_new = OrderedDict()  # for writing csv (append new fields later)
         for k, v in fieldmap.items():
@@ -42,12 +43,12 @@ class ConfigHandler(object):
             else:
                 self.fieldmap_new[k] = v
                 
-        #Update properties
+        # Update properties
         self.fieldnames_new = tuple(self.fieldmap_new.values())
         self.fieldnames_new += ('tag_list',)
         self.fieldmap_new.update({'tag_list':'tag_list', })
         
-        #Populate config_new
+        # Populate config_new
         self.config_new = {
                          'address_fields':address_fields,
                          'date_fields': date_fields,
@@ -69,10 +70,9 @@ class Dict2Dict(object):
 
 class FileHandler(object):
     
-    def config_load(self, filename):  # Load config
-        config_modulename = path.basename(filename).replace('.py', '')
-        (file, pathname, description)=find_module(config_modulename)
-        return load_module(config_modulename, file, pathname, description).config
+    def config_load(self, modulename):
+        mod = import_module(modulename)
+        return mod.config
     
     def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
@@ -153,7 +153,7 @@ class RegisterFixer(object):
 
     def clean_row(self, row):
         '''Clean all the values (but not the keys) in a row'''
-        for k,v in row.items():
+        for k, v in row.items():
             row[k] = self.clean_value(v)
             
     def doa2dob(self, doa):

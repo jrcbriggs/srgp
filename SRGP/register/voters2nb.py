@@ -46,9 +46,9 @@ class Main(object):
     
 if __name__ == '__main__':
     # Set argv for testing
-#     SRGP = '/home/ph1jb/SRGP/'
+    SRGP = '/home/ph1jb/SRGP/'
 #     SRGP = '/home/julian/Desktop/SRGP/'
 #     argv += [SRGP + 'electoralregister-apr2014head.csv']
-#     argv += ['config_electoral_register2014.py']
+#     argv += ['config_electoral_register2014']
     main = Main(argv)
     
