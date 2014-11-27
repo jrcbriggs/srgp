@@ -4,11 +4,13 @@ Created on 18 Nov 2014
 @author: julian
 '''
 from collections import OrderedDict
+import os
+import sys
 import unittest
 
 from address_regexes import regexes
-from voter_handler import Dict2Dict, ConfigHandler
-from voters2nb import RegisterFixer, FileHandler
+from register2nb import RegisterFixer, FileHandler
+from register_handler import Dict2Dict, ConfigHandler
 
 
 class Test(unittest.TestCase):
@@ -67,7 +69,7 @@ class Test(unittest.TestCase):
         self.doa = '31/12/2014'
         self.dob_nb = '12/31/1996'  # Date of Birth = Date of Attainment less 18 years
         self.date_fields = ['Election_Date']
-        self.pathname = '/tmp/test_electoralRoll2nb.csv'
+        self.pathname = '/tmp/config_electoralregister_test.py'
         self.table = [self.row0, self.row1]
         self.table_fixed = [
                     {'col0':'a', 'col1':'b', },
@@ -90,7 +92,9 @@ class Test(unittest.TestCase):
     def test_config_load(self):
         with open(self.pathname, 'w') as fh:
             fh.write('config={"var0":123}\n')
-        config = self.filehandler.config_load(self.pathname)
+            modulename = os.path.basename(self.pathname).replace('.py', '')
+            sys.path.append('/tmp')
+        config = self.filehandler.config_load(modulename)
         self.assertEquals(config['var0'], 123)
         
     def test_csv_print(self):
@@ -284,7 +288,7 @@ class Test(unittest.TestCase):
     def test_tags_create(self):
         row = self.row0
         tagtail = 'julian'
-        expected = {'tag_list':'"3_d_julian,4_e_julian"'}
+        expected = {'tag_list':'d_3,e_4'}
         actual = self.vh.tags_create(row, self.tagfields, tagtail)
         self.assertEqual(expected, actual)
  

@@ -6,11 +6,8 @@ Created on 1 Nov 2014
 '''
 from collections import OrderedDict
 from csv import DictReader, DictWriter
-from datetime import datetime as dt, date, timedelta
-from imp import load_source, find_module, load_module
+from datetime import datetime as dt
 from importlib import import_module
-from os import path
-from re import search
 from sys import stdout
 import sys
 

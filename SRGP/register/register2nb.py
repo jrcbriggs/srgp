@@ -5,22 +5,21 @@ Created on 1 Nov 2014
 @author: julian
 '''
 from os import path
+from re import search
 from sys import argv
 import sys
 
 from address_regexes import regexes
-from voter_handler import FileHandler, RegisterFixer, Dict2Dict, ConfigHandler
+from register_handler import FileHandler, RegisterFixer, Dict2Dict, ConfigHandler
 
 
 class Main(object):
-    def __init__(self, argv):
-        csv_filename = argv[1]
+    def __init__(self, csv_filename, modulename):
         basename = path.basename(csv_filename).replace('.csv', '')
         filehandler = FileHandler()        
         
         # Load config
-        config_filename = argv[2]
-        config = filehandler.config_load(config_filename)
+        config = filehandler.config_load(modulename)
         ch = ConfigHandler(**config)
         
         # Read csv file
@@ -41,14 +40,31 @@ class Main(object):
         filehandler.csv_write(table_new, csv_filename_new, ch.fieldnames_new)
 #         filehandler.csv_print(table_new, fieldnames_new)
 
-        # Print output filename
+        # Print output csv_filename
         print csv_filename_new
     
 if __name__ == '__main__':
     # Set argv for testing
     SRGP = '/home/ph1jb/SRGP/'
 #     SRGP = '/home/julian/Desktop/SRGP/'
-#     argv += [SRGP + 'electoralregister-apr2014head.csv']
-#     argv += ['config_electoral_register2014']
-    main = Main(argv)
+
+    # CSV Filename
+    csv_filename = None
+    if len(argv) == 1:
+        csv_filename = SRGP + 'electoralregister-apr2014head.csv'
+    else:
+        csv_filename = argv[1]
+    
+    # Config module
+    modulename = None
+    if len(argv) == 2:
+        modulename = argv[2]
+    elif search('register', csv_filename):
+        modulename = 'config_electoral_register2014'
+    elif search('members', csv_filename):
+        modulename = 'config_members'
+    elif search('canvass', csv_filename):
+        modulename = 'config_canvassing_sheets'
+        
+    main = Main(csv_filename, modulename)
     
