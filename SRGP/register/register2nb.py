@@ -4,7 +4,7 @@ Created on 1 Nov 2014
 
 @author: julian
 '''
-from os import path
+from os import getenv, path
 from re import search
 from sys import argv
 import sys
@@ -44,9 +44,8 @@ class Main(object):
         print csv_filename_new
     
 if __name__ == '__main__':
-    # Set argv for testing
-    SRGP = '/home/ph1jb/SRGP/'
-#     SRGP = '/home/julian/Desktop/SRGP/'
+    
+    SRGP = getenv("HOME") + '/Desktop/SRGP/'
 
     # CSV Filename
     csv_filename = None

@@ -36,7 +36,7 @@ if __name__ == "__main__":
     data_b64 = csvread2base64(filename)
     data = {'import': {
                 'file': data_b64,
-                'type': 'people', # voter fails (Julian 27-nov-2014
+                'type': 'people', # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
                 'is_overwritable': True,
               }}
     data_json = json.dumps(data)

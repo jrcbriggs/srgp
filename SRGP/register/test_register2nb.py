@@ -20,6 +20,7 @@ class Test(unittest.TestCase):
                 'address_fields' : ('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'),
                 'date_fields' : ('c',),  # Date fields
                 'doa_field' : 'c',  # Date of Attainment field
+                'date_format' : '%d/%m/%Y',  # _electoral_roll
                 'fieldmap':OrderedDict([
                               ('a', 'A'),
                               ('b', 'B'),
@@ -211,6 +212,13 @@ class Test(unittest.TestCase):
         self.assertDictEqual(row, exp)
 #                'address1':'Other Electors',
         
+    def test_fix_append_fields(self):
+        fields_new = {'fn0':0, 'fn1':1}
+        expected = self.row0.copy()
+        expected.update({'fn0':0, 'fn1':1})
+        self.vh.append_fields(self.row0, fields_new)
+        self.assertEqual(self.row0, expected)
+    
     def test_fix_date(self):
         expected = '12/31/2014'
         actual = self.vh.fix_date(self.doa)
@@ -231,6 +239,20 @@ class Test(unittest.TestCase):
         self.vh.fix_doa(row, self.doa_field)
         self.assertDictEqual(row, expected)        
 
+    def test_fix_local_party(self):
+        self.row0.update({'Local party':None})
+        self.vh.fix_local_party(self.row0)
+        expected = self.row0.copy()
+        expected.update({'Local party':'G'})
+        self.assertDictEqual(self.row0, expected)
+        
+    def test_fix_local_party_no(self):
+        self.row0.update({'Local partyXXX':123})
+        self.vh.fix_local_party(self.row0)
+        expected = self.row0.copy()
+        expected.update({'Local partyXXX':123})
+        self.assertDictEqual(self.row0, expected)
+        
     def test_fix_table(self):
         '''put a valid doa in the Date of Attainment field'''
         self.row0.update({'c':self.doa, 'a1':'220 SVR', 'a2':'Sheffield', 'a3':'S10 1ST', 'a4':'', 'a5':'', 'a6':'', 'a7':'', })
@@ -271,6 +293,22 @@ class Test(unittest.TestCase):
         for house in('Sheffield', 'South Yorks', 'Approach', 'S10 1ST',):
             self.assertFalse(self.vh.ishouse(house), 'unexpected match: ' + house)
 
+    def test_ismember_true(self):
+        for status in ('Current', 'New'):
+            self.row0.update({'Status':status})
+            actual = self.vh.ismember(self.row0)
+            self.assertTrue(actual)
+            
+    def test_ismember_false(self):
+        for status in ('Cancelled', 'Deceased', 'Expired'):
+            self.row0.update({'Status':status})
+            actual = self.vh.ismember(self.row0)
+            self.assertFalse(actual)
+    
+    def test_ismember_no_field(self):
+        actual = self.vh.ismember(self.row0)
+        self.assertFalse(actual)
+    
     def test_ispostcode(self):
         for postcode in('S10 1ST', 'S1 1ST', 'S1 2ST',):
             self.assertTrue(self.vh.ispostcode(postcode), 'expected match: ' + postcode)

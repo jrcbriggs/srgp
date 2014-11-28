@@ -24,6 +24,7 @@ config = {
             'Address 7',
             ),
         'date_fields' : ('Date of Attainment',),
+        'date_format' : '%d/%m/%Y', #_electoral_roll
         'doa_field' : 'Date of Attainment',
         'fieldmap':OrderedDict([
                 ('PD', 'tag_list'), #city_sub_district

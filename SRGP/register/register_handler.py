@@ -9,7 +9,6 @@ from csv import DictReader, DictWriter
 from datetime import datetime as dt
 from importlib import import_module
 from sys import stdout
-import sys
 
 
 # from xlrd import xlsx
@@ -23,6 +22,7 @@ class ConfigHandler(object):
     def __init__(self,
                  address_fields,
                  date_fields,
+                 date_format,
                  doa_field,
                  fieldmap,
                  **kwargs
@@ -49,6 +49,7 @@ class ConfigHandler(object):
         self.config_new = {
                          'address_fields':address_fields,
                          'date_fields': date_fields,
+                         'date_format': date_format,
                          'doa_field':doa_field,
                          'fieldnames':self.fieldnames,
                          'tagfields':self.tagfields,
@@ -122,12 +123,12 @@ class FileHandler(object):
             dw.writerows(table)          
 
 class RegisterFixer(object):
-    date_format_electoral_roll = '%d/%m/%Y'
     date_format_nb = '%m/%d/%Y'
    
     def __init__(self,
                 address_fields=(),
                 date_fields=(),
+                date_format='',
                 doa_field='',
                 fieldnames={},
                 fieldmap={},
@@ -138,6 +139,7 @@ class RegisterFixer(object):
                  ):
         self.address_fields = address_fields
         self.date_fields = date_fields
+        self.date_format = date_format
         self.doa_field = doa_field
         self.fieldnames = fieldnames
         self.regexes = regexes
@@ -145,6 +147,14 @@ class RegisterFixer(object):
         self.tagfields = tagfields
         self.tagtail = tagtail
 
+    def append_fields(self, row, fields_new):
+        row.update(fields_new)
+        for k, v in fields_new.items():
+            if k == 'party_member':
+                row[k]= self.ismember(row) # Set is_member flag
+            elif k == 'voter':
+                pass #TODO            
+    
     def clean_value(self, value):
         return value.replace(',', ' ').strip()
 
@@ -187,7 +197,7 @@ class RegisterFixer(object):
         if date is just whitespace return empty string'''
         date = date.strip()
         if date:
-            return dt.strftime(dt.strptime(date, self.date_format_electoral_roll), self.date_format_nb)
+            return dt.strftime(dt.strptime(date, self.date_format), self.date_format_nb)
         else:
             return date            
            
@@ -201,6 +211,12 @@ class RegisterFixer(object):
         if doa_fieldname in row and row[doa_fieldname]:
             row[doa_fieldname] = self.doa2dob(row[doa_fieldname])
     
+    def fix_local_party(self, row):
+        '''members only: overwrite "Sheffield & Rotherham Green Party" with "G" '''
+        field = 'Local party'
+        if field in row:
+            row[field] = 'G'
+        
     def fix_table(self):
         '''in-place update row'''
         for row in self.table:
@@ -208,6 +224,7 @@ class RegisterFixer(object):
             self.fix_dates(row)            
             self.fix_doa(row, self.doa_field)            
             self.fix_addresses(row, self.address_fields)            
+            self.fix_local_party(row)            
             row.update(self.tags_create(row, self.tagfields, self.tagtail)) 
         return self.table
             
@@ -219,6 +236,12 @@ class RegisterFixer(object):
     
     def ishouse(self, house)  :  # is value a house name
         return self.regexes['house_regex'].search(house)
+    
+    def ismember(self, row)  :  # is value a postcode
+        if 'Status' in row:
+            return row['Status'] in ('Current', 'New')
+        else:
+            return False
     
     def ispostcode(self, postcode)  :  # is value a postcode
         return self.regexes['postcode_regex'].search(postcode)
