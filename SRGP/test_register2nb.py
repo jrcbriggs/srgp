@@ -29,6 +29,7 @@ class Test(unittest.TestCase):
                               ('e', 'tag_list'),
                               ('f', None),
                               ]),
+                'fields_extra' : OrderedDict([]),
                 'tagfields' : ('e', 'f'),
         }        
         self.config_new = self.config.copy()
@@ -219,6 +220,27 @@ class Test(unittest.TestCase):
         self.vh.append_fields(self.row0, fields_new)
         self.assertEqual(self.row0, expected)
     
+    def test_fix_append_fields_party_member(self):
+        fields_new = {'party_member':'party_member'}
+        expected = self.row0.copy()
+        expected.update({'party_member':False})
+        self.vh.append_fields(self.row0, fields_new)
+        self.assertEqual(self.row0, expected)
+    
+    def test_fix_append_fields_is_deceased(self):
+        fields_new = {'is_deceased':'is_deceased'}
+        expected = self.row0.copy()
+        expected.update({'is_deceased':False})
+        self.vh.append_fields(self.row0, fields_new)
+        self.assertEqual(self.row0, expected)
+    
+    def test_fix_append_fields_is_voter(self):
+        fields_new = {'is_voter':'is_voter'}
+        expected = self.row0.copy()
+        expected.update({'is_voter':False})
+        self.vh.append_fields(self.row0, fields_new)
+        self.assertEqual(self.row0, expected)
+    
     def test_fix_date(self):
         expected = '12/31/2014'
         actual = self.vh.fix_date(self.doa)
@@ -233,6 +255,20 @@ class Test(unittest.TestCase):
         self.vh.fix_dates(row)
         self.assertDictEqual(row, expected)
         
+    def test_fix_deceased(self):
+        self.row0.update({'Status':'Deceased'})
+        self.vh.fix_deceased(self.row0)
+        expected = self.row0.copy()
+        expected.update({'is_deceased':True})
+        self.assertDictEqual(self.row0, expected)
+        
+    def test_fix_deceased_no(self):
+        self.row0.update({'Status':'Current'})
+        self.vh.fix_deceased(self.row0)
+        expected = self.row0.copy()
+        expected.update({'is_deceased': False})
+        self.assertDictEqual(self.row0, expected)
+
     def test_fix_doa(self):
         row = {'a':'0', 'b':'1', 'c':self.doa}
         expected = {'a':'0', 'b':'1', 'c':'31/12/1996'}
@@ -285,6 +321,22 @@ class Test(unittest.TestCase):
 
     def test_iscounty(self):
         self.assertTrue(self.vh.iscounty('South Yorks'), 'expected match: ' + 'South Yorks')
+
+    def test_isdeceased_true(self):
+        self.row0.update({'Status':'Deceased'})
+        actual = self.vh.isdeceased(self.row0)
+        self.assertTrue(actual)
+            
+    def test_isdeceased_false(self):
+        for status in ('Cancelled', 'Current', 'Expired', 'New'):
+            self.row0.update({'Status':status})
+            actual = self.vh.isdeceased(self.row0)
+            self.assertFalse(actual)
+    
+    def test_isdeceased_no_field(self):
+        actual = self.vh.isdeceased(self.row0)
+        self.assertFalse(actual)
+    
         self.assertFalse(self.vh.iscounty('XSouth Yorks'), 'unexpected match: ' + 'XSouth Yorks')
 
     def test_ishouse(self):
@@ -323,6 +375,22 @@ class Test(unittest.TestCase):
         for street in 'Sheffield S10 Yorks'.split():
             self.assertFalse(self.vh.isstreet(street), 'unexpected match: ' + street)
 
+    def test_isvoter_true(self):
+        for status in ('E'):
+            self.row0.update({'Status':status})
+            actual = self.vh.isvoter(self.row0)
+            self.assertTrue(actual)
+            
+    def test_isvoter_false(self):
+        for status in (''):
+            self.row0.update({'Status':status})
+            actual = self.vh.isvoter(self.row0)
+            self.assertFalse(actual)
+    
+    def test_isvoter_no_field(self):
+        actual = self.vh.isvoter(self.row0)
+        self.assertFalse(actual)
+    
     def test_tags_create(self):
         row = self.row0
         tagtail = 'julian'

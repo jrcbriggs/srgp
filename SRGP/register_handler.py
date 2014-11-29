@@ -25,9 +25,11 @@ class ConfigHandler(object):
                  date_format,
                  doa_field,
                  fieldmap,
+                 fields_extra,
                  **kwargs
                  ):
         self.fieldnames = tuple(fieldmap.keys())  # for reading csv
+        self.fields_extra = fields_extra
         
         # Derive things from fieldmap
         self.tagfields = ()
@@ -42,6 +44,7 @@ class ConfigHandler(object):
                 
         # Update properties
         self.fieldnames_new = tuple(self.fieldmap_new.values())
+        self.fieldnames_new += tuple(fields_extra.values())
         self.fieldnames_new += ('tag_list',)
         self.fieldmap_new.update({'tag_list':'tag_list', })
         
@@ -52,6 +55,7 @@ class ConfigHandler(object):
                          'date_format': date_format,
                          'doa_field':doa_field,
                          'fieldnames':self.fieldnames,
+                         'fields_extra':self.fields_extra,
                          'tagfields':self.tagfields,
                          }
 
@@ -132,6 +136,7 @@ class RegisterFixer(object):
                 doa_field='',
                 fieldnames={},
                 fieldmap={},
+                fields_extra={},
                 regexes={},
                 table=(),
                 tagfields=None,
@@ -142,18 +147,21 @@ class RegisterFixer(object):
         self.date_format = date_format
         self.doa_field = doa_field
         self.fieldnames = fieldnames
+        self.fields_extra = fields_extra
         self.regexes = regexes
         self.table = table
         self.tagfields = tagfields
         self.tagtail = tagtail
 
-    def append_fields(self, row, fields_new):
-        row.update(fields_new)
-        for k, v in fields_new.items():
+    def append_fields(self, row, fields_extra):
+        row.update(fields_extra)
+        for k, v in fields_extra.items():
             if k == 'party_member':
-                row[k]= self.ismember(row) # Set is_member flag
-            elif k == 'voter':
-                pass #TODO            
+                row[k] = self.ismember(row)  # Set is_member flag
+            elif k == 'is_deceased':
+                row[k] = self.isdeceased(row)  # Set is_deceased flag
+            elif k == 'is_voter':
+                row[k] = self.isvoter(row)  # Set is_deceased flag
     
     def clean_value(self, value):
         return value.replace(',', ' ').strip()
@@ -206,6 +214,10 @@ class RegisterFixer(object):
         for field in self.date_fields:
             row[field] = self.fix_date(row[field])
 
+    def fix_deceased(self, row):
+        '''members only: append is_deceased column and populate'''
+        row['is_deceased'] = self.isdeceased(row)
+
     def fix_doa(self, row, doa_fieldname):
         '''Update Date of Attainment field in-place'''
         if doa_fieldname in row and row[doa_fieldname]:
@@ -215,8 +227,8 @@ class RegisterFixer(object):
         '''members only: overwrite "Sheffield & Rotherham Green Party" with "G" '''
         field = 'Local party'
         if field in row:
-            row[field] = 'G'
-        
+            row[field] = 'G'    
+
     def fix_table(self):
         '''in-place update row'''
         for row in self.table:
@@ -224,7 +236,8 @@ class RegisterFixer(object):
             self.fix_dates(row)            
             self.fix_doa(row, self.doa_field)            
             self.fix_addresses(row, self.address_fields)            
-            self.fix_local_party(row)            
+            self.fix_local_party(row)   
+            self.append_fields(row, self.fields_extra)         
             row.update(self.tags_create(row, self.tagfields, self.tagtail)) 
         return self.table
             
@@ -234,14 +247,14 @@ class RegisterFixer(object):
     def iscounty (self, county) :  # is value a county
         return self.regexes['county_regex'].search(county)
     
+    def isdeceased(self, row): 
+        return row.get('Status', None) == 'Deceased'
+    
     def ishouse(self, house)  :  # is value a house name
         return self.regexes['house_regex'].search(house)
     
     def ismember(self, row)  :  # is value a postcode
-        if 'Status' in row:
-            return row['Status'] in ('Current', 'New')
-        else:
-            return False
+        return row.get('Status', None)  in ('Current', 'New')
     
     def ispostcode(self, postcode)  :  # is value a postcode
         return self.regexes['postcode_regex'].search(postcode)
@@ -249,6 +262,9 @@ class RegisterFixer(object):
     def isstreet (self, street)  :  # is value a street        
         return self.regexes['street_regex'].search(street)
  
+    def isvoter(self, row)  :
+        return row.get('Status', None) == 'E'
+    
     def tags_create(self, row, tagfields, tagtail):
         '''Assemble tag, append to @tags, create tag_list field.
         If tag field is blank then omit tag'''

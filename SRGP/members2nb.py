@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # CSV Filename
     csv_filename = None
     if len(argv) == 1:
-        csv_filename = SRGP + 'electoralregister-apr2014head.csv'
+        csv_filename = SRGP + 'members/SRGP_MembersAll_20141119-2321head.csv'
     else:
         csv_filename = argv[1]
     
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         modulename = argv[2]
     elif search('register', csv_filename):
         modulename = 'config_electoral_register2014'
-    elif search('members', csv_filename):
+    elif search('Members', csv_filename):
         modulename = 'config_members'
     elif search('canvass', csv_filename):
         modulename = 'config_canvassing_sheets'
