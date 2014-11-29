@@ -9,7 +9,7 @@ import sys
 import unittest
 
 from address_regexes import regexes
-from register2nb import RegisterFixer, FileHandler
+from csv2nb import RegisterFixer, FileHandler
 from register_handler import Dict2Dict, ConfigHandler
 
 
