@@ -218,7 +218,7 @@ class Test(unittest.TestCase):
         expected = self.row0.copy()
         expected.update({'fn0':0, 'fn1':1})
         self.vh.append_fields(self.row0, fields_new)
-        self.assertEqual(self.row0, expected)
+        self.assertDictEqual(self.row0, expected)
     
     def test_fix_append_fields_party_member(self):
         fields_new = {'party_member':'party_member'}

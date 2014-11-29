@@ -43,10 +43,9 @@ class ConfigHandler(object):
                 self.fieldmap_new[k] = v
                 
         # Update properties
-        self.fieldnames_new = tuple(self.fieldmap_new.values())
-        self.fieldnames_new += tuple(fields_extra.values())
-        self.fieldnames_new += ('tag_list',)
+        self.fieldmap_new.update(fields_extra)
         self.fieldmap_new.update({'tag_list':'tag_list', })
+        self.fieldnames_new=tuple(self.fieldmap_new.values())
         
         # Populate config_new
         self.config_new = {
@@ -154,7 +153,7 @@ class RegisterFixer(object):
         self.tagtail = tagtail
 
     def append_fields(self, row, fields_extra):
-        row.update(fields_extra)
+#         row.update(fields_extra)
         for k, v in fields_extra.items():
             if k == 'party_member':
                 row[k] = self.ismember(row)  # Set is_member flag
@@ -162,6 +161,8 @@ class RegisterFixer(object):
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_voter':
                 row[k] = self.isvoter(row)  # Set is_deceased flag
+            else:
+                row[k]=v
     
     def clean_value(self, value):
         return value.replace(',', ' ').strip()
@@ -253,8 +254,8 @@ class RegisterFixer(object):
     def ishouse(self, house)  :  # is value a house name
         return self.regexes['house_regex'].search(house)
     
-    def ismember(self, row)  :  # is value a postcode
-        return row.get('Status', None)  in ('Current', 'New')
+    def ismember(self, row):
+        return row.get('Status', None) in ('Current', 'New')
     
     def ispostcode(self, postcode)  :  # is value a postcode
         return self.regexes['postcode_regex'].search(postcode)

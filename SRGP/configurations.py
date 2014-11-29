@@ -54,7 +54,7 @@ config_members = {
         'skip_lines':0,
         'fields_extra':OrderedDict([
             ('is_deceased', 'is_deceased'),
-            ('is_member', 'is_member'),
+            ('party_member', 'party_member'),
             ]),
 }
 
