@@ -33,6 +33,7 @@ class ConfigHandler(object):
                  doa_field,
                  fieldmap,
                  fields_extra,
+                 fields_flip,
                  **kwargs
                  ):
         self.fieldnames = tuple(fieldmap.keys())  # for reading csv
@@ -62,6 +63,7 @@ class ConfigHandler(object):
                          'doa_field':doa_field,
                          'fieldnames':self.fieldnames,
                          'fields_extra':self.fields_extra,
+                         'fields_flip':fields_flip,
                          'tagfields':self.tagfields,
                          }
 
@@ -146,7 +148,7 @@ class TableFixer(object):
                         'Foster|Millsands|Pinsent|Redgrave|'  # blocks
                         'Other Electors',
                         IGNORECASE),
-    }
+               }
    
     def __init__(self,
                 address_fields=(),
@@ -156,6 +158,7 @@ class TableFixer(object):
                 fieldnames={},
                 fieldmap={},
                 fields_extra={},
+                fields_flip=(),
                 table=(),
                 tagfields=None,
                 tagtail=None
@@ -166,22 +169,32 @@ class TableFixer(object):
         self.doa_field = doa_field
         self.fieldnames = fieldnames
         self.fields_extra = fields_extra
+        self.fields_flip = fields_flip
         self.table = table
         self.tagfields = tagfields
         self.tagtail = tagtail
 
     def append_fields(self, row, fields_extra):
-#         row.update(fields_extra)
         for k, v in fields_extra.items():
-            if k == 'party_member':
-                row[k] = self.ismember(row)  # Set is_member flag
+            if k == '':
+                pass
             elif k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_voter':
                 row[k] = self.isvoter(row)  # Set is_deceased flag
+            elif k == 'party':
+                row[k] = 'G'
+            elif k == 'party_member':
+                row[k] = self.ismember(row)  # Set is_member flag
+            elif k == 'support level':
+                row[k] = 1 if self.ismember(row) else '' # assume
             else:
                 row[k] = v
-    
+
+    def flip_fields(self, row, fieldnames):
+        for fn in fieldnames:
+            row[fn]= not row[fn]
+            
     def clean_value(self, value):
         return value.replace(',', ' ').strip()
 
@@ -257,6 +270,7 @@ class TableFixer(object):
             self.fix_addresses(row, self.address_fields)            
             self.fix_local_party(row)   
             self.append_fields(row, self.fields_extra)         
+            self.flip_fields(row, self.fields_flip)         
             row.update(self.tags_create(row, self.tagfields, self.tagtail)) 
         return self.table
             

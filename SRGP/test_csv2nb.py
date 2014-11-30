@@ -28,6 +28,7 @@ class Test(unittest.TestCase):
                               ('f', None),
                               ]),
                 'fields_extra' : OrderedDict([]),
+                'fields_flip' : (),
                 'tagfields' : ('e', 'f'),
         }        
         self.config_new = self.config.copy()
@@ -304,6 +305,25 @@ class Test(unittest.TestCase):
         self.assertDictEqual(table_fixed[0], self.row0)
         self.assertDictEqual(table_fixed[1], self.row1)
         
+    def test_flip_fields(self):
+        row = {'k0':'v0','Do not mail':1, 'Do not Phone':1}
+        fieldnames = ('Do not mail', 'Do not Phone')
+        self.vh.flip_fields(row, fieldnames)
+        expected = {'k0':'v0','Do not mail':0, 'Do not Phone':0}
+        self.assertDictEqual(row,expected)
+        #
+        row = {'k0':'v0','Do not mail':0, 'Do not Phone':0}
+        fieldnames = ('Do not mail', 'Do not Phone')
+        self.vh.flip_fields(row, fieldnames)
+        expected = {'k0':'v0','Do not mail':1, 'Do not Phone':1}
+        self.assertDictEqual(row,expected)
+                
+        #
+        row = {'k0':'v0','Do not mail':1, 'Do not Phone':0}
+        fieldnames = ('Do not mail', 'Do not Phone')
+        self.vh.flip_fields(row, fieldnames)
+        expected = {'k0':'v0','Do not mail':0, 'Do not Phone':1}
+        self.assertDictEqual(row,expected)
                 
     def test_iscity(self):
         self.assertTrue(self.vh.iscity('Sheffield'), 'expected match: ' + 'Sheffield')

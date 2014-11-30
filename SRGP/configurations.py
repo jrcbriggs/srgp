@@ -102,3 +102,47 @@ config_register = {
             ('is_voter', 'is_voter'),
             ]),
     }
+
+config_civi_search_all={
+         'address_fields' : (
+            'Street Address',
+            'Supplemental Address 1',
+            'Supplemental Address 2',
+            'City',
+            'Postal Code',
+            'Country',
+            ),
+        'date_fields' : ('Start Date', 'End Date', 'Member Since',),
+        'date_format' : '%Y-%m-%d',  # Membershiip date: 2014-05-17
+        'doa_field' : None,
+          'fieldmap':OrderedDict([
+            ('Contact ID', 'civiCRM_ID'),
+            ('Do not mail', 'email opt in'), #Reverse Sense
+            ('Do Not Phone', 'mobile opt in'), #Reverse Sense
+            ('Do not mail', 'do_not_contact'), #tag NoMail
+            ('Do Not Sms', 'tag_list'), #tag NoSMS
+            ('First Name', 'first_name'),
+            ('Last Name', 'last_name'),
+            ('Individual Prefix', 'prefix'),
+            ('Gender', 'sex'),
+            ('Birth Date', 'DOB'),
+            ('Is Deceased', 'is deceased'),
+            ('Street Address', 'address1'),
+            ('Supplemental Address 1', 'address2'),
+            ('Supplemental Address 2', 'address3'),
+            ('City', 'city'),
+            ('Postal Code', 'zip'),
+            ('Country', 'country_code'),  # encode
+            ('Email', 'email'),
+            ('Phone', 'phone_number'),
+          ]),
+        'skip_lines':0,
+        'fields_extra':OrderedDict([
+            ('party', 'party'),
+            ('party_member', 'party_member'),
+            ('support level', 'support level'),
+            ]),
+        'fields_flip':(                       #Reverse Sense
+                      'Do not mail',
+                      'Do Not Phone',),
+}
