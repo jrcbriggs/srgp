@@ -8,7 +8,7 @@ import os
 import sys
 import unittest
 
-from csv2nb import RegisterFixer, FileHandler, Dict2Dict, ConfigHandler
+from csv2nb import TableFixer, FileHandler, TableMapper, ConfigHandler
 
 
 class Test(unittest.TestCase):
@@ -55,17 +55,17 @@ class Test(unittest.TestCase):
         # filehandler
         self.filehandler = FileHandler()
         
-        # Dict2Dict
+        # TableMapper
         self.row0 = {'a':'0', 'b':'1', 'c':'2', 'd':'3', 'e':'4', 'f':'5'}
         self.row1 = {'a':'6', 'b':'7', 'c':'8', 'd':'9', 'e':'10', 'f':'11'}
         self.data = [self.row0, self.row1]
-        self.d2d = Dict2Dict(self.data, self.fieldmap)
+        self.d2d = TableMapper(self.data, self.fieldmap)
 
         # OrderedDict
         self.od = OrderedDict([('a', 0), ('b', 1), ('c', 2), ])
         self.od1 = OrderedDict([('z', 9), ('y', 8), ('x', 7), ])
         
-        # RegisterFixer
+        # TableFixer
         self.doa = '31/12/2014'
         self.dob_nb = '12/31/1996'  # Date of Birth = Date of Attainment less 18 years
         self.date_fields = ['Election_Date']
@@ -75,7 +75,7 @@ class Test(unittest.TestCase):
                     {'col0':'a', 'col1':'b', },
                     ]
         self.tagtail = 'tail',
-        self.vh = RegisterFixer(table=self.table, tagtail=self.tagtail, **self.config)
+        self.vh = TableFixer(table=self.table, tagtail=self.tagtail, **self.config)
         
     # ConfigHandler
     def test_confighandler(self):
@@ -121,7 +121,7 @@ class Test(unittest.TestCase):
         self.assertRaises(ValueError, self.filehandler.csv_read, self.pathname,
                           [])
              
-    # Dict2Dict
+    # TableMapper
     def test_maprow(self):
         expected = {'A':'0', 'B':'1', 'C':'2', }
         actual = self.d2d.maprow(self.row0, self.fieldmap)
@@ -154,7 +154,7 @@ class Test(unittest.TestCase):
         actual = self.od1.values()
         self.assertListEqual(actual, expected)
         
-    # RegisterFixer
+    # TableFixer
         
     def test_clean_value(self):
         fixtures = {
@@ -292,7 +292,7 @@ class Test(unittest.TestCase):
         self.row1.update({'c':self.doa, 'a1':'220 SVR', 'a2':'Sheffield', 'a3':'S10 1ST', 'a4':'', 'a5':'', 'a6':'', 'a7':'', })
         addresses_dict = dict(zip(self.address_fields, self.address_fields))
         self.config_new['fieldmap'].update(addresses_dict)  # put a valid doa in the Date of Attainment field
-        vh = RegisterFixer(table=self.table, tagtail='tagtail', **self.config_new)
+        vh = TableFixer(table=self.table, tagtail='tagtail', **self.config_new)
         table_fixed = vh.fix_table()
         print table_fixed
         row0 = self.row0.copy()

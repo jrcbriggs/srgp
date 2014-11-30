@@ -10,7 +10,7 @@ from sys import argv
 import sys
 
 from address_regexes import regexes
-from register_handler import FileHandler, RegisterFixer, Dict2Dict, ConfigHandler
+from register_handler import FileHandler, TableFixer, TableMapper, ConfigHandler
 
 
 class Main(object):
@@ -28,11 +28,11 @@ class Main(object):
         (table, unused) = filehandler.csv_read(csv_filename, ch.fieldnames, skip_lines)
 
         # Fix table
-        vh = RegisterFixer(regexes=regexes, table=table, tagtail=tagtail, **ch.config_new)
+        vh = TableFixer(regexes=regexes, table=table, tagtail=tagtail, **ch.config_new)
         table_fixed = vh.fix_table()
 
         # Create new table
-        d2d = Dict2Dict(table_fixed, ch.fieldmap_new)
+        d2d = TableMapper(table_fixed, ch.fieldmap_new)
         table_new = d2d.data_new
                 
         # Write

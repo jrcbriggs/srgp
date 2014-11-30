@@ -65,7 +65,7 @@ class ConfigHandler(object):
                          'tagfields':self.tagfields,
                          }
 
-class Dict2Dict(object):
+class TableMapper(object):
     '''Map an old dict to a new dict: rename keys, values unchanged'''
     def __init__(self, data, fieldmap):
         self.data_new = self.mapdata(data, fieldmap)
@@ -132,7 +132,7 @@ class FileHandler(object):
             dw.writeheader()
             dw.writerows(table)          
 
-class RegisterFixer(object):
+class TableFixer(object):
     date_format_nb = '%m/%d/%Y'
     regexes = {
             'city_regex' : compile('^Sheffield$', IGNORECASE),
@@ -147,7 +147,6 @@ class RegisterFixer(object):
                         'Other Electors',
                         IGNORECASE),
     }
-
    
     def __init__(self,
                 address_fields=(),
@@ -312,11 +311,11 @@ class Main(object):
         (table, unused) = filehandler.csv_read(csv_filename, ch.fieldnames, skip_lines)
 
         # Fix table
-        vh = RegisterFixer(table=table, tagtail=tagtail, **ch.config_new)
+        vh = TableFixer(table=table, tagtail=tagtail, **ch.config_new)
         table_fixed = vh.fix_table()
 
         # Create new table
-        d2d = Dict2Dict(table_fixed, ch.fieldmap_new)
+        d2d = TableMapper(table_fixed, ch.fieldmap_new)
         table_new = d2d.data_new
                 
         # Write
