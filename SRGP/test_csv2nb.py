@@ -8,9 +8,7 @@ import os
 import sys
 import unittest
 
-from address_regexes import regexes
-from csv2nb import RegisterFixer, FileHandler
-from register_handler import Dict2Dict, ConfigHandler
+from csv2nb import RegisterFixer, FileHandler, Dict2Dict, ConfigHandler
 
 
 class Test(unittest.TestCase):
@@ -77,8 +75,7 @@ class Test(unittest.TestCase):
                     {'col0':'a', 'col1':'b', },
                     ]
         self.tagtail = 'tail',
-        self.regexes = regexes
-        self.vh = RegisterFixer(regexes=regexes, table=self.table, tagtail=self.tagtail, **self.config)
+        self.vh = RegisterFixer(table=self.table, tagtail=self.tagtail, **self.config)
         
     # ConfigHandler
     def test_confighandler(self):
@@ -295,11 +292,7 @@ class Test(unittest.TestCase):
         self.row1.update({'c':self.doa, 'a1':'220 SVR', 'a2':'Sheffield', 'a3':'S10 1ST', 'a4':'', 'a5':'', 'a6':'', 'a7':'', })
         addresses_dict = dict(zip(self.address_fields, self.address_fields))
         self.config_new['fieldmap'].update(addresses_dict)  # put a valid doa in the Date of Attainment field
-        vh = RegisterFixer(table=self.table,
-                               regexes=self.regexes,
-                               tagtail='tagtail',
-                               **self.config_new
-                               )
+        vh = RegisterFixer(table=self.table, tagtail='tagtail', **self.config_new)
         table_fixed = vh.fix_table()
         print table_fixed
         row0 = self.row0.copy()

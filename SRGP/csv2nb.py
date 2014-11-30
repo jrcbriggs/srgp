@@ -9,14 +9,13 @@ from csv import DictReader, DictWriter
 from datetime import datetime as dt
 from importlib import import_module
 from os import getenv, path
+from re import compile, IGNORECASE
 from re import search
 from sys import argv
 from sys import stdout
 import sys
 
-from address_regexes import regexes
 from configurations import config_members, config_register
-from register_handler import FileHandler, RegisterFixer, Dict2Dict, ConfigHandler
 
 
 # from xlrd import xlsx
@@ -53,7 +52,7 @@ class ConfigHandler(object):
         # Update properties
         self.fieldmap_new.update(fields_extra)
         self.fieldmap_new.update({'tag_list':'tag_list', })
-        self.fieldnames_new=tuple(self.fieldmap_new.values())
+        self.fieldnames_new = tuple(self.fieldmap_new.values())
         
         # Populate config_new
         self.config_new = {
@@ -135,6 +134,20 @@ class FileHandler(object):
 
 class RegisterFixer(object):
     date_format_nb = '%m/%d/%Y'
+    regexes = {
+            'city_regex' : compile('^Sheffield$', IGNORECASE),
+            'county_regex' : compile('^South Yorks$', IGNORECASE),
+            'house_regex' : compile('Barn|Building|College|Cottage|Farm|Hall|House|Lodge|Mansion|Mill|Residence', IGNORECASE),
+            'postcode_regex' : compile('^S\d\d? \d\w\w$'),
+            'street_regex' : compile(r'Approach|Avenue|Bank|Bridge|Close|Common|Court|Crescent|Croft|Dell|'
+                        'Drive|Gardens|Gate|Glen|Green|Grove|Head|Hill|Lane|Mews|Parade|Park|'
+                        'Place|Rise|Road|Row|Square|Street|Terrace|Town|Turn|View|Walk|Way|Wharf|'
+                        'Backfields|Birkendale|Castlegate|Cracknell|Cross Smithfield|Kelham Island|Shalesmoor|Summerfield|Upperthorpe|Wicker|'  # Localities
+                        'Foster|Millsands|Pinsent|Redgrave|'  # blocks
+                        'Other Electors',
+                        IGNORECASE),
+    }
+
    
     def __init__(self,
                 address_fields=(),
@@ -144,7 +157,6 @@ class RegisterFixer(object):
                 fieldnames={},
                 fieldmap={},
                 fields_extra={},
-                regexes={},
                 table=(),
                 tagfields=None,
                 tagtail=None
@@ -155,7 +167,6 @@ class RegisterFixer(object):
         self.doa_field = doa_field
         self.fieldnames = fieldnames
         self.fields_extra = fields_extra
-        self.regexes = regexes
         self.table = table
         self.tagfields = tagfields
         self.tagtail = tagtail
@@ -170,7 +181,7 @@ class RegisterFixer(object):
             elif k == 'is_voter':
                 row[k] = self.isvoter(row)  # Set is_deceased flag
             else:
-                row[k]=v
+                row[k] = v
     
     def clean_value(self, value):
         return value.replace(',', ' ').strip()
@@ -301,7 +312,7 @@ class Main(object):
         (table, unused) = filehandler.csv_read(csv_filename, ch.fieldnames, skip_lines)
 
         # Fix table
-        vh = RegisterFixer(regexes=regexes, table=table, tagtail=tagtail, **ch.config_new)
+        vh = RegisterFixer(table=table, tagtail=tagtail, **ch.config_new)
         table_fixed = vh.fix_table()
 
         # Create new table
@@ -317,12 +328,10 @@ class Main(object):
         print csv_filename_new
     
 if __name__ == '__main__':
-    
-    SRGP = getenv("HOME") + '/Desktop/SRGP/'
 
     # CSV Filename
-    csv_filename = None
     if len(argv) == 1:
+        SRGP = getenv("HOME") + '/Desktop/SRGP/'
         csv_filename = SRGP + 'electoralregister-apr2014head.csv'
     else:
         csv_filename = argv[1]
@@ -337,4 +346,3 @@ if __name__ == '__main__':
 #         config= config_canvass
         
     main = Main(csv_filename, config)
-    
