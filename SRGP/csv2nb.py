@@ -15,7 +15,8 @@ from sys import argv
 from sys import stdout
 import sys
 
-from configurations import config_members, config_register
+from configurations import config_members, config_register, \
+    config_civi_search_all
 
 
 # from xlrd import xlsx
@@ -97,12 +98,13 @@ class FileHandler(object):
             next(fh)
         dr = DictReader(fh)
         table = [row for row in dr]
-        fieldnames = tuple(dr.fieldnames)           
-        if fieldnames != fieldnames_expected:
-            fields_odd = self.find_mismatch(fieldnames, fieldnames_expected)
-            raise ValueError('Unexpected fieldnames:\n' + ','.join(fieldnames)
-                             + '\n' + ','.join(fieldnames_expected)
-                             + '\n' + 'mismatch:' + ','.join(fields_odd))
+        fieldnames = tuple(dr.fieldnames)  
+        if len(fieldnames)==len(fieldnames_expected):         
+            if fieldnames != fieldnames_expected:
+                fields_odd = self.find_mismatch(fieldnames, fieldnames_expected)
+                raise ValueError('Unexpected fieldnames:\n' + ','.join(fieldnames)
+                                 + '\n' + ','.join(fieldnames_expected)
+                                 + '\n' + 'mismatch:' + ','.join(fields_odd))
         return (table, fieldnames)
     
     def find_mismatch(self, set0, set1):
@@ -176,9 +178,7 @@ class TableFixer(object):
 
     def append_fields(self, row, fields_extra):
         for k, v in fields_extra.items():
-            if k == '':
-                pass
-            elif k == 'is_deceased':
+            if k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_voter':
                 row[k] = self.isvoter(row)  # Set is_deceased flag
@@ -186,7 +186,7 @@ class TableFixer(object):
                 row[k] = 'G'
             elif k == 'party_member':
                 row[k] = self.ismember(row)  # Set is_member flag
-            elif k == 'support level':
+            elif k == 'support_level':
                 row[k] = 1 if self.ismember(row) else '' # assume
             else:
                 row[k] = v
@@ -352,8 +352,10 @@ if __name__ == '__main__':
     # Config 
     if search('register', csv_filename):
         config = config_register
-    elif search('embers', csv_filename,):
+    elif search('Members', csv_filename,):
         config = config_members
+    elif search('Search', csv_filename,):
+        config = config_civi_search_all
     elif search('canvass', csv_filename):
         pass
 #         config= config_canvass

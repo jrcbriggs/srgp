@@ -112,14 +112,14 @@ config_civi_search_all={
             'Postal Code',
             'Country',
             ),
-        'date_fields' : ('Start Date', 'End Date', 'Member Since',),
-        'date_format' : '%Y-%m-%d',  # Membershiip date: 2014-05-17
+        'date_fields' : ('Birth Date',),
+        'date_format' : '%Y-%m-%d',  # Membership date: 2014-05-17
         'doa_field' : None,
           'fieldmap':OrderedDict([
-            ('Contact ID', 'civiCRM_ID'),
-            ('Do not mail', 'email opt in'), #Reverse Sense
+            ('Internal Contact ID', 'civiCRM_ID'),
+            ('Do Not Email', 'email opt in'), #Reverse Sense
             ('Do Not Phone', 'mobile opt in'), #Reverse Sense
-            ('Do not mail', 'do_not_contact'), #tag NoMail
+            ('Do Not Mail', 'do_not_contact'), #tag NoMail
             ('Do Not Sms', 'tag_list'), #tag NoSMS
             ('First Name', 'first_name'),
             ('Last Name', 'last_name'),
@@ -138,11 +138,11 @@ config_civi_search_all={
           ]),
         'skip_lines':0,
         'fields_extra':OrderedDict([
-            ('party', 'party'),
-            ('party_member', 'party_member'),
-            ('support level', 'support level'),
+#             ('party', 'party'),#Undefined in civi search all
+#             ('party_member', 'party_member'), #Undefined in civi search all
+#             ('support level', 'support level'),#Undefined in civi search all
             ]),
         'fields_flip':(                       #Reverse Sense
-                      'Do not mail',
+                      'Do Not Mail',
                       'Do Not Phone',),
 }

@@ -118,9 +118,10 @@ class Test(unittest.TestCase):
         self.assertTupleEqual(fieldnames, self.fieldnames)
              
     def test_csv_read_err(self):
-        self.filehandler.csv_write(self.table, self.pathname, self.fieldnames)        
+        self.filehandler.csv_write(self.table, self.pathname, self.fieldnames) 
+        fieldnames_new = self.fieldnames[:-1] + ('Junk',)       
         self.assertRaises(ValueError, self.filehandler.csv_read, self.pathname,
-                          [])
+                          fieldnames_new)
              
     # TableMapper
     def test_maprow(self):
@@ -217,27 +218,33 @@ class Test(unittest.TestCase):
         expected.update({'fn0':0, 'fn1':1})
         self.vh.append_fields(self.row0, fields_new)
         self.assertDictEqual(self.row0, expected)
+
+    def test_fix_append_fields_named(self):
+        for fieldname in ('is_voter', 'is_deceased', 'party_member'):
+            expected = self.row0.copy()
+            expected.update({fieldname:False})
+            self.vh.append_fields(self.row0, {fieldname:fieldname})
+            self.assertEqual(self.row0, expected)
     
-    def test_fix_append_fields_party_member(self):
-        fields_new = {'party_member':'party_member'}
+    def test_fix_append_fields_party(self):
         expected = self.row0.copy()
-        expected.update({'party_member':False})
-        self.vh.append_fields(self.row0, fields_new)
-        self.assertEqual(self.row0, expected)
+        expected.update({'party': 'G'})
+        self.vh.append_fields(self.row0, {'party':'party'})
+        self.assertDictEqual(self.row0, expected)
     
-    def test_fix_append_fields_is_deceased(self):
-        fields_new = {'is_deceased':'is_deceased'}
+    def test_fix_append_fields_support_level_member(self):
+        self.row0.update({'Status':'New'})
         expected = self.row0.copy()
-        expected.update({'is_deceased':False})
-        self.vh.append_fields(self.row0, fields_new)
-        self.assertEqual(self.row0, expected)
+        expected.update({'support_level': 1})
+        self.vh.append_fields(self.row0, {'support_level':'support_level'})
+        self.assertDictEqual(self.row0, expected)
     
-    def test_fix_append_fields_is_voter(self):
-        fields_new = {'is_voter':'is_voter'}
+    def test_fix_append_fields_support_level_not_member(self):
+        self.row0.update({'Status':'Deceased'})
         expected = self.row0.copy()
-        expected.update({'is_voter':False})
-        self.vh.append_fields(self.row0, fields_new)
-        self.assertEqual(self.row0, expected)
+        expected.update({'support_level': ''})
+        self.vh.append_fields(self.row0, {'support_level':'support_level'})
+        self.assertDictEqual(self.row0, expected)
     
     def test_fix_date(self):
         expected = '12/31/2014'
@@ -306,24 +313,24 @@ class Test(unittest.TestCase):
         self.assertDictEqual(table_fixed[1], self.row1)
         
     def test_flip_fields(self):
-        row = {'k0':'v0','Do not mail':1, 'Do not Phone':1}
+        row = {'k0':'v0', 'Do not mail':1, 'Do not Phone':1}
         fieldnames = ('Do not mail', 'Do not Phone')
         self.vh.flip_fields(row, fieldnames)
-        expected = {'k0':'v0','Do not mail':0, 'Do not Phone':0}
-        self.assertDictEqual(row,expected)
+        expected = {'k0':'v0', 'Do not mail':0, 'Do not Phone':0}
+        self.assertDictEqual(row, expected)
         #
-        row = {'k0':'v0','Do not mail':0, 'Do not Phone':0}
+        row = {'k0':'v0', 'Do not mail':0, 'Do not Phone':0}
         fieldnames = ('Do not mail', 'Do not Phone')
         self.vh.flip_fields(row, fieldnames)
-        expected = {'k0':'v0','Do not mail':1, 'Do not Phone':1}
-        self.assertDictEqual(row,expected)
+        expected = {'k0':'v0', 'Do not mail':1, 'Do not Phone':1}
+        self.assertDictEqual(row, expected)
                 
         #
-        row = {'k0':'v0','Do not mail':1, 'Do not Phone':0}
+        row = {'k0':'v0', 'Do not mail':1, 'Do not Phone':0}
         fieldnames = ('Do not mail', 'Do not Phone')
         self.vh.flip_fields(row, fieldnames)
-        expected = {'k0':'v0','Do not mail':0, 'Do not Phone':1}
-        self.assertDictEqual(row,expected)
+        expected = {'k0':'v0', 'Do not mail':0, 'Do not Phone':1}
+        self.assertDictEqual(row, expected)
                 
     def test_iscity(self):
         self.assertTrue(self.vh.iscity('Sheffield'), 'expected match: ' + 'Sheffield')
