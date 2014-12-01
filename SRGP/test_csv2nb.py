@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 '''
 Created on 18 Nov 2014
 
@@ -9,7 +10,6 @@ import sys
 import unittest
 
 from csv2nb import TableFixer, FileHandler, TableMapper, ConfigHandler
-
 
 class Test(unittest.TestCase):
 
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
         self.assertTupleEqual(ch.fieldnames, ('a', 'b', 'c', 'd', 'e', 'f',))
         self.assertTupleEqual(ch.fieldnames_new, ('A', 'B', 'C', 'tag_list'))
         self.assertDictEqual(ch.fieldmap_new, {'a':'A', 'b':'B', 'c':'C', 'tag_list':'tag_list' })
-        self.assertListEqual(ch.fieldmap_new.keys(), ['a', 'b', 'c', 'tag_list'])
+        self.assertListEqual(list(ch.fieldmap_new.keys()), ['a', 'b', 'c', 'tag_list'])
         self.assertTupleEqual(ch.tagfields, ('d', 'e',))
         
 
@@ -142,18 +142,18 @@ class Test(unittest.TestCase):
     # OrderedDict
     def test_ordereddict(self):
         expected = ['a', 'b', 'c']
-        actual = self.od.keys()
+        actual = list(self.od.keys())
         self.assertListEqual(actual, expected)
         expected = [0, 1, 2]
-        actual = self.od.values()
+        actual = list(self.od.values())
         self.assertListEqual(actual, expected)
         
     def test_ordereddict1(self):
         expected = ['z', 'y', 'x']
-        actual = self.od1.keys()
+        actual = list(self.od1.keys())
         self.assertListEqual(actual, expected)
         expected = [9, 8, 7]
-        actual = self.od1.values()
+        actual = list(self.od1.values())
         self.assertListEqual(actual, expected)
         
     # TableFixer
@@ -302,7 +302,7 @@ class Test(unittest.TestCase):
         self.config_new['fieldmap'].update(addresses_dict)  # put a valid doa in the Date of Attainment field
         vh = TableFixer(table=self.table, tagtail='tagtail', **self.config_new)
         table_fixed = vh.fix_table()
-        print table_fixed
+        print (table_fixed)
         row0 = self.row0.copy()
         row0.update({'c':self.dob_nb, 'a1':'220 SVR', 'a2':'', 'a3':'', 'a4':'', 'a5':'Sheffield', 'a6':'S10 1ST', 'a7':'GB', })
         row1 = self.row1.copy()

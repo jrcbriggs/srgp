@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 '''
 Created on 1 Nov 2014
 
@@ -16,7 +16,8 @@ from sys import stdout
 import sys
 
 from configurations import config_members, config_register, \
-    config_civi_search_all
+    config_civi_search_all, config_officers, config_supporters, \
+    config_volunteers
 
 
 # from xlrd import xlsx
@@ -193,7 +194,7 @@ class TableFixer(object):
 
     def flip_fields(self, row, fieldnames):
         for fn in fieldnames:
-            row[fn]= not row[fn]
+            row[fn] = not row[fn]
             
     def clean_value(self, value):
         return value.replace(',', ' ').strip()
@@ -312,7 +313,7 @@ class TableFixer(object):
         taglist_str = ','.join(tags)
         return {'tag_list':taglist_str, }
 
-class Main(object):
+class NbApi(object):
     def __init__(self, csv_filename, config):
         basename = path.basename(csv_filename).replace('.csv', '')
         filehandler = FileHandler()        
@@ -338,26 +339,24 @@ class Main(object):
 #         filehandler.csv_print(table_new, fieldnames_new)
 
         # Print output csv_filename
-        print csv_filename_new
+        print (csv_filename_new)
     
 if __name__ == '__main__':
-
-    # CSV Filename
-    if len(argv) == 1:
-        SRGP = getenv("HOME") + '/Desktop/SRGP/'
-        csv_filename = SRGP + 'electoralregister-apr2014head.csv'
-    else:
-        csv_filename = argv[1]
-    
-    # Config 
-    if search('register', csv_filename):
-        config = config_register
-    elif search('Members', csv_filename,):
-        config = config_members
-    elif search('Search', csv_filename,):
-        config = config_civi_search_all
-    elif search('canvass', csv_filename):
-        pass
-#         config= config_canvass
-        
-    main = Main(csv_filename, config)
+    config=None
+    for csv_filename in argv[1:]:
+        if search('register', csv_filename):
+            config = config_register
+        elif search('Members', csv_filename,):
+            config = config_members
+        elif search('Officers', csv_filename,):
+            config = config_officers
+        elif search('Supporters', csv_filename,):
+            config = config_supporters
+        elif search('Volunteers', csv_filename,):
+            config = config_volunteers
+        elif search('Search', csv_filename,):
+            config = config_civi_search_all
+        elif search('canvass', csv_filename):
+            pass #config= config_canvass 
+        print (csv_filename)           
+        nbapi = NbApi(csv_filename, config)
