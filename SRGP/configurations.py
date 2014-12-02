@@ -235,3 +235,54 @@ config_register = {
             ]),
         'fields_flip':(),  # Reverse Sense
     }
+
+config_register_city2014_postal = {
+                'address_fields' : {
+                        'address1':'Qualifying_Address_1',
+                        'address2':'Qualifying_Address_2',
+                        'address3':'Qualifying_Address_3',
+                        'address4':'Qualifying_Address_4',
+                        'address4':'Qualifying_Address_5',
+                        'address4':'Qualifying_Address_6',
+                        'city':'Qualifying_Address_7',
+                        'zip':'Qualifying_Address_8',
+                        'country_code':'Qualifying_Address_9',
+            },
+        'date_fields' : ('Election_Date',),
+        'date_format' : '%d/%m/%Y',  # _electoral_roll
+        'doa_field' : '',
+        'fieldnames' : (
+            'Authority_Name', 'Area_Name',
+            'PD_Letters', 'Alternate_PD',
+            'Published_ENo', 'Supplementary',
+            'Forename', 'Initials',
+            'Surname', 'Proxy_Name',
+            'Send_Address_1', 'Send_Address_2',
+            'Send_Address_3', 'Send_Address_4',
+            'Send_Address_5', 'Send_Postcode',
+            'Qualifying_Address_1', 'Qualifying_Address_2',
+            'Qualifying_Address_3', 'Qualifying_Address_4',
+            'Qualifying_Address_5', 'Qualifying_Address_6',
+            'Qualifying_Address_7', 'Qualifying_Address_8',
+            'Qualifying_Address_9', 'Absent_Status',
+            'Overseas_Address', 'Away_Address',
+            'Election_Date', 'Election_Title_1',
+            'Election_Title_2',
+        ),
+        'fields_extra':OrderedDict([
+            ('is_voter', 'is_voter'),
+            ]),
+        'fields_flip':(),  # Reverse Sense
+        'skip_lines':1,
+        'tagfields' : (
+            'PD_Letters'      ,
+            'Published_ENo'   ,
+            'Absent_Status'   ,
+            'Overseas_Address',
+            'Away_Address'    ,
+            'Election_Date'   ,
+            'Election_Title_1',
+            'Election_Title_2',
+        ),
+    }
+
