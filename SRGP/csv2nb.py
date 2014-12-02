@@ -134,11 +134,10 @@ class Csv2Nb(object):
         
         # Read csv file
         skip_lines = config.get('skip_lines', 0)
-        tagtail = argv[3] if len(argv) > 3 else basename
         (table, unused) = filehandler.csv_read(csv_filename, ch.fieldnames, skip_lines)
 
         # Fix table
-        vh = TableFixer(table=table, tagtail=tagtail, **ch.params)
+        vh = TableFixer(table=table, tagtail='tagtail', **ch.params)
         table_fixed = vh.fix_table()
 
         # Create new table
@@ -190,7 +189,7 @@ class TableFixer(object):
         self.tagfields = tagfields
         self.tagtail = tagtail
 
-    def append_fields(self, row, fields_extra):
+    def extra_fields(self, row, fields_extra):
         for k, v in fields_extra.items():
             if k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
@@ -289,7 +288,7 @@ class TableFixer(object):
             self.fix_doa(row, self.doa_fields)            
             self.fix_addresses(row, self.address_fields)            
             self.fix_local_party(row)   
-            self.append_fields(row, self.fields_extra)         
+            self.extra_fields(row, self.fields_extra)         
             self.flip_fields(row, self.fields_flip)         
             row.update(self.tags_create(row, self.tagfields, self.tagtail)) 
         return self.table

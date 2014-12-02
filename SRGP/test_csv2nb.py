@@ -15,7 +15,7 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         self.config = {
-                'address_fields' : OrderedDict([('a1','A1'), ('a2','A2'), ('a3','A3'),( 'a4','A4'),( 'city','A5'),( 'zip','A6'),( 'country_code','A7'),]),
+                'address_fields' : OrderedDict([('a1', 'A1'), ('a2', 'A2'), ('a3', 'A3'), ('a4', 'A4'), ('city', 'A5'), ('zip', 'A6'), ('country_code', 'A7'), ]),
                 'date_fields' : ('c',),  # Date fields
                 'doa_fields' : ('c',),  # Date of Attainment field
                 'date_format' : '%d/%m/%Y',  # _electoral_roll
@@ -158,6 +158,13 @@ class Test(unittest.TestCase):
         
     # TableFixer
         
+    def test_append_fields_other(self):
+        for isness in ('is_supporter', 'is_volunteer'):
+            fields_extra = OrderedDict([(isness, isness), ])
+            row0 = self.row0.copy()
+            self.vh.extra_fields(row0, fields_extra)
+            self.assertTrue(row0[isness])
+    
     def test_clean_value(self):
         fixtures = {
                  'asdf':'asdf',
@@ -211,34 +218,34 @@ class Test(unittest.TestCase):
         fields_new = {'fn0':0, 'fn1':1}
         expected = self.row0.copy()
         expected.update({'fn0':0, 'fn1':1})
-        self.vh.append_fields(self.row0, fields_new)
+        self.vh.extra_fields(self.row0, fields_new)
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_append_fields_named(self):
         for fieldname in ('is_voter', 'is_deceased', 'party_member'):
             expected = self.row0.copy()
             expected.update({fieldname:False})
-            self.vh.append_fields(self.row0, {fieldname:fieldname})
+            self.vh.extra_fields(self.row0, {fieldname:fieldname})
             self.assertEqual(self.row0, expected)
     
     def test_fix_append_fields_party(self):
         expected = self.row0.copy()
         expected.update({'party': 'G'})
-        self.vh.append_fields(self.row0, {'party':'party'})
+        self.vh.extra_fields(self.row0, {'party':'party'})
         self.assertDictEqual(self.row0, expected)
     
     def test_fix_append_fields_support_level_member(self):
         self.row0.update({'Status':'New'})
         expected = self.row0.copy()
         expected.update({'support_level': 1})
-        self.vh.append_fields(self.row0, {'support_level':'support_level'})
+        self.vh.extra_fields(self.row0, {'support_level':'support_level'})
         self.assertDictEqual(self.row0, expected)
     
     def test_fix_append_fields_support_level_not_member(self):
         self.row0.update({'Status':'Deceased'})
         expected = self.row0.copy()
         expected.update({'support_level': ''})
-        self.vh.append_fields(self.row0, {'support_level':'support_level'})
+        self.vh.extra_fields(self.row0, {'support_level':'support_level'})
         self.assertDictEqual(self.row0, expected)
     
     def test_fix_date(self):
@@ -405,7 +412,8 @@ class Test(unittest.TestCase):
     def test_isvoter_no_field(self):
         actual = self.vh.isvoter(self.row0)
         self.assertFalse(actual)
-    
+        
+
     def test_tags_create(self):
         row = self.row0
         tagtail = 'julian'
