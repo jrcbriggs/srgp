@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 '''
 Created on 23 Nov 2014
 
@@ -15,33 +15,35 @@ import json
 import requests
 from sys import argv
 
-
-def csvread2base64(filenameToModuleName):
-    with open(filename, 'rb') as fh:
-        csv = fh.read()        
-        (data_b64, length) = base64_encode(csv)
-        return data_b64
-    
-if __name__ == "__main__":
-#     argv.append('electoralregister-apr2014headNB.csv') #for testing
-#     
-#     SRGP = '/home/ph1jb/SRGP/'
-#     filename = SRGP + argv[1]
-    filename = argv[1]
-    token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
-    site_slug = 'srgp.nationbuilder.com'
+class Csv2Nb(object):
     endpoint = '/api/v1/imports'
-    url = "https://" + site_slug + endpoint + '?access_token=' + token
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json', }
-    data_b64 = csvread2base64(filename)
+    slug = 'srgp.nationbuilder.com'
+    token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
+    url = "https://" + slug + endpoint + '?access_token=' + token
     data = {'import': {
-                'file': data_b64,
-                'type': 'people', # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
+                'file': None,
+                'type': 'people',  # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
                 'is_overwritable': True,
-              }}
-    data_json = json.dumps(data)
-    response = requests.post(url, headers=headers, data=data_json)
-#     print 'url:', url
-#     print 'headers:', headers
-#     print 'data_json:', data_json
-    print 'response:', response.content
+              }}        
+  
+    def __init__(self, filename):
+        self.file_b64 = self.csvread2base64(filename)
+        self.file_b64_ascii = str(self.file_b64, encoding='ascii')
+        self.data['import']['file'] = self.file_b64_ascii
+        self.data_json = json.dumps(self.data)
+
+    def csvread2base64(self, filename):
+        with open(filename, 'rb') as fh:
+            csv = fh.read()        
+            (file_b64, length) = base64_encode(csv)
+            return file_b64
+    
+    def upload(self):
+        self.response = requests.post(self.url, headers=self.headers, data=self.data_json)
+
+if __name__ == "__main__":
+    for filename in argv[1:]: #skip scriptname in argv[0] 
+        nbapi = Csv2Nb(filename)
+        nbapi.upload()
+        print ('response:', nbapi.response.content)
