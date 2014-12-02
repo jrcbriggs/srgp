@@ -56,7 +56,7 @@ if __name__ == '__main__':
     
     # Config module
     modulename = None
-    if len(argv) == 2:
+    if len(argv) == 3:
         modulename = argv[2]
     elif search('register', csv_filename):
         modulename = 'config_electoral_register2014'
