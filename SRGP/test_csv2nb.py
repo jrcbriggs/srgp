@@ -15,7 +15,7 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         self.config = {
-                'address_fields' : ('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'),
+                'address_fields' : OrderedDict([('a1','A1'), ('a2','A2'), ('a3','A3'),( 'a4','A4'),( 'city','A5'),( 'zip','A6'),( 'country_code','A7'),]),
                 'date_fields' : ('c',),  # Date fields
                 'doa_field' : 'c',  # Date of Attainment field
                 'date_format' : '%d/%m/%Y',  # _electoral_roll
@@ -31,8 +31,8 @@ class Test(unittest.TestCase):
                 'fields_flip' : (),
                 'tagfields' : ('e', 'f'),
         }        
-        self.config_new = self.config.copy()
-        self.config_new.update({
+        self.params = self.config.copy()
+        self.params.update({
                                    'fieldnames': ('a', 'b', 'c', 'd', 'e', 'f',),
         }) 
         self.config_r2nb = self.config.copy()
@@ -184,33 +184,28 @@ class Test(unittest.TestCase):
         self.assertEqual(actual, expected)
         
     def test_fix_addresses(self):
-        address_fields = ('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7')
-        row = {'junk':1, 'a1':'220 SVR', 'a2':'Sheffield', 'a3':'S10 1ST', 'a4':'', 'a5':'', 'a6':'', 'a7':'', }
-        exp = {'junk':1, 'a1':'220 SVR', 'a2':'', 'a3':'', 'a4':'', 'a5':'Sheffield', 'a6':'S10 1ST', 'a7':'GB', }
-        self.vh.fix_addresses(row, address_fields)
+        row = {'junk':1, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'S10 1ST', 'A4':'', 'A5':'', 'A6':'', 'A7':'', }
+        exp = {'junk':1, 'A1':'220 SVR', 'A2':'', 'A3':'', 'A4':'', 'A5':'Sheffield', 'A6':'S10 1ST', 'A7':'GB', }
+        self.vh.fix_addresses(row, self.address_fields)
         self.assertDictEqual(row, exp)
         
     def test_fix_addresses1(self):
-        address_fields = ('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7')
-        row = {'junk':1, 'a1':'Attic', 'a2':'220 SVR', 'a3':'Sheffield', 'a4':'S10 1ST', 'a5':'', 'a6':'', 'a7':'', }
-        exp = {'junk':1, 'a1':'Attic', 'a2':'220 SVR', 'a3':'', 'a4':'', 'a5':'Sheffield', 'a6':'S10 1ST', 'a7':'GB', }
-        self.vh.fix_addresses(row, address_fields)
+        row = {'junk':1, 'A1':'Attic', 'A2':'220 SVR', 'A3':'Sheffield', 'A4':'S10 1ST', 'A5':'', 'A6':'', 'A7':'', }
+        exp = {'junk':1, 'A1':'Attic', 'A2':'220 SVR', 'A3':'', 'A4':'', 'A5':'Sheffield', 'A6':'S10 1ST', 'A7':'GB', }
+        self.vh.fix_addresses(row, self.address_fields)
         self.assertDictEqual(row, exp)
         
     def test_fix_addresses2(self):
-        address_fields = ('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7')
-        row = {'junk':1, 'a1':'Flat 1', 'a2':'Crookes Hall', 'a3':'220 SVR', 'a4':'Sheffield', 'a5':'S10 1ST', 'a6':'', 'a7':'', }
-        exp = {'junk':1, 'a1':'Flat 1', 'a2':'Crookes Hall', 'a3':'220 SVR', 'a4':'', 'a5':'Sheffield', 'a6':'S10 1ST', 'a7':'GB', }
-        self.vh.fix_addresses(row, address_fields)
+        row = {'junk':1, 'A1':'Flat 1', 'A2':'Crookes Hall', 'A3':'220 SVR', 'A4':'Sheffield', 'A5':'S10 1ST', 'A6':'', 'A7':'', }
+        exp = {'junk':1, 'A1':'Flat 1', 'A2':'Crookes Hall', 'A3':'220 SVR', 'A4':'', 'A5':'Sheffield', 'A6':'S10 1ST', 'A7':'GB', }
+        self.vh.fix_addresses(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_addresses_other_electors(self):
-        address_fields = ('a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7')
-        row = {'junk':1, 'a1':'Other Electors', 'a2':'', 'a3':'', 'a4':'', 'a5':'', 'a6':'', 'a7':'', }
-        exp = {'junk':1, 'a1':'Other Electors', 'a2':'', 'a3':'', 'a4':'', 'a5':'', 'a6':'', 'a7':'GB', }
-        self.vh.fix_addresses(row, address_fields)
+        row = {'junk':1, 'A1':'Other Electors', 'A2':'', 'A3':'', 'A4':'', 'A5':'', 'A6':'', 'A7':'', }
+        exp = {'junk':1, 'A1':'Other Electors', 'A2':'', 'A3':'', 'A4':'', 'A5':'', 'A6':'', 'A7':'GB', }
+        self.vh.fix_addresses(row, self.address_fields)
         self.assertDictEqual(row, exp)
-#                'address1':'Other Electors',
         
     def test_fix_append_fields(self):
         fields_new = {'fn0':0, 'fn1':1}
@@ -296,17 +291,17 @@ class Test(unittest.TestCase):
         
     def test_fix_table(self):
         '''put a valid doa in the Date of Attainment field'''
-        self.row0.update({'c':self.doa, 'a1':'220 SVR', 'a2':'Sheffield', 'a3':'S10 1ST', 'a4':'', 'a5':'', 'a6':'', 'a7':'', })
-        self.row1.update({'c':self.doa, 'a1':'220 SVR', 'a2':'Sheffield', 'a3':'S10 1ST', 'a4':'', 'a5':'', 'a6':'', 'a7':'', })
+        self.row0.update({'c':self.doa, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'S10 1ST', 'A4':'', 'A5':'', 'A6':'', 'A7':'', })
+        self.row1.update({'c':self.doa, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'S10 1ST', 'A4':'', 'A5':'', 'A6':'', 'A7':'', })
         addresses_dict = dict(zip(self.address_fields, self.address_fields))
-        self.config_new['fieldmap'].update(addresses_dict)  # put a valid doa in the Date of Attainment field
-        vh = TableFixer(table=self.table, tagtail='tagtail', **self.config_new)
+        self.params['fieldmap'].update(addresses_dict)  # put a valid doa in the Date of Attainment field
+        vh = TableFixer(table=self.table, tagtail='tagtail', **self.params)
         table_fixed = vh.fix_table()
         print (table_fixed)
         row0 = self.row0.copy()
-        row0.update({'c':self.dob_nb, 'a1':'220 SVR', 'a2':'', 'a3':'', 'a4':'', 'a5':'Sheffield', 'a6':'S10 1ST', 'a7':'GB', })
+        row0.update({'c':self.dob_nb, 'A1':'220 SVR', 'A2':'', 'A3':'', 'A4':'', 'A5':'Sheffield', 'A6':'S10 1ST', 'A7':'GB', })
         row1 = self.row1.copy()
-        row1.update({'c':self.dob_nb, 'a1':'220 SVR', 'a2':'', 'a3':'', 'a4':'', 'a5':'Sheffield', 'a6':'S10 1ST', 'a7':'GB', })
+        row1.update({'c':self.dob_nb, 'A1':'220 SVR', 'A2':'', 'A3':'', 'A4':'', 'A5':'Sheffield', 'A6':'S10 1ST', 'A7':'GB', })
         table_expected = [row0, row1]
         self.assertListEqual(table_fixed, table_expected)
         self.assertDictEqual(table_fixed[0], self.row0)

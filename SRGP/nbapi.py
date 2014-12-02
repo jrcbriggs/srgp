@@ -33,17 +33,17 @@ class NbApi(object):
         self.data['import']['file'] = self.file_b64_ascii
         self.data_json = json.dumps(self.data)
 
-    def upload(self):
-        self.response = requests.post(self.url, headers=self.headers, data=self.data_json)
-
     def csvread2base64(self, filename):
         with open(filename, 'rb') as fh:
             csv = fh.read()        
             (file_b64, length) = base64_encode(csv)
             return file_b64
     
+    def upload(self):
+        self.response = requests.post(self.url, headers=self.headers, data=self.data_json)
+
 if __name__ == "__main__":
-    for filename in argv:
+    for filename in argv[1:]: #skip scriptname in argv[0] 
         nbapi = NbApi(filename)
         nbapi.upload()
         print ('response:', nbapi.response.content)
