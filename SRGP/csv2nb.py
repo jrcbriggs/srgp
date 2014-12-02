@@ -31,7 +31,7 @@ class ConfigHandler(object):
                  address_fields,
                  date_fields,
                  date_format,
-                 doa_field,
+                 doa_fields,
                  fieldmap,
                  fields_extra,
                  fields_flip,
@@ -61,7 +61,7 @@ class ConfigHandler(object):
                          'address_fields':address_fields,
                          'date_fields': date_fields,
                          'date_format': date_format,
-                         'doa_field':doa_field,
+                         'doa_fields':doa_fields,
                          'fieldnames':self.fieldnames,
                          'fields_extra':self.fields_extra,
                          'fields_flip':fields_flip,
@@ -125,7 +125,7 @@ class FileHandler(object):
             dw.writeheader()
             dw.writerows(table)          
 
-class NbApi(object):
+class Csv2Nb(object):
     def __init__(self, csv_filename, config):
         basename = path.basename(csv_filename).replace('.csv', '')
         filehandler = FileHandler()        
@@ -170,7 +170,7 @@ class TableFixer(object):
                 address_fields=(),
                 date_fields=(),
                 date_format='',
-                doa_field='',
+                doa_fields='',
                 fieldnames={},
                 fieldmap={},
                 fields_extra={},
@@ -182,7 +182,7 @@ class TableFixer(object):
         self.address_fields = address_fields
         self.date_fields = date_fields
         self.date_format = date_format
-        self.doa_field = doa_field
+        self.doa_fields = doa_fields
         self.fieldnames = fieldnames
         self.fields_extra = fields_extra
         self.fields_flip = fields_flip
@@ -194,6 +194,8 @@ class TableFixer(object):
         for k, v in fields_extra.items():
             if k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
+            elif k == 'is_supporter':
+                row[k] = True  # Set is_supporter flag on all rows in SRGP CSVs
             elif k == 'is_volunteer':
                 row[k] = True  # Set is_volunteer flag on all rows in the Volunteers csv
             elif k == 'is_voter':
@@ -268,10 +270,10 @@ class TableFixer(object):
         '''members only: append is_deceased column and populate'''
         row['is_deceased'] = self.isdeceased(row)
 
-    def fix_doa(self, row, doa_fieldname):
+    def fix_doa(self, row, doa_fields):
         '''Update Date of Attainment field in-place'''
-        if doa_fieldname in row and row[doa_fieldname]:
-            row[doa_fieldname] = self.doa2dob(row[doa_fieldname])
+        for doa_field in doa_fields:
+            row[doa_field] = self.doa2dob(row[doa_field])
     
     def fix_local_party(self, row):
         '''members only: overwrite "Sheffield & Rotherham Green Party" with "G" '''
@@ -284,7 +286,7 @@ class TableFixer(object):
         for row in self.table:
             self.clean_row(row)
             self.fix_dates(row)            
-            self.fix_doa(row, self.doa_field)            
+            self.fix_doa(row, self.doa_fields)            
             self.fix_addresses(row, self.address_fields)            
             self.fix_local_party(row)   
             self.append_fields(row, self.fields_extra)         
@@ -360,5 +362,5 @@ if __name__ == '__main__':
         elif search('canvass', csv_filename):
             pass  # config= config_canvass 
 
-        nbapi = NbApi(csv_filename, config)
+        nbapi = Csv2Nb(csv_filename, config)
         print (nbapi.csv_filename_new)

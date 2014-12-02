@@ -7,7 +7,7 @@ from encodings.base64_codec import base64_encode
 import json
 import unittest
 
-from nbapi import NbApi
+from nbapi import Csv2Nb
 
 
 class Test(unittest.TestCase):
@@ -35,10 +35,10 @@ class Test(unittest.TestCase):
         csv_str = 'a,b,c,d,e,f\n0,1,2,3,4,5\n6,7,8,9,10,11\n'
         with open(self.filename, 'w') as fh:
             fh.write(csv_str)        
-        self.nbapi = NbApi(self.filename)
+        self.nbapi = Csv2Nb(self.filename)
 
     def testNbApi(self):
-        self.assertIsInstance(self.nbapi, NbApi)
+        self.assertIsInstance(self.nbapi, Csv2Nb)
     
     def testNbApi_file_b64(self):
         actual=self.nbapi.file_b64

@@ -15,7 +15,7 @@ import json
 import requests
 from sys import argv
 
-class NbApi(object):
+class Csv2Nb(object):
     endpoint = '/api/v1/imports'
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json', }
     slug = 'srgp.nationbuilder.com'
@@ -44,6 +44,6 @@ class NbApi(object):
 
 if __name__ == "__main__":
     for filename in argv[1:]: #skip scriptname in argv[0] 
-        nbapi = NbApi(filename)
+        nbapi = Csv2Nb(filename)
         nbapi.upload()
         print ('response:', nbapi.response.content)

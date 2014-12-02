@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
         self.config = {
                 'address_fields' : OrderedDict([('a1','A1'), ('a2','A2'), ('a3','A3'),( 'a4','A4'),( 'city','A5'),( 'zip','A6'),( 'country_code','A7'),]),
                 'date_fields' : ('c',),  # Date fields
-                'doa_field' : 'c',  # Date of Attainment field
+                'doa_fields' : ('c',),  # Date of Attainment field
                 'date_format' : '%d/%m/%Y',  # _electoral_roll
                 'fieldmap':OrderedDict([
                               ('a', 'A'),
@@ -47,7 +47,7 @@ class Test(unittest.TestCase):
                                                           ]),
         }) 
         self.address_fields = self.config['address_fields']       
-        self.doa_field = 'c'
+        self.doa_fields = ('c',)
         self.fieldnames = ('a', 'b', 'c', 'd', 'e', 'f',)
         self.fieldnames_new = ('A', 'B', 'C', 'tag_list',)
         self.fieldmap = OrderedDict([('a', 'A',), ('b', 'B',), ('c', 'C',), ])
@@ -60,7 +60,7 @@ class Test(unittest.TestCase):
         self.row0 = {'a':'0', 'b':'1', 'c':'2', 'd':'3', 'e':'4', 'f':'5'}
         self.row1 = {'a':'6', 'b':'7', 'c':'8', 'd':'9', 'e':'10', 'f':'11'}
         self.data = [self.row0, self.row1]
-        self.d2d = TableMapper(self.data, self.fieldmap)
+        self.tm = TableMapper(self.data, self.fieldmap)
 
         # OrderedDict
         self.od = OrderedDict([('a', 0), ('b', 1), ('c', 2), ])
@@ -126,17 +126,17 @@ class Test(unittest.TestCase):
     # TableMapper
     def test_maprow(self):
         expected = {'A':'0', 'B':'1', 'C':'2', }
-        actual = self.d2d.maprow(self.row0, self.fieldmap)
+        actual = self.tm.maprow(self.row0, self.fieldmap)
         self.assertDictEqual(actual, expected)
 
     def test_mapdata(self):
         expected = [{'A':'0', 'B':'1', 'C':'2', }, {'A':'6', 'B':'7', 'C':'8', }]
-        actual = self.d2d.mapdata(self.data, self.fieldmap)
+        actual = self.tm.mapdata(self.data, self.fieldmap)
         self.assertListEqual(actual, expected)
 
-    def test_Dict2Dict(self):
+    def test_TableMapper(self):
         expected = [{'A':'0', 'B':'1', 'C':'2', }, {'A':'6', 'B':'7', 'C':'8', }, ]
-        actual = self.d2d.data_new
+        actual = self.tm.data_new
         self.assertListEqual(actual, expected)
 
     # OrderedDict
@@ -272,7 +272,7 @@ class Test(unittest.TestCase):
     def test_fix_doa(self):
         row = {'a':'0', 'b':'1', 'c':self.doa}
         expected = {'a':'0', 'b':'1', 'c':'31/12/1996'}
-        self.vh.fix_doa(row, self.doa_field)
+        self.vh.fix_doa(row, self.doa_fields)
         self.assertDictEqual(row, expected)        
 
     def test_fix_local_party(self):
