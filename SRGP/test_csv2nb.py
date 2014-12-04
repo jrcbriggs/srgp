@@ -162,6 +162,7 @@ class Test(unittest.TestCase):
         for isness in ('is_supporter', 'is_volunteer'):
             fields_extra = OrderedDict([(isness, isness), ])
             row0 = self.row0.copy()
+            row0.update({'Status': 'New'})
             self.vh.extra_fields(row0, fields_extra)
             self.assertTrue(row0[isness])
     
@@ -234,6 +235,12 @@ class Test(unittest.TestCase):
         self.vh.extra_fields(self.row0, {'party':'party'})
         self.assertDictEqual(self.row0, expected)
     
+    def test_fix_append_fields_status(self):
+        expected = self.row0.copy()
+        expected.update({'status': 'active'})
+        self.vh.extra_fields(self.row0, {'status':'status'})
+        self.assertDictEqual(self.row0, expected)
+    
     def test_fix_append_fields_support_level_member(self):
         self.row0.update({'Status':'New'})
         expected = self.row0.copy()
@@ -248,6 +255,12 @@ class Test(unittest.TestCase):
         self.vh.extra_fields(self.row0, {'support_level':'support_level'})
         self.assertDictEqual(self.row0, expected)
     
+    def test_fix_city(self):
+        row = {'junk':1, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'S10 1ST', 'A4':'', 'A5':'', 'A6':'', 'A7':'', }
+        exp = {'junk':1, 'A1':'220 SVR', 'A2':'', 'A3':'S10 1ST', 'A4':'', 'A5':'Sheffield', 'A6':'', 'A7':'', }
+        self.vh.fix_city(row, self.address_fields, 'A5')
+        self.assertDictEqual(row, exp)
+
     def test_fix_date(self):
         expected = '12/31/2014'
         actual = self.vh.fix_date(self.doa)
@@ -295,7 +308,14 @@ class Test(unittest.TestCase):
         expected = self.row0.copy()
         expected.update({'Local partyXXX':123})
         self.assertDictEqual(self.row0, expected)
-        
+
+    def test_fix_postcode(self):
+        row = {'junk':1, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'S10 1ST', 'A4':'', 'A5':'', 'A6':'', 'A7':'', }
+        exp = {'junk':1, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'', 'A4':'', 'A5':'', 'A6':'S10 1ST', 'A7':'', }
+        self.vh.fix_postcode(row, self.address_fields, 'A6')
+        self.assertDictEqual(row, exp)
+
+
     def test_fix_table(self):
         '''put a valid doa in the Date of Attainment field'''
         self.row0.update({'c':self.doa, 'A1':'220 SVR', 'A2':'Sheffield', 'A3':'S10 1ST', 'A4':'', 'A5':'', 'A6':'', 'A7':'', })
@@ -333,6 +353,13 @@ class Test(unittest.TestCase):
         self.vh.flip_fields(row, fieldnames)
         expected = {'k0':'v0', 'Do not mail':0, 'Do not Phone':1}
         self.assertDictEqual(row, expected)
+
+    def test_get_status(self):
+        for k,v in {'Cancelled': 'expired', 'Current': 'active', 'Deceased': 'expired', 'Expired': 'expired', 'New': 'active'}.items():
+            self.row0.update({'Status':k})
+            actual = self.vh.get_status(self.row0)
+            expected = v
+            self.assertEqual(actual, expected)
                 
     def test_iscity(self):
         self.assertTrue(self.vh.iscity('Sheffield'), 'expected match: ' + 'Sheffield')

@@ -14,6 +14,7 @@ from encodings.base64_codec import base64_encode
 import json
 import requests
 from sys import argv
+from encodings import idna
 
 class Csv2Nb(object):
     endpoint = '/api/v1/imports'
@@ -41,9 +42,24 @@ class Csv2Nb(object):
     
     def upload(self):
         self.response = requests.post(self.url, headers=self.headers, data=self.data_json)
+        self.status_code = self.response.status_code
+        self.response_text = self.response.text
+        self.response_dict = json.loads(self.response_text)
+        self.response_id = self.response_dict['import']['id']
+        
+    def get_import_status(self, id):
+        endpoint = '/api/v1/imports/'
+        url = 'https://' + self.slug + endpoint + str(id) + '?access_token=' + self.token
+        self.status = requests.post(url, headers=self.headers)
+        return self.status
 
 if __name__ == "__main__":
-    for filename in argv[1:]: #skip scriptname in argv[0] 
+    for filename in argv[1:]:  # skip scriptname in argv[0] 
         nbapi = Csv2Nb(filename)
         nbapi.upload()
-        print ('response:', nbapi.response.content)
+        print ('status_code:', nbapi.status_code)
+        print ('response_text:', nbapi.response_text)
+        print ('response_dict:', nbapi.response_dict)
+        print ('response_id:', nbapi.response_id)
+        status = nbapi.get_import_status(nbapi.response_id)
+        print('status', status)
