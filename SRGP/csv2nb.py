@@ -126,7 +126,7 @@ class FileHandler(object):
             dw.writeheader()
             dw.writerows(table)          
 
-class Csv2Nb(object):
+class Uploader(object):
     def __init__(self, csv_filename, config):
         basename = path.basename(csv_filename).replace('.csv', '')
         filehandler = FileHandler()        
@@ -383,5 +383,5 @@ if __name__ == '__main__':
         elif search('canvass', csv_filename):
             pass  # config= config_canvass 
 
-        nbapi = Csv2Nb(csv_filename, config)
-        print (nbapi.csv_filename_new)
+        uploader = Uploader(csv_filename, config)
+        print (uploader.csv_filename_new)

@@ -16,8 +16,8 @@ import requests
 from sys import argv
 from time import sleep
 
-class Csv2Nb(object):
-    endpoint_imports = '/api/v1/imports'
+class Uploader(object):
+    endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json', }
     slug = 'srgp.nationbuilder.com'
     token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
@@ -25,21 +25,24 @@ class Csv2Nb(object):
                 'file': None,
                 'type': 'people',  # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
                 'is_overwritable': True,
-              }}        
+              }}    
+    response_id=None    
   
     def __init__(self, filename):
+        '''Read in csv. Prepare json for upload.'''
         self.file_b64 = self.csvread2base64(filename)
         self.file_b64_ascii = str(self.file_b64, encoding='ascii')
         self.data['import']['file'] = self.file_b64_ascii
         self.data_json = json.dumps(self.data)
         
-    def assemble_url(self, endpoint):
+    def assemble_url(self, endpoint_parts):
+        endpoint = '/'.join(endpoint_parts)
         return "https://" + self.slug + endpoint + '?access_token=' + self.token
 
     def csvread2base64(self, filename):
         with open(filename, 'rb') as fh:
             csv = fh.read()        
-            (file_b64, length) = base64_encode(csv)
+            (file_b64, unused) = base64_encode(csv)
             return file_b64
     
     def get_import_result(self, url_result):
@@ -52,36 +55,43 @@ class Csv2Nb(object):
         return {'id':response_dict['import']['id'],
                 'status_name':response_dict['import']['status']['name']}
     
-    def upload(self, url_upload):
-        response = requests.post(url_upload, headers=self.headers, data=self.data_json)
-        return json.loads(response.text)['import']['id']  # Return the import id
-    
-    def wait_for_import_finished(self, url_status, period=1, ntries=99):
-        status_name = None
-        for i in range(ntries):
-            status_name = self.get_import_status(url_status)['status_name']
+    def upload(self, url_upload, period=1):
+        for status_name in self._upload_helper(url_upload):
             print (status_name)
             if status_name in ('completed', 'finished'):
                 break
-            sleep(period)
-        return status_name  
+        
+        # Examine result of import
+        url_result = self.assemble_url((self.endpoint_base, str(self.response_id), 'result',))
+        result = self.get_import_result(url_result)
+        print (result)
+
+    def _upload_helper(self, url_upload, period=1):
+        '''A generator which posts an import then yields the status name of successive status queries'''
+        #Post import
+        response = requests.post(url_upload, headers=self.headers, data=self.data_json)
+        self.response_id = json.loads(response.text)['import']['id']
+        
+        #Get import status
+        url_status = self.assemble_url((self.endpoint_base, str(self.response_id),))
+        while True:
+            status_name = self.get_import_status(url_status)['status_name']
+            if status_name in ('completed', 'finished'):
+                break
+            else:
+                yield status_name  
+                sleep(period)
+        yield status_name  
+        
+class Main(object):
+    
+    def __init__(self, filename):
+    
+            # Upload csv
+        uploader = Uploader(filename)
+        url_upload = uploader.assemble_url((uploader.endpoint_base,))
+        uploader.upload(url_upload)
 
 if __name__ == "__main__":
     for filename in argv[1:]:  # skip scriptname in argv[0] 
-        
-        # Upload csv
-        nbapi = Csv2Nb(filename)
-        url_upload = nbapi.assemble_url(nbapi.endpoint_imports)
-        response_id = nbapi.upload(url_upload)
-        print ('response_id:', response_id)
-        
-        # Wait until finished
-        url_status = nbapi.assemble_url('/'.join((nbapi.endpoint_imports, str(response_id),)))
-        print(url_status)
-        status_name = nbapi.wait_for_import_finished(url_status)
-        
-        # Examine result of import
-        url_result = nbapi.assemble_url('/'.join((nbapi.endpoint_imports, str(response_id), 'result',)))
-        print(url_result)
-        result = nbapi.get_import_result(url_result)
-        print (result)
+        Main(filename)
