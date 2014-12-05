@@ -57,6 +57,7 @@ config_members = {
             ('is_deceased', 'is_deceased'),
             ('is_supporter', 'is_supporter'),
             ('party_member', 'party_member'),
+            ('status', 'status'),
             ]),
         'fields_flip':(),  # Reverse Sense
 }

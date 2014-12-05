@@ -18,6 +18,7 @@ import sys
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
     config_volunteers
+from requests import status_codes
 
 # from xlrd import xlsx
 class ConfigHandler(object):
@@ -125,7 +126,7 @@ class FileHandler(object):
             dw.writeheader()
             dw.writerows(table)          
 
-class Csv2Nb(object):
+class Uploader(object):
     def __init__(self, csv_filename, config):
         basename = path.basename(csv_filename).replace('.csv', '')
         filehandler = FileHandler()        
@@ -134,11 +135,10 @@ class Csv2Nb(object):
         
         # Read csv file
         skip_lines = config.get('skip_lines', 0)
-        tagtail = argv[3] if len(argv) > 3 else basename
         (table, unused) = filehandler.csv_read(csv_filename, ch.fieldnames, skip_lines)
 
         # Fix table
-        vh = TableFixer(table=table, tagtail=tagtail, **ch.params)
+        vh = TableFixer(table=table, tagtail='tagtail', **ch.params)
         table_fixed = vh.fix_table()
 
         # Create new table
@@ -190,12 +190,12 @@ class TableFixer(object):
         self.tagfields = tagfields
         self.tagtail = tagtail
 
-    def append_fields(self, row, fields_extra):
+    def extra_fields(self, row, fields_extra):
         for k, v in fields_extra.items():
             if k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_supporter':
-                row[k] = True  # Set is_supporter flag on all rows in SRGP CSVs
+                row[k] = self.ismember(row) # Set is_supporter flag if a member
             elif k == 'is_volunteer':
                 row[k] = True  # Set is_volunteer flag on all rows in the Volunteers csv
             elif k == 'is_voter':
@@ -204,11 +204,14 @@ class TableFixer(object):
                 row[k] = 'G'
             elif k == 'party_member':
                 row[k] = self.ismember(row)  # Set is_member flag
+            elif k == 'status':
+                row[k] = 'active'  # Status must be either 'active', 'grace period', 'expired', or 'canceled'
             elif k == 'support_level':
                 row[k] = 1 if self.ismember(row) else ''  # assume
             else:
                 row[k] = v
 
+  
     def flip_fields(self, row, fieldnames):
         for fn in fieldnames:
             row[fn] = not row[fn]
@@ -236,17 +239,23 @@ class TableFixer(object):
         move city (Sheffield) to 5th (and blank original city field)
         Do fields in this order to avoid city clobbering postcode in long address.
         ''' 
+        
         field_countrycode = address_fields.get('country_code', None)
-        field_postcode = address_fields.get('zip', None)
-        field_city = address_fields.get('city', None)
         if field_countrycode:
             row[field_countrycode] = 'GB'
-        for fieldname in reversed(list(address_fields.values())):
+            
+        field_postcode = address_fields.get('zip', None)
+        if field_postcode:
+            self.fix_postcode(row, address_fields, field_postcode)
+            
+        field_city = address_fields.get('city', None)
+        if field_city:
+            self.fix_city(row, address_fields, field_city)
+        
+    def fix_city(self, row, address_fields, field_city):
+        for fieldname in address_fields.values():
             v = row[fieldname]
-            if self.ispostcode(v):
-                row[fieldname] = ''
-                row[field_postcode] = v
-            elif field_city and self.iscity(v):
+            if self.iscity(v):
                 row[fieldname] = ''
                 row[field_city] = v
                 
@@ -281,6 +290,13 @@ class TableFixer(object):
         if field in row:
             row[field] = 'G'    
 
+    def fix_postcode(self, row, address_fields, field_postcode):
+        for fieldname in address_fields.values():
+            v = row[fieldname]
+            if self.ispostcode(v):
+                row[fieldname] = ''
+                row[field_postcode] = v
+                
     def fix_table(self):
         '''in-place update row'''
         for row in self.table:
@@ -289,11 +305,16 @@ class TableFixer(object):
             self.fix_doa(row, self.doa_fields)            
             self.fix_addresses(row, self.address_fields)            
             self.fix_local_party(row)   
-            self.append_fields(row, self.fields_extra)         
+            self.extra_fields(row, self.fields_extra)         
             self.flip_fields(row, self.fields_flip)         
             row.update(self.tags_create(row, self.tagfields, self.tagtail)) 
         return self.table
             
+    def get_status(self, row):
+        statusmap={'Cancelled': 'expired', 'Current': 'active', 'Deceased': 'expired', 'Expired': 'expired', 'New': 'active'}
+        status = row['Status']
+        return statusmap[status]
+    
     def iscity(self, city):  # is value a city
         return self.regexes['city_regex'].search(city)
         
@@ -362,5 +383,5 @@ if __name__ == '__main__':
         elif search('canvass', csv_filename):
             pass  # config= config_canvass 
 
-        nbapi = Csv2Nb(csv_filename, config)
-        print (nbapi.csv_filename_new)
+        uploader = Uploader(csv_filename, config)
+        print (uploader.csv_filename_new)
