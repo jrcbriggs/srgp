@@ -34,6 +34,8 @@ class Uploader(object):
         self.file_b64_ascii = str(self.file_b64, encoding='ascii')
         self.data['import']['file'] = self.file_b64_ascii
         self.data_json = json.dumps(self.data)
+        url_upload = self.assemble_url((self.endpoint_base,))
+        self.upload(url_upload)
         
     def assemble_url(self, endpoint_parts):
         endpoint = '/'.join(endpoint_parts)
@@ -83,15 +85,6 @@ class Uploader(object):
                 sleep(period)
         yield status_name  
         
-class Main(object):
-    
-    def __init__(self, filename):
-    
-            # Upload csv
-        uploader = Uploader(filename)
-        url_upload = uploader.assemble_url((uploader.endpoint_base,))
-        uploader.upload(url_upload)
-
 if __name__ == "__main__":
     for filename in argv[1:]:  # skip scriptname in argv[0] 
-        Main(filename)
+        uploader = Uploader(filename)
