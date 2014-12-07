@@ -15,6 +15,7 @@ import json
 import requests
 from sys import argv
 from time import sleep
+from gi.overrides import keysyms
 
 class Uploader(object):
     endpoint_base = '/api/v1/imports'
@@ -26,7 +27,6 @@ class Uploader(object):
                 'type': 'people',  # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
                 'is_overwritable': True,
               }}    
-    response_id=None    
   
     def __init__(self, filename):
         '''Read in csv. Prepare json for upload.'''
@@ -34,11 +34,9 @@ class Uploader(object):
         self.file_b64_ascii = str(self.file_b64, encoding='ascii')
         self.data['import']['file'] = self.file_b64_ascii
         self.data_json = json.dumps(self.data)
-        url_upload = self.assemble_url((self.endpoint_base,))
-        self.upload(url_upload)
         
     def assemble_url(self, endpoint_parts):
-        endpoint = '/'.join(endpoint_parts)
+        endpoint = '/'.join((self.endpoint_base,) + endpoint_parts)
         return "https://" + self.slug + endpoint + '?access_token=' + self.token
 
     def csvread2base64(self, filename):
@@ -46,45 +44,42 @@ class Uploader(object):
             csv = fh.read()        
             (file_b64, unused) = base64_encode(csv)
             return file_b64
+
+    def get_upload_status(self, response_id):
+        '''Generator which yields the status name of successive status queries'''
+        url_status = self.assemble_url((str(response_id),))
+        status_name = None
+        while status_name not in ('completed', 'finished'):
+            response = requests.get(url_status, headers=self.headers)
+            status_name = self.json_extractor(response.text, ('import', 'status', 'name',))
+            yield status_name  
     
-    def get_import_result(self, url_result):
-        response = requests.get(url_result, headers=self.headers)
-        return json.loads(response.text)['result']
-    
-    def get_import_status(self, url_status):
-        response = requests.get(url_status, headers=self.headers)
-        response_dict = json.loads(response.text)
-        return {'id':response_dict['import']['id'],
-                'status_name':response_dict['import']['status']['name']}
+    def json_extractor(self, json_str, keys):
+        v = json.loads(json_str)
+        for k in keys:
+            v = v.get(k)
+        return v
     
     def upload(self, url_upload, period=1):
-        for status_name in self._upload_helper(url_upload):
+        # Post import
+        response = requests.post(url_upload, headers=self.headers, data=self.data_json)
+        response_id = self.json_extractor(response.text, ('import', 'id',))
+
+        # Repeatedly check status until finished
+        status_name = None
+        for status_name in self.get_upload_status(response_id):
+            sleep(period)
             print (status_name)
-            if status_name in ('completed', 'finished'):
-                break
         
         # Examine result of import
-        url_result = self.assemble_url((self.endpoint_base, str(self.response_id), 'result',))
-        result = self.get_import_result(url_result)
-        print (result)
+        url_result = self.assemble_url((str(response_id), 'result',))
+        response = requests.get(url_result, headers=self.headers)
+        result = self.json_extractor(response.text, ('result',))
+        return sorted(result.items())
 
-    def _upload_helper(self, url_upload, period=1):
-        '''A generator which posts an import then yields the status name of successive status queries'''
-        #Post import
-        response = requests.post(url_upload, headers=self.headers, data=self.data_json)
-        self.response_id = json.loads(response.text)['import']['id']
-        
-        #Get import status
-        url_status = self.assemble_url((self.endpoint_base, str(self.response_id),))
-        while True:
-            status_name = self.get_import_status(url_status)['status_name']
-            if status_name in ('completed', 'finished'):
-                break
-            else:
-                yield status_name  
-                sleep(period)
-        yield status_name  
         
 if __name__ == "__main__":
     for filename in argv[1:]:  # skip scriptname in argv[0] 
         uploader = Uploader(filename)
+        url_upload = uploader.assemble_url(())
+        print (uploader.upload(url_upload))
