@@ -41,96 +41,15 @@ class Test(unittest.TestCase):
             fh.write(csv_str)        
         self.uploader = Uploader(self.filename)
         self.response_post = MagicMock()
-        self.response_post.text = '''{
-                          "import": {
-                            "id": 5,
-                            "type": "people",
-                            "status": {
-                              "name": "queued"
-                            }
-                          }
-                        }
-                        '''
-        self.response_get = MagicMock()        
-        self.response_get.text = '''{
-                      "import": {
-                        "id": 5,
-                        "type": "people",
-                        "status": {
-                          "name": "finished",
-                          "processed": 100,
-                          "total": 198
-                            }
-                          },
-                      "result": {
-                        "rows_updated": 44,
-                        "rows_succeeded": 267,
-                        "rows_failed": 54,
-                        "failure_csv": "[Base 64 encoded error csv file]"
-                          }                    
-                      }                        
-                     '''
-        self.response_get.text0 = '{"import":{"id": 5,}}'
-        self.failure_csv='self.failure_csv'
+        self.response_post.text = '{"import":{"id":5}}'
+        self.response_get0 = MagicMock()
+        self.response_get0.text = '{"import":{"status":{"name":"working"}}}'
+        self.response_get1 = MagicMock()
+        self.response_get1.text = '{"import":{"status":{"name":"finished"}}}'
+        self.response_get2 = MagicMock()
+        self.response_get2.text = '{"result":{}}'
+        self.failure_csv = 'self.failure_csv'
         
-    def test_assemble_url(self):
-        endpoint_parts = ('a', 'b', 'c',)
-        actual = self.uploader.assemble_url(endpoint_parts)
-        expected = 'https://' + self.slug + self.endpoint + '/a/b/c' + '?access_token=' + self.token
-        self.assertEqual(actual, expected)
-        
-    @skip
-    def test_download_failure_csv(self):
-        actual=self.uploader.download_failure_csv('failure_csv_name')
-        expected=self.failure_csv
-        self.assertEqual(actual, expected)
-        
-    def test_upload(self):
-        requests = uploader.requests
-        requests.post = MagicMock(return_value=self.response_post)
-        self.uploader.get_upload_status = MagicMock(return_value=['working', 'completed'])
-        requests.get = MagicMock(return_value=self.response_get)
-        #
-        url = self.uploader.assemble_url(())        
-        self.uploader.upload(url, period=3)        
-        requests.post.assert_called_once_with(url, headers=self.headers, data=self.data_json)
-        #        
-        url_status = self.uploader.assemble_url(('5',))
-#         self.uploader.get_upload_status.assert_called_once_with(url_status, headers=self.headers)
-        #        
-        url_status = self.uploader.assemble_url(('5', 'result',))
-        requests.get.assert_called_with(url_status, headers=self.headers)        
-    
-    def test_get_upload_status_working(self):
-        self.response_get.text = self.response_get.text.replace('finished', 'working')
-        return_value = self.response_get
-        # Mocks
-        requests = uploader.requests
-        requests.get = MagicMock(return_value=return_value)
-        # Call
-        result = next(self.uploader.get_upload_status(5))
-        # Assert   
-        self.assertEqual(result, 'working')     
-        url_status = self.uploader.assemble_url(('5',))
-        requests.get.assert_called_with(url_status, headers=self.headers)        
-        requests.get.assert_called_with(url_status, headers=self.headers)  
-      
-    def test_get_upload_status_finished(self):
-        '''get_upload_status is a generator. So we use the generator 
-        in a loop and exit at end of first iteration 
-        '''
-        return_value = self.response_get
-        # Mocks
-        requests = uploader.requests
-        requests.get = MagicMock(return_value=return_value)
-        # Call
-        result = next(self.uploader.get_upload_status(5))
-        # Assert   
-        self.assertEqual(result, 'finished')     
-        url_status = self.uploader.assemble_url(('5',))
-        requests.get.assert_called_with(url_status, headers=self.headers)        
-        requests.get.assert_called_with(url_status, headers=self.headers)
-    
     def test_Uploader(self):
         self.assertIsInstance(self.uploader, Uploader)
     
@@ -154,6 +73,66 @@ class Test(unittest.TestCase):
         expected = self.data_json
         self.assertEqual(actual, expected)
         
+    def test_assemble_url(self):
+        endpoint_parts = ('a', 'b', 'c',)
+        actual = self.uploader.assemble_url(endpoint_parts)
+        expected = 'https://' + self.slug + self.endpoint + '/a/b/c' + '?access_token=' + self.token
+        self.assertEqual(actual, expected)
+        
+    @skip
+    def test_download_failure_csv(self):
+        actual = self.uploader.download_failure_csv('failure_csv_name')
+        expected = self.failure_csv
+        self.assertEqual(actual, expected)
+        
+    def test_get_upload_status_finished(self):
+        '''get_upload_status is a generator. So we use the generator 
+        in a loop and exit at end of first iteration 
+        '''
+        return_value = self.response_get1
+        # Mocks
+        requests = uploader.requests
+        requests.get = MagicMock(return_value=return_value)
+        # Call
+        result = next(self.uploader.get_upload_status(5))
+        # Assert   
+        self.assertEqual(result, 'finished')     
+        url_status = self.uploader.assemble_url(('5',))
+        requests.get.assert_called_with(url_status, headers=self.headers)        
+        requests.get.assert_called_with(url_status, headers=self.headers)
+    
+    def test_get_upload_status_working(self):
+        # Mocks
+        requests = uploader.requests
+        requests.get = MagicMock()
+        #Return on consecetive calls: working, finished 
+        requests.get.side_effect = [self.response_get0, self.response_get1, ]
+        # Call
+        result = next(self.uploader.get_upload_status(5))
+        # Assert   
+        self.assertEqual(result, 'working')     
+        url_status = self.uploader.assemble_url(('5',))
+        requests.get.assert_called_with(url_status, headers=self.headers)        
+        requests.get.assert_called_with(url_status, headers=self.headers)  
+      
+    def test_upload(self):
+        requests = uploader.requests
+        requests.post = MagicMock(return_value=self.response_post)
+
+        #Return on 3 consequetive calls: working, finished, result
+        requests.get = MagicMock()
+        requests.get.side_effect = [self.response_get0, self.response_get1, self.response_get2, ]
+        #
+        url = self.uploader.assemble_url(())        
+        self.uploader.upload(url, period=3)        
+        requests.post.assert_called_once_with(url, headers=self.headers, data=self.data_json)
+        #        
+        url_status = self.uploader.assemble_url(('5',))
+#         self.uploader.get_upload_status.assert_called_once_with(url_status, headers=self.headers)
+        #        
+        url_status = self.uploader.assemble_url(('5', 'result',))
+        requests.get.assert_called_with(url_status, headers=self.headers)        
+    
     def test_csvread2base64(self):
         actual = self.uploader.csvread2base64(self.filename)
         expected = self.file_b64
