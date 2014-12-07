@@ -3,10 +3,11 @@ Created on 30 Nov 2014
 
 @author: julian
 '''
+
 from encodings.base64_codec import base64_encode
 import json
-from selenium.webdriver.support import expected_conditions
 import unittest
+from unittest.case import skip
 from unittest.mock import MagicMock
 
 from uploader import Uploader
@@ -68,28 +69,46 @@ class Test(unittest.TestCase):
                         "failure_csv": "[Base 64 encoded error csv file]"
                           }                    
                       }                        
-                      '''
+                     '''
+        self.response_get.text0 = '{"import":{"id": 5,}}'
+        self.failure_csv='self.failure_csv'
+        
+    def test_assemble_url(self):
+        endpoint_parts = ('a', 'b', 'c',)
+        actual = self.uploader.assemble_url(endpoint_parts)
+        expected = 'https://' + self.slug + self.endpoint + '/a/b/c' + '?access_token=' + self.token
+        self.assertEqual(actual, expected)
+        
+    @skip
+    def test_download_failure_csv(self):
+        actual=self.uploader.download_failure_csv('failure_csv_name')
+        expected=self.failure_csv
+        self.assertEqual(actual, expected)
         
     def test_upload(self):
         requests = uploader.requests
         requests.post = MagicMock(return_value=self.response_post)
-        uploader.get_upload_status = MagicMock(return_value=['working', 'completed'])
+        self.uploader.get_upload_status = MagicMock(return_value=['working', 'completed'])
         requests.get = MagicMock(return_value=self.response_get)
-        url = self.uploader.assemble_url(())
-        period = 3
-        self.uploader.upload(url, period)        
-        requests.post.assert_called_with(url, headers=self.headers, data=self.data_json)        
+        #
+        url = self.uploader.assemble_url(())        
+        self.uploader.upload(url, period=3)        
+        requests.post.assert_called_once_with(url, headers=self.headers, data=self.data_json)
+        #        
+        url_status = self.uploader.assemble_url(('5',))
+#         self.uploader.get_upload_status.assert_called_once_with(url_status, headers=self.headers)
+        #        
         url_status = self.uploader.assemble_url(('5', 'result',))
         requests.get.assert_called_with(url_status, headers=self.headers)        
     
     def test_get_upload_status_working(self):
-        self.response_get.text=self.response_get.text.replace('finished','working')
+        self.response_get.text = self.response_get.text.replace('finished', 'working')
         return_value = self.response_get
         # Mocks
         requests = uploader.requests
         requests.get = MagicMock(return_value=return_value)
         # Call
-        result =next( self.uploader.get_upload_status(5))
+        result = next(self.uploader.get_upload_status(5))
         # Assert   
         self.assertEqual(result, 'working')     
         url_status = self.uploader.assemble_url(('5',))
@@ -105,7 +124,7 @@ class Test(unittest.TestCase):
         requests = uploader.requests
         requests.get = MagicMock(return_value=return_value)
         # Call
-        result =next( self.uploader.get_upload_status(5))
+        result = next(self.uploader.get_upload_status(5))
         # Assert   
         self.assertEqual(result, 'finished')     
         url_status = self.uploader.assemble_url(('5',))
@@ -133,12 +152,6 @@ class Test(unittest.TestCase):
     def test_Uploader_data_json(self):
         actual = self.uploader.data_json
         expected = self.data_json
-        self.assertEqual(actual, expected)
-        
-    def test_assemble_url(self):
-        endpoint_parts = ('a', 'b', 'c',)
-        actual = self.uploader.assemble_url(endpoint_parts)
-        expected = 'https://' + self.slug + self.endpoint + '/a/b/c' + '?access_token=' + self.token
         self.assertEqual(actual, expected)
         
     def test_csvread2base64(self):

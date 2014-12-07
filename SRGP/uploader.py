@@ -37,7 +37,10 @@ class Uploader(object):
         
     def assemble_url(self, endpoint_parts):
         endpoint = '/'.join((self.endpoint_base,) + endpoint_parts)
-        return "https://" + self.slug + endpoint + '?access_token=' + self.token
+        return ''.join(('https://', self.slug, endpoint, '?access_token=', self.token))
+    
+    def download_failure_csv(self, failure_csv_name):
+        print (failure_csv_name)
 
     def csvread2base64(self, filename):
         with open(filename, 'rb') as fh:
@@ -63,18 +66,23 @@ class Uploader(object):
     def upload(self, url_upload, period=1):
         # Post import
         response = requests.post(url_upload, headers=self.headers, data=self.data_json)
-        response_id = self.json_extractor(response.text, ('import', 'id',))
+        id = self.json_extractor(response.text, ('import', 'id',))
 
         # Repeatedly check status until finished
         status_name = None
-        for status_name in self.get_upload_status(response_id):
+        for status_name in self.get_upload_status(id):
             sleep(period)
             print (status_name)
         
         # Examine result of import
-        url_result = self.assemble_url((str(response_id), 'result',))
+        url_result = self.assemble_url((str(id), 'result',))
         response = requests.get(url_result, headers=self.headers)
         result = self.json_extractor(response.text, ('result',))
+        
+        # Download Error csv if exists (needs id so do in upload)
+        failure_csv = self.json_extractor(response.text, ('result','failure_csv',))
+        if failure_csv:
+            self.download_failure_csv(failure_csv)
         return sorted(result.items())
 
         
