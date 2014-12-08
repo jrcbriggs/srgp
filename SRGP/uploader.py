@@ -18,6 +18,7 @@ import requests
 from sys import argv
 from time import sleep
 
+
 class Uploader(object):
     endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json', }
@@ -47,7 +48,9 @@ class Uploader(object):
     def base64_2csvfile(self, csv_b64_ascii):
         csv_b64 = bytearray(csv_b64_ascii, 'ascii')
         (csv, unused) = base64_decode(csv_b64)
-        with open(self.err_filename, 'wb') as fh:
+        with open(self.err_filename, 'a') as fh:
+            fh.write(str(datetime.now())+'\n')        
+        with open(self.err_filename, 'ab') as fh:
             fh.write(csv)        
 
     def json_extractor(self, json_str, keys):
@@ -92,7 +95,7 @@ class Uploader(object):
         return ''.join(('https://', self.slug, endpoint, '?access_token=', self.token))
            
 if __name__ == "__main__":
-    err_filename = 'uploader_errors{}.csv'.format(str(datetime.now().isoformat()))
+    err_filename = 'uploader_errors.csv'
     for filename in argv[1:]:  # skip scriptname in argv[0] 
         uploader = Uploader(filename, err_filename)
         url_upload = uploader.url_join(())

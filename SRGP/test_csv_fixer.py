@@ -9,7 +9,7 @@ import os
 import sys
 import unittest
 
-from csv2nb import TableFixer, FileHandler, TableMapper, ConfigHandler
+from csv_fixer import TableFixer, FileHandler, TableMapper, ConfigHandler
 
 class Test(unittest.TestCase):
 
