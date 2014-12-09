@@ -12,7 +12,6 @@ srgp.nationbuilder.com/api/v1/imports?access_token=9c285c1ec7debb2d5cee02b6b9762
 '''
 from datetime import datetime
 from encodings.base64_codec import base64_encode, base64_decode
-from gi.overrides import keysyms
 import json
 import requests
 from sys import argv
@@ -21,14 +20,14 @@ from time import sleep
 
 class Uploader(object):
     endpoint_base = '/api/v1/imports'
-    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', }
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
     slug = 'srgp.nationbuilder.com'
     token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
     data = {'import': {
-                'file': None,
-                'type': 'people',  # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
-                'is_overwritable': True,
-              }}    
+            'file': None,
+            'type': 'people',  # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
+            'is_overwritable': True,
+              }}
   
     def __init__(self, filename, err_filename):
         '''Read in csv. Prepare json for upload.'''
@@ -49,7 +48,7 @@ class Uploader(object):
         csv_b64 = bytearray(csv_b64_ascii, 'ascii')
         (csv, unused) = base64_decode(csv_b64)
         with open(self.err_filename, 'a') as fh:
-            fh.write(str(datetime.now())+'\n')        
+            fh.write(str(datetime.now()) + '\n')
         with open(self.err_filename, 'ab') as fh:
             fh.write(csv)        
 

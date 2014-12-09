@@ -86,14 +86,15 @@ class Test(unittest.TestCase):
         expected = self.file_b64
         self.assertEqual(actual, expected)
         
-    @skip
-    def test_failure_csv_extract(self):
-        # Mocks
-        requests = uploader.requests
-        requests.get = MagicMock(return_value=self.response_get2)
-        actual = self.uploader.failure_csv_extract('failure_csv_name')
-        expected = self.failure_csv
-        self.assertEqual(actual, expected)
+    def test_base64_2csvfile(self):
+        with open(self.err_filename, 'wb') as fh:
+            pass        
+        self.uploader.err_filename=self.err_filename
+        self.uploader.base64_2csvfile(self.csv_b64_ascii)
+        with open(self.err_filename, 'r') as fh:        
+            actual = fh.read()
+            expected = self.csv
+            self.assertEqual(actual, expected)
         
     def test_json_extractor(self):
         json_str = '{"a":{"b":{"c":3}}}'
