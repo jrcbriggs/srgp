@@ -4,16 +4,13 @@ Created on 30 Nov 2014
 @author: julian
 '''
 
-from encodings.base64_codec import base64_encode
+from base64 import b64encode, b64decode
 import json
 import unittest
 from unittest.case import skip
 from unittest.mock import MagicMock
-
 from uploader import Uploader
 import uploader
-
-
 class Test(unittest.TestCase):
 
     def setUp(self):
@@ -30,7 +27,7 @@ class Test(unittest.TestCase):
         self.data_json = json.dumps(self.data)
           
         self.csv = b'a,b,c,d,e,f\n0,1,2,3,4,5\n6,7,8,9,10,11\n'
-        (self.file_b64, length) = base64_encode(self.csv)
+        self.file_b64 = b64encode(self.csv)
         self.file_b64ascii = str(self.file_b64, encoding='ascii')
         self.data['import']['file'] = self.file_b64ascii
         self.data_json = json.dumps(self.data)
@@ -51,7 +48,7 @@ class Test(unittest.TestCase):
 
         # Test get csv from results failure_csv        
         self.csv = b'Col0,Col1,Col2,Col3,Col4,Col5\na,b,c,d,e,f\n0,1,2,3,4,5\n6,7,8,9,10,11\n'
-        (self.csv_b64, unused) = base64_encode(self.csv);
+        self.csv_b64 = b64encode(self.csv);
         self.csv_b64_ascii = str(self.csv_b64, encoding='ascii')
         result = {'result':{'failure_csv': self.csv_b64_ascii}}
         self.response_get2.text = json.dumps(result)

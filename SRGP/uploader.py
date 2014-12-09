@@ -11,14 +11,12 @@ srgp.nationbuilder.com/api/v1/imports?access_token=9c285c1ec7debb2d5cee02b6b9762
     fh = open(filename, 'r')
     csv = fh.read()
 '''
+from base64 import b64encode, b64decode
 from datetime import datetime
-from encodings.base64_codec import base64_encode, base64_decode
 import json
 import requests
 from sys import argv
 from time import sleep
-
-
 class Uploader(object):
     endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json',
@@ -39,14 +37,17 @@ class Uploader(object):
         self.data_json = json.dumps(self.data)
 
     def csvread2base64ascii(self, filename):
+        '''Read and encode csv file contents as base64 ascii encoded'''
         with open(filename, 'rb') as fh:
             csv = fh.read()
-            (file_b64, unused) = base64_encode(csv)
+            file_b64 = b64encode(csv)
             return str(file_b64, encoding='ascii')
 
     def base64_2csvfile(self, csv_b64_ascii):
+        '''Decode base64 ascii encoded string and append to csv file
+        Prepend date and filename of csv upload'''
         csv_b64 = bytearray(csv_b64_ascii, 'ascii')
-        (csv, unused) = base64_decode(csv_b64)
+        csv = b64decode(csv_b64)
         with open(self.err_filename, 'a') as fh:
             fh.write(str(datetime.now()) + '\n')
         with open(self.err_filename, 'ab') as fh:
