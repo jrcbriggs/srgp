@@ -31,8 +31,8 @@ class Test(unittest.TestCase):
           
         self.csv = b'a,b,c,d,e,f\n0,1,2,3,4,5\n6,7,8,9,10,11\n'
         (self.file_b64, length) = base64_encode(self.csv)
-        self.file_b64_ascii = str(self.file_b64, encoding='ascii')
-        self.data['import']['file'] = self.file_b64_ascii
+        self.file_b64ascii = str(self.file_b64, encoding='ascii')
+        self.data['import']['file'] = self.file_b64ascii
         self.data_json = json.dumps(self.data)
 
         self.filename = '/tmp/test_uploader.csv'
@@ -61,16 +61,6 @@ class Test(unittest.TestCase):
     def test_Uploader(self):
         self.assertIsInstance(self.uploader, Uploader)
     
-    def test_Uploader_file_b64(self):
-        actual = self.uploader.file_b64
-        expected = self.file_b64
-        self.assertEqual(actual, expected)
-    
-    def test_Uploader_file_b64_ascii(self):
-        actual = self.uploader.file_b64_ascii
-        expected = self.file_b64_ascii
-        self.assertEqual(actual, expected)
-    
     def test_Uploader_data(self):
         actual = self.uploader.data
         expected = self.data
@@ -82,8 +72,8 @@ class Test(unittest.TestCase):
         self.assertEqual(actual, expected)
         
     def test_csvread2base64(self):
-        actual = self.uploader.csvread2base64(self.filename)
-        expected = self.file_b64
+        actual = self.uploader.csvread2base64ascii(self.filename)
+        expected = self.file_b64ascii
         self.assertEqual(actual, expected)
         
     @skip
