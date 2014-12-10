@@ -4,7 +4,7 @@ Created on 27 Nov 2014
 
 @author: julian
 '''
-from collections import OD
+from collections import OrderedDict as OD
 
 config_members = {
                 'address_fields' : {

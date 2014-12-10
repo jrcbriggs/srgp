@@ -14,6 +14,8 @@ srgp.nationbuilder.com/api/v1/imports?access_token=9c285c1ec7debb2d5cee02b6b9762
 from base64 import b64encode, b64decode
 from datetime import datetime
 import json
+from os import path
+from os.path import dirname, basename
 import requests
 from sys import argv
 from time import sleep
@@ -33,11 +35,14 @@ class Uploader(object):
 
     def __init__(self, filename, err_filename):
         '''Read in csv. Prepare json for upload.'''
-        self.err_filename = err_filename  # file to writer errors to
+        self.err_filename = self.get_err_filename(filename, err_filename)  # file to writer errors to
         #
         self.data['import']['file'] = self.csvread2base64ascii(filename)
         self.data_json = json.dumps(self.data)
-        self.heading = 'Uploaded file: {} at {}'.format(filename, str(datetime.now()))
+        self.heading = 'Uploaded file: {} at {}\n'.format(filename, str(datetime.now()))
+
+    def get_err_filename(self, csv_filename, err_filename):
+        return path.join(dirname (csv_filename), basename(err_filename))
 
     def csvread2base64ascii(self, filename):
         '''Read and encode csv file contents as base64 ascii encoded'''

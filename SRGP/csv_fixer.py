@@ -4,7 +4,7 @@ Created on 1 Nov 2014
 
 @author: julian
 '''
-from collections import OD
+from collections import OrderedDict as OD
 from csv import DictReader, DictWriter
 from datetime import datetime as dt
 from importlib import import_module
@@ -306,9 +306,9 @@ class TableFixer(object):
 
     def fix_local_party(self, row):
         '''members only: overwrite "Sheffield & Rotherham Green Party" by G'''
-        field = 'Local party'
-        if field in row:
-            row[field] = 'G'
+        for field in ('Local party','Party'):
+            if field in row:
+                row[field] = 'G'
 
     def fix_postcode(self, row, address_fields, field_postcode):
         for fieldname in address_fields.values():

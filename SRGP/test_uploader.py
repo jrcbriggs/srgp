@@ -86,6 +86,11 @@ class Test(unittest.TestCase):
             expected = self.csv
             self.assertEqual(actual, expected)
 
+    def test_err_filename(self):
+        actual = self.uploader.get_err_filename(self.filename, self.err_filename)
+        expected = self.err_filename
+        self.assertEqual(actual, expected)
+
     def test_json_extractor(self):
         json_str = '{"a":{"b":{"c":3}}}'
         actual = self.uploader.json_extractor(json_str, ('a', 'b', 'c',))
