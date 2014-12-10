@@ -18,6 +18,7 @@ import requests
 from sys import argv
 from time import sleep
 
+
 class Uploader(object):
     endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json',
@@ -36,6 +37,7 @@ class Uploader(object):
         #
         self.data['import']['file'] = self.csvread2base64ascii(filename)
         self.data_json = json.dumps(self.data)
+        self.heading = 'Uploaded file: {} at {}'.format(filename, str(datetime.now()))
 
     def csvread2base64ascii(self, filename):
         '''Read and encode csv file contents as base64 ascii encoded'''
@@ -44,13 +46,13 @@ class Uploader(object):
             file_b64 = b64encode(csv)
             return str(file_b64, encoding='ascii')
 
-    def base64_2csvfile(self, csv_b64_ascii):
+    def base64_2csvfile(self, csv_b64_ascii, heading):
         '''Decode base64 ascii encoded string and append to csv file
         Prepend date and filename of csv upload'''
         csv_b64 = bytearray(csv_b64_ascii, 'ascii')
         csv = b64decode(csv_b64)
         with open(self.err_filename, 'a') as fh:
-            fh.write(str(datetime.now()) + '\n')
+            fh.write(heading)
         with open(self.err_filename, 'ab') as fh:
             fh.write(csv)
 
@@ -80,7 +82,7 @@ class Uploader(object):
         status_name = None
         for status_name in self.upload_status_get(upload_id):
             sleep(period)
-            print (status_name)
+            print(status_name)
 
         # Examine result of import
         url_result = self.url_join((str(upload_id), 'result',))
@@ -91,7 +93,7 @@ class Uploader(object):
         failure_csv = self.json_extractor(response.text,
                                           ('result', 'failure_csv',))
         if failure_csv:
-            self.base64_2csvfile(failure_csv)
+            self.base64_2csvfile(failure_csv, self.heading)
         return sorted(result.items())
 
     def url_join(self, endpoint_parts):
@@ -104,4 +106,4 @@ if __name__ == "__main__":
     for filename in argv[1:]:  # skip scriptname in argv[0]
         uploader = Uploader(filename, err_filename)
         url_upload = uploader.url_join(())
-        print (uploader.upload(url_upload))
+        print(uploader.upload(url_upload))

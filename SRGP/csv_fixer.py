@@ -4,7 +4,7 @@ Created on 1 Nov 2014
 
 @author: julian
 '''
-from collections import OrderedDict
+from collections import OD
 from csv import DictReader, DictWriter
 from datetime import datetime as dt
 from importlib import import_module
@@ -43,7 +43,7 @@ class ConfigHandler(object):
         # Derive things from fieldmap
         self.tagfields = ()
         # for writing csv (append new fields later)
-        self.fieldmap_new = OrderedDict()
+        self.fieldmap_new = OD()
         for k, v in fieldmap.items():
             if v == 'tag_list':
                 self.tagfields += (k,)  # Put original fieldname on taglist
@@ -227,7 +227,7 @@ class TableFixer(object):
                 # 'canceled'
                 row[k] = 'active'
             elif k == 'support_level':
-                row[k] = 1 if self.ismember(row) else ''  # assume
+                row[k] = 1   # assume strong support from members, officers, supporters, volunteers and civi search 
             else:
                 row[k] = v
 
@@ -408,5 +408,5 @@ if __name__ == '__main__':
         elif search('canvass', csv_filename):
             pass  # config= config_canvass
 
-        CsvFixer = CsvFixer(csv_filename, config)
-        print(CsvFixer.csv_filename_new)
+        csvfixer = CsvFixer(csv_filename, config)
+        print(csvfixer.csv_filename_new)

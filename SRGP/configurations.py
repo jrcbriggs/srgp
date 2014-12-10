@@ -4,7 +4,7 @@ Created on 27 Nov 2014
 
 @author: julian
 '''
-from collections import OrderedDict
+from collections import OD
 
 config_members = {
                 'address_fields' : {
@@ -18,7 +18,7 @@ config_members = {
         'date_fields' : ('Start Date', 'End Date', 'Member Since',),
         'date_format' : '%Y-%m-%d',  # Membershiip date: 2014-05-17
         'doa_fields' : (),
-          'fieldmap':OrderedDict([
+          'fieldmap':OD([
             ('Contact Name', None),
             ('Joint member name', None),
             ('Postal Greeting', None),
@@ -53,11 +53,12 @@ config_members = {
 #             (1, 'support level'),  # extra
           ]),
         'skip_lines':0,
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_deceased', 'is_deceased'),
             ('is_supporter', 'is_supporter'),
             ('party_member', 'party_member'),
             ('status', 'status'),
+            ('support_level', 'support_level'),
             ]),
         'fields_flip':(),  # Reverse Sense
 }
@@ -73,7 +74,7 @@ config_officers = {
         'date_fields' : (),
         'date_format' : '%Y-%m-%d',  # Membershiip date: 2014-05-17
         'doa_fields' : (),
-          'fieldmap':OrderedDict([
+          'fieldmap':OD([
             ('Relationship Type', 'tag_list'),
             ('Party', 'party'),  # encode to G
             ('Contact Name', 'name'),
@@ -87,8 +88,9 @@ config_officers = {
             ('Status', 'membership_name'),
           ]),
         'skip_lines':0,
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_supporter', 'is_supporter'),
+            ('support_level', 'support_level'),
             ]),
         'fields_flip':(),  # Reverse Sense
 }
@@ -103,7 +105,7 @@ config_supporters = {
         'date_fields' : (),
         'date_format' : '%Y-%m-%d',  # Membershiip date: 2014-05-17
         'doa_fields' : (),
-          'fieldmap':OrderedDict([
+          'fieldmap':OD([
             ('Contact Name', 'name'),
             ('Do not mail', 'do_not_contact'),
             ('Contact ID', 'civiCRM_ID'),
@@ -118,8 +120,9 @@ config_supporters = {
             ('Local party', 'party'),  # encode to G
           ]),
         'skip_lines':0,
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_supporter', 'is_supporter'),
+            ('support_level', 'support_level'),
             ]),
         'fields_flip':(),  # Reverse Sense
 }
@@ -129,7 +132,7 @@ config_volunteers = {
         'date_fields' : (),
         'date_format' : '%Y-%m-%d',  # Membershiip date: 2014-05-17
         'doa_fields' : (),
-          'fieldmap':OrderedDict([
+          'fieldmap':OD([
             ('Contact Name', 'name'),
             ('Contact ID', 'civiCRM_ID'),
             ('Email', 'email'),
@@ -144,9 +147,10 @@ config_volunteers = {
             ('Where Help From', 'tag_list'),
           ]),
         'skip_lines':0,
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_supporter', 'is_supporter'),
             ('is_volunteer', 'is_volunteer'),
+            ('support_level', 'support_level'),
             ]),
         'fields_flip':(),  # Reverse Sense
 }
@@ -163,7 +167,7 @@ config_search = {
         'date_fields' : ('Birth Date',),
         'date_format' : '%Y-%m-%d',  # Membership date: 2014-05-17
         'doa_fields' : (),
-          'fieldmap':OrderedDict([
+          'fieldmap':OD([
             ('Internal Contact ID', 'civiCRM_ID'),
             ('Do Not Email', 'email opt in'),  # Reverse Sense
             ('Do Not Phone', 'mobile opt in'),  # Reverse Sense
@@ -185,8 +189,9 @@ config_search = {
             ('Phone', 'phone_number'),
           ]),
         'skip_lines':0,
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_supporter', 'is_supporter'),
+            ('support_level', 'support_level'),
             ]),
         'fields_flip':(# Reverse Sense
                       'Do Not Email',
@@ -213,7 +218,7 @@ config_register = {
         'date_fields' : ('Date of Attainment',),
         'date_format' : '%d/%m/%Y',  # _electoral_roll
         'doa_fields' : ('Date of Attainment',),
-        'fieldmap':OrderedDict([
+        'fieldmap':OD([
                 ('PD', 'tag_list'),  # city_sub_district
                 ('ENO', 'external_id'),
                 ('Status', 'tag_list'),
@@ -233,7 +238,7 @@ config_register = {
                 ('Address 7', 'registered_country_code'),
                 ]),
         'skip_lines':1,
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_voter', 'is_voter'),
             ]),
         'fields_flip':(),  # Reverse Sense
@@ -272,7 +277,7 @@ config_register_city2014_postal = {
             'Election_Date', 'Election_Title_1',
             'Election_Title_2',
         ),
-        'fields_extra':OrderedDict([
+        'fields_extra':OD([
             ('is_voter', 'is_voter'),
             ]),
         'fields_flip':(),  # Reverse Sense
