@@ -22,6 +22,13 @@ from time import sleep
 
 
 class Uploader(object):
+
+    '''Upload (NB format) csv file to NB.
+    1. Upload
+    2. Check status repeatedly
+    3. Download results (which may include error_csv
+    4. Append results (if any) to upload_errors file
+    '''
     endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json', }
@@ -29,20 +36,23 @@ class Uploader(object):
     token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
     data = {'import': {
             'file': None,
-            'type': 'people',  # member & voter fails (Julian 27-nov-2014)
+            'type': 'people',
             'is_overwritable': True,
             }}
 
     def __init__(self, filename, err_filename):
-        '''Read in csv. Prepare json for upload.'''
-        self.err_filename = self.get_err_filename(filename, err_filename)  # file to writer errors to
+        '''Read in csv. Prepare json for upload. Prepare header for log file'''
+        self.err_filename = self.get_err_filename(
+            filename, err_filename)  # file to writer errors to
         #
         self.data['import']['file'] = self.csvread2base64ascii(filename)
         self.data_json = json.dumps(self.data)
-        self.heading = '\nUploaded file: {} at {}\n'.format(filename, str(datetime.now()))
+        self.heading = '\nUploaded file: {} at {}\n'.format(
+            filename, str(datetime.now()))
 
     def get_err_filename(self, csv_filename, err_filename):
-        return path.join(dirname (csv_filename), basename(err_filename))
+        '''Create logfile name'''
+        return path.join(dirname(csv_filename), basename(err_filename))
 
     def csvread2base64ascii(self, filename):
         '''Read and encode csv file contents as base64 ascii encoded'''
@@ -62,6 +72,7 @@ class Uploader(object):
             fh.write(csv)
 
     def json_extractor(self, json_str, keys):
+        '''Extract a value from nested dict encoded as json string'''
         v = json.loads(json_str)
         for k in keys:
             v = v.get(k)
@@ -78,6 +89,12 @@ class Uploader(object):
             yield status_name
 
     def upload(self, url_upload, period=1):
+        '''Upload csv file to NB:
+        1. Upload
+        2. Check status repeatedly
+        3. Download results (which may include error_csv
+        4. Append results (if any) to upload_errors file
+        '''
         # Post import
         response = requests.post(url_upload, headers=self.headers,
                                  data=self.data_json)
@@ -102,6 +119,7 @@ class Uploader(object):
         return sorted(result.items())
 
     def url_join(self, endpoint_parts):
+        '''Assemble url for upload to NB endpoint'''
         endpoint = '/'.join((self.endpoint_base,) + endpoint_parts)
         return ''.join(('https://', self.slug, endpoint, '?access_token=',
                         self.token))
