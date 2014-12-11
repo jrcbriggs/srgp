@@ -137,7 +137,7 @@ class Test(unittest.TestCase):
         requests.get.side_effect = [self.response_get0, self.response_get1, self.response_get2, ]
         #
         url = self.uploader.url_join(())
-        self.uploader.upload(url, period=3)
+        self.uploader.upload(url, period=1e-6)
         requests.post.assert_called_once_with(url, headers=self.headers, data=self.data_json)
         #
 #         url_status = self.uploader.url_join(('5',))

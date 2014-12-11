@@ -39,7 +39,7 @@ class Uploader(object):
         #
         self.data['import']['file'] = self.csvread2base64ascii(filename)
         self.data_json = json.dumps(self.data)
-        self.heading = 'Uploaded file: {} at {}\n'.format(filename, str(datetime.now()))
+        self.heading = '\nUploaded file: {} at {}\n'.format(filename, str(datetime.now()))
 
     def get_err_filename(self, csv_filename, err_filename):
         return path.join(dirname (csv_filename), basename(err_filename))

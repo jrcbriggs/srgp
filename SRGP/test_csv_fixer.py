@@ -432,6 +432,16 @@ class Test(unittest.TestCase):
         actual = self.vh.isvoter(self.row0)
         self.assertFalse(actual)
 
+    def test_is_matching_row(self):
+        skip_dict ={'a':'0'}
+        actual = self.vh.is_matching_row(self.row0, skip_dict)
+        self.assertListEqual(actual, [self.row0])
+
+    def test_is_matching_row_no_match(self):
+        skip_dict ={'a':'XXX'}
+        actual = self.vh.is_matching_row(self.row0, skip_dict)
+        self.assertListEqual(actual, [])
+
     def test_tags_create(self):
         row = self.row0
         tagtail = 'julian'

@@ -49,8 +49,6 @@ config_members = {
             ('Local party', 'party'),  # encode to G
             ('Regional party', None),
             ('Override local party', None),
-#             (1, 'party_member'),  # extra
-#             (1, 'support level'),  # extra
           ]),
         'skip_lines':0,
         'fields_extra':OD([

@@ -181,6 +181,8 @@ class TableFixer(object):
                           'Other Electors',
                           IGNORECASE),
     }
+    # Skip Rows where (civi) contact type is Organization (not Individual)
+    skip_dict = {'Contact Type': 'Organization'}
 
     def __init__(self,
                  address_fields=(),
@@ -227,7 +229,9 @@ class TableFixer(object):
                 # 'canceled'
                 row[k] = 'active'
             elif k == 'support_level':
-                row[k] = 1   # assume strong support from members, officers, supporters, volunteers and civi search 
+                # assume strong support from all civi:
+                # (members, officers, supporters, volunteers and search)
+                row[k] = 1
             else:
                 row[k] = v
 
@@ -306,7 +310,7 @@ class TableFixer(object):
 
     def fix_local_party(self, row):
         '''members only: overwrite "Sheffield & Rotherham Green Party" by G'''
-        for field in ('Local party','Party'):
+        for field in ('Local party', 'Party'):
             if field in row:
                 row[field] = 'G'
 
@@ -319,6 +323,7 @@ class TableFixer(object):
 
     def fix_table(self):
         '''in-place update row'''
+        skip_list = []
         for row in self.table:
             self.clean_row(row)
             self.fix_dates(row)
@@ -328,6 +333,9 @@ class TableFixer(object):
             self.extra_fields(row, self.fields_extra)
             self.flip_fields(row, self.fields_flip)
             row.update(self.tags_create(row, self.tagfields, self.tagtail))
+            skip_list += self.is_matching_row(row, self.skip_dict)
+        for row in skip_list:
+            self.table.remove(row)  # Remove list element by value
         return self.table
 
     def get_status(self, row):
@@ -348,6 +356,9 @@ class TableFixer(object):
 
     def ishouse(self, house):  # is value a house name
         return self.regexes['house'].search(house)
+
+    def is_matching_row(self, row, skip_dict):
+        return [row for (k, v) in skip_dict.items() if row.get(k, None) == v]
 
     def ismember(self, row):
         return row.get('Status', None) in ('Current', 'New')
@@ -372,7 +383,7 @@ class TableFixer(object):
 #                 tag = '_'.join([value, tagfield, tagtail])
                 tag = '_'.join([tagfield, value])
                 tags.append(tag)
-        taglist_str = ','.join(tags)
+        taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
 
 
