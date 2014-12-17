@@ -20,10 +20,10 @@ from configurations import config_members, config_register, \
 
 class ConfigHandler(object):
 
-    '''Derive fields from the config dict:
+    '''Parse the config dict to extract input params to table fixer and csv fixer:
+    fieldmap: ordered dict maps old to new fieldnames
     fieldnames: for reading original csv
     fieldnames_new: fieldnames for writing new csv
-    fieldmap: ordered dict maps old to new fieldnames
     tagfields: fieldnames from original csv to add to tag_list
     '''
 
@@ -71,6 +71,8 @@ class ConfigHandler(object):
 
 
 class FileHandler(object):
+    '''Handle reading and writing files, including the config file which is loaded as a Python module.
+    '''
 
     def config_load(self, modulename):
         mod = import_module(modulename)
@@ -133,26 +135,32 @@ class FileHandler(object):
 
 
 class CsvFixer(object):
+    '''The top level class.
+    Read csv data file into a table
+    Fix the data in table
+    Create new table: with NB table column headings
+    Write the table to a new csv file for import to NB.
+    '''
 
     def __init__(self, csv_filename, config):
         filehandler = FileHandler()
 
         ch = ConfigHandler(**config)
 
-        # Read csv file
+        # Read csv data file into a table
         skip_lines = config.get('skip_lines', 0)
         (table, unused) = filehandler.csv_read(
             csv_filename, ch.fieldnames, skip_lines)
 
-        # Fix table
+        # Fix the data in table
         vh = TableFixer(table=table, tagtail='tagtail', **ch.params)
         table_fixed = vh.fix_table()
 
-        # Create new table
+        # Create new table: with NB table column headings 
         d2d = TableMapper(table_fixed, ch.fieldmap_new)
         table_new = d2d.data_new
 
-        # Write
+        # Write the table to a new csv file for import to NB.
         self.csv_filename_new = csv_filename.replace('.csv', 'NB.csv')
         filehandler.csv_write(
             table_new, self.csv_filename_new, ch.fieldnames_new)
@@ -160,6 +168,18 @@ class CsvFixer(object):
 
 
 class TableFixer(object):
+    '''
+    Fix the data in the table, top level method is: fix_table
+    clean_rows (trim leading and training white space
+    fix_dates: from dd/mm/yyyy etc. to mm/dd/yyyy
+    fix_doa: change date of attainment (18yo can vote) to DoB
+    fix_addresses: move city, postcode and country to names fields
+    fix_local_party: change 'Sheffield & Rotherham Green Party' to G
+    extra_fields: append and populate extra fields
+    flip_fields: reverse the (boolean) sense of field, eg do_not_email to email_opt_in
+    row.update: append tags column
+    skip_list: skip matching rows (eg Organisation row in civi Search csv)
+    '''
     date_format_nb = '%m/%d/%Y'
     regexes = {
         'city': compile('^(Rotherham|Sheffield)$', IGNORECASE),
@@ -389,7 +409,9 @@ class TableFixer(object):
 
 class TableMapper(object):
 
-    '''Map an old dict to a new dict: rename keys, values unchanged'''
+    '''Map original table (row of dicts) to new table (row of dicts).
+    Read original table and field mapper. Write new table with new field names.
+    Values unchanged'''
 
     def __init__(self, data, fieldmap):
         self.data_new = self.mapdata(data, fieldmap)
@@ -403,7 +425,7 @@ class TableMapper(object):
 if __name__ == '__main__':
     config = None
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
-
+        # Find config varname to match csv filename
         if search('register', csv_filename):
             config = config_register
         elif search('Members', csv_filename,):
