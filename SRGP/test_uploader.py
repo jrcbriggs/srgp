@@ -137,13 +137,11 @@ class Test(unittest.TestCase):
         requests.get.side_effect = [self.response_get0, self.response_get1, self.response_get2, ]
         #
         url = self.uploader.url_join(())
-        self.uploader.upload(url, period=1e-6)
+        next(self.uploader.upload(url, period=1e-6))
         requests.post.assert_called_once_with(url, headers=self.headers, data=self.data_json)
         #
-#         url_status = self.uploader.url_join(('5',))
-#         requests.get.assert_called_with(url_status, headers=self.headers)
-        #
-        url_status = self.uploader.url_join(('5', 'result',))
+        url_status = self.uploader.url_join(('5',))
+        next(self.uploader.upload(url, period=1e-6))
         requests.get.assert_called_with(url_status, headers=self.headers)
 
     def test_url_join(self):
