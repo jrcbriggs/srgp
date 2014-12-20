@@ -19,9 +19,8 @@ from os.path import dirname, basename
 import requests
 from sys import argv
 from time import sleep
-from checkbox_support.contrib.xrandr import Status
 
-
+from configurations import nbslug, nbtoken
 class Uploader(object):
 
     '''Upload (NB format) csv file to NB.
@@ -33,8 +32,6 @@ class Uploader(object):
     endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json', }
-    slug = 'srgp.nationbuilder.com'
-    token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
     data = {'import': {
             'file': None,
             'type': 'people',
@@ -83,7 +80,7 @@ class Uploader(object):
 
     def upload_status_get(self, response_id):
         '''Generator yielding the status name of successive status queries'''
-        url_status = self.url_join((str(response_id),))
+        url_status = self.url_join(nbslug,(str(response_id),),nbtoken)
         status_name = None
         while status_name not in ('completed', 'finished'):
             response = requests.get(url_status, headers=self.headers)
@@ -120,16 +117,16 @@ class Uploader(object):
         self.base64_2csvfile(csv_b64_ascii, self.heading)
         yield sorted(result.items())
 
-    def url_join(self, endpoint_parts):
+    def url_join(self, nbslug, endpoint_parts, nbtoken):
         '''Assemble url for upload to NB endpoint'''
         endpoint = '/'.join((self.endpoint_base,) + endpoint_parts)
-        return ''.join(('https://', self.slug, endpoint, '?access_token=',
-                        self.token))
+        return ''.join(('https://', nbslug, endpoint, '?access_token=',
+                        nbtoken))
 
 if __name__ == "__main__":
     err_filename = 'uploader_log.csv'
     for filename in argv[1:]:  # skip scriptname in argv[0]
         uploader = Uploader(filename, err_filename)
-        url_upload = uploader.url_join(())
+        url_upload = uploader.url_join(nbslug, (), nbtoken)
         for status in uploader.upload(url_upload):
             print(status)

@@ -7,7 +7,6 @@ Created on 30 Nov 2014
 from base64 import b64encode, b64decode
 import json
 import unittest
-from unittest.case import skip
 from unittest.mock import MagicMock
 from uploader import Uploader
 import uploader
@@ -18,9 +17,9 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.endpoint = '/api/v1/imports'
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json', }
-        self.slug = 'srgp.nationbuilder.com'
-        self.token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
-        self.url = "https://" + self.slug + self.endpoint + '?access_token=' + self.token
+        self.nbslug = 'dummy.nationbuilder.com'
+        self.nbtoken = '1234567890'
+        self.url = "https://" + self.nbslug + self.endpoint + '?access_token=' + self.nbtoken
         self.data = {'import': {
             'file': None,
             # voter fails (Julian 27-nov-2014) member fails Julian 27-nov-2014
@@ -107,7 +106,7 @@ class Test(unittest.TestCase):
         result = next(self.uploader.upload_status_get(5))
         # Assert
         self.assertEqual(result, 'finished')
-        url_status = self.uploader.url_join(('5',))
+        url_status = self.uploader.url_join(self.nbslug, ('5',), self.nbtoken)
         requests.get.assert_called_with(url_status, headers=self.headers)
 
     def test_upload_status_get_working(self):
@@ -125,10 +124,12 @@ class Test(unittest.TestCase):
         result = next(self.uploader.upload_status_get(5))
         # Assert
         self.assertEqual(result, 'finished')
-        url_status = self.uploader.url_join(('5',))
+        url_status = self.uploader.url_join(self.nbslug, ('5',), self.nbtoken)
         requests.get.assert_called_with(url_status, headers=self.headers)
 
     def test_upload(self):
+        uploader.nbslug = self.nbslug
+        uploader.nbtoken = self.nbtoken
         requests = uploader.requests
         requests.post = MagicMock(return_value=self.response_post)
 
@@ -136,18 +137,19 @@ class Test(unittest.TestCase):
         requests.get = MagicMock()
         requests.get.side_effect = [self.response_get0, self.response_get1, self.response_get2, ]
         #
-        url = self.uploader.url_join(())
+        url = self.uploader.url_join(self.nbslug, (), self.nbtoken)
         next(self.uploader.upload(url, period=1e-6))
         requests.post.assert_called_once_with(url, headers=self.headers, data=self.data_json)
         #
-        url_status = self.uploader.url_join(('5',))
+        url_status = self.uploader.url_join(self.nbslug, ('5',), self.nbtoken)
         next(self.uploader.upload(url, period=1e-6))
         requests.get.assert_called_with(url_status, headers=self.headers)
 
     def test_url_join(self):
         endpoint_parts = ('a', 'b', 'c',)
-        actual = self.uploader.url_join(endpoint_parts)
-        expected = 'https://' + self.slug + self.endpoint + '/a/b/c' + '?access_token=' + self.token
+        actual = self.uploader.url_join(self.nbslug, endpoint_parts, self.nbtoken)
+        expected = 'https://' + self.nbslug + self.endpoint + \
+            '/a/b/c' + '?access_token=' + self.nbtoken
         self.assertEqual(actual, expected)
 
 
