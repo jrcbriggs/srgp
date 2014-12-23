@@ -21,6 +21,8 @@ from sys import argv
 from time import sleep
 
 from configurations import nbslug, nbtoken
+
+
 class Uploader(object):
 
     '''Upload (NB format) csv file to NB.
@@ -80,7 +82,7 @@ class Uploader(object):
 
     def upload_status_get(self, response_id):
         '''Generator yielding the status name of successive status queries'''
-        url_status = self.url_join(nbslug,(str(response_id),),nbtoken)
+        url_status = self.url_join(nbslug, (str(response_id),), nbtoken)
         status_name = None
         while status_name not in ('completed', 'finished'):
             response = requests.get(url_status, headers=self.headers)
@@ -107,7 +109,7 @@ class Uploader(object):
             sleep(period)
 
         # Examine result of import
-        url_result = self.url_join((str(upload_id), 'result',))
+        url_result = self.url_join(nbslug, (str(upload_id), 'result',), nbtoken)
         response = requests.get(url_result, headers=self.headers)
         result = self.json_extractor(response.text, ('result',))
 
