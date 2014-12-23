@@ -1,28 +1,27 @@
 '''
-Created on 2 Dec 2014
+Created on 23 Dec 2014
 
-@author: julian
+@author: ph1j
 '''
 
+from splinter.browser import Browser
+from time import sleep
 
-# from splinter import Browser
-# 
-# 
-# with Browser() as browser:
-#     # Visit URL
-#     url = "http://www.google.com"
-#     url = "https://my.greenparty.org.uk/civicrm"
-#     browser.visit(url)
-#     browser.fill('q', 'splinter - python acceptance testing for web applications')
-#     # Find and click the 'search' button
-#     button = browser.find_by_name('btnG')
-#     # Interact with elements
-#     button.click()
-#     if browser.is_text_present('splinter.cobrateam.info'):
-#         print( "Yes, the official website was found!")
-#     else:
-#         print ("No, it wasn't found... We need to improve our SEO techniques")
-#         
-        
-# if __name__ == '__main__':
-#     pass
+
+class Scrape(object):
+
+    def __init__(self, url, params):
+        with Browser('firefox') as b:
+            b.visit(url)
+            b.fill_form(params)
+            b.find_by_id('edit-submit').first.click()
+            for label in ('Officers', 'Supporters', 'Volunteers',): # ,'Search'
+                b.click_link_by_text(label)
+                b.find_by_value('Export to CSV').first.click()
+                sleep(9)
+
+
+if __name__ == '__main__':
+    params = {'name': 'j.briggs@phonecoop.coop', 'pass': 'KewGr33n', }
+    url = 'https://my.greenparty.org.uk/civicrm'
+    s = Scrape(url, params)
