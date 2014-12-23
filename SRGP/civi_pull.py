@@ -1,28 +1,37 @@
 '''
-Created on 2 Dec 2014
+Created on 23 Dec 2014
 
-@author: julian
+@author: ph1j
 '''
 
+from splinter.browser import Browser
+from time import sleep
 
-# from splinter import Browser
-# 
-# 
-# with Browser() as browser:
-#     # Visit URL
-#     url = "http://www.google.com"
-#     url = "https://my.greenparty.org.uk/civicrm"
-#     browser.visit(url)
-#     browser.fill('q', 'splinter - python acceptance testing for web applications')
-#     # Find and click the 'search' button
-#     button = browser.find_by_name('btnG')
-#     # Interact with elements
-#     button.click()
-#     if browser.is_text_present('splinter.cobrateam.info'):
-#         print( "Yes, the official website was found!")
-#     else:
-#         print ("No, it wasn't found... We need to improve our SEO techniques")
-#         
-        
-# if __name__ == '__main__':
-#     pass
+
+class Scrape(object):
+
+    def __init__(self, username, password, url):
+        #         browsername = 'chrome'
+        #         browsername = 'zope.testbrowser'
+        browsername = 'firefox'
+        with Browser(browsername) as b:
+            b.visit(url)
+            # Find the username form and fill it with the defined username
+            b.find_by_id('edit-name').first.fill(username)
+
+            # Find the password form and fill it with the defined password
+            b.find_by_id('edit-pass').first.fill(password)
+            b.find_by_id('edit-submit').first.click()
+            b.click_link_by_text('Officers')
+            b.find_by_value('Export to CSV').first.click()
+#             with b.get_prompt() as prompt:
+#                 prompt.accept()
+            sleep(9)
+
+
+if __name__ == '__main__':
+    username = 'j.briggs@phonecoop.coop'
+    password = 'KewGr33n'
+    slug = 'my.greenparty.org.uk/civicrm'
+    url = 'https://{}'.format(slug)  # , password, slug)
+    s = Scrape(username, password, url)
