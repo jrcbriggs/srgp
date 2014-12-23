@@ -7,11 +7,15 @@ Created on 1 Nov 2014
 from collections import OrderedDict as OD
 from csv import DictReader, DictWriter
 from datetime import datetime as dt
+import datetime
 from importlib import import_module
+from io import StringIO
+import mmap
 from re import compile, IGNORECASE
 from re import search
 from sys import argv
 from sys import stdout
+import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
@@ -71,6 +75,7 @@ class ConfigHandler(object):
 
 
 class FileHandler(object):
+
     '''Handle reading and writing files, including the config file which is loaded as a Python module.
     '''
 
@@ -96,30 +101,16 @@ class FileHandler(object):
             if fieldnames != fieldnames_expected:
                 fields_odd = self.find_mismatch(
                     fieldnames, fieldnames_expected)
-                raise ValueError('Unexpected fieldnames:\n'
+                raise ValueError('Unexpected fieldnames:\nactual: '
                                  + ','.join(fieldnames)
-                                 + '\n' + ','.join(fieldnames_expected)
-                                 + '\n' + 'mismatch:' + ','.join(fields_odd))
+                                 + '\nexpected: ' + ','.join(fieldnames_expected)
+                                 + '\nmismatch:' + ','.join(fields_odd))
         return (table, fieldnames)
 
     def find_mismatch(self, set0, set1):
         '''return difference of 2 iterables (lists, sets, tuples)
         as sorted list'''
         return sorted(list(set(set0).difference(set(set1))))
-
-#     def xls_read(self, pathname, fieldnames_expected):
-#         '''Read xls file (excluding 1st row) into self.table.
-#         Populate self.fieldnames with fields from 1st row in order'''
-#         with xlsx.
-#         with open(pathname, 'r') as fh:
-#             dr = DictReader(fh)
-#             table = [row for row in dr]
-#             fieldnames = tuple(dr.fieldnames)
-#             if fieldnames != fieldnames_expected:
-#                 raise ValueError('Unexpected fieldnames:\n'
-#                                  + ','.join(fieldnames)
-#                                  + '\n' + ','.join(fieldnames_expected))
-#             return (table, fieldnames)
 
     def csv_print(self, table, fieldnames2):
         self.csv_write_fh(table, stdout, fieldnames2)
@@ -133,8 +124,29 @@ class FileHandler(object):
         dw.writeheader()
         dw.writerows(table)
 
+    def xlsx_read(self, pathname, fieldnames_expected, skip_lines=0, sheet_index=0):
+        with open(pathname, 'r') as fh:
+
+            data = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
+            book = xlrd.open_workbook(file_contents=data)
+            sheet = book.sheet_by_index(sheet_index)
+
+            def cell_value(i, j):
+                '''Convert xls date from days since ~1900 to '31/12/2014' '''
+                cell = sheet.cell(i, j)
+                value = cell.value
+                if cell.ctype == 3 and value:  # XL_CELL_DATE
+                    return datetime.datetime(*xlrd.xldate_as_tuple(value, book.datemode)).strftime('%d/%m/%Y')
+                else:
+                    return str(value).replace(',', '')
+
+            csv = (','.join([cell_value(i, j) for j in range(sheet.ncols)])
+                   for i in range(sheet.nrows))
+            return self.csv_read_fh(csv, fieldnames_expected, skip_lines)
+
 
 class CsvFixer(object):
+
     '''The top level class.
     Read csv data file into a table
     Fix the data in table
@@ -142,32 +154,31 @@ class CsvFixer(object):
     Write the table to a new csv file for import to NB.
     '''
 
-    def __init__(self, csv_filename, config):
-        filehandler = FileHandler()
-
+    def __init__(self, csv_filename, config, filereader):
         ch = ConfigHandler(**config)
 
         # Read csv data file into a table
         skip_lines = config.get('skip_lines', 0)
-        (table, unused) = filehandler.csv_read(
+        (table, unused) = filereader(
             csv_filename, ch.fieldnames, skip_lines)
 
         # Fix the data in table
         vh = TableFixer(table=table, tagtail='tagtail', **ch.params)
         table_fixed = vh.fix_table()
 
-        # Create new table: with NB table column headings 
+        # Create new table: with NB table column headings
         d2d = TableMapper(table_fixed, ch.fieldmap_new)
         table_new = d2d.data_new
 
         # Write the table to a new csv file for import to NB.
-        self.csv_filename_new = csv_filename.replace('.csv', 'NB.csv')
+        self.csv_filename_new = csv_filename.replace('.csv', 'NB.csv').replace('.xlsx', 'NB.csv')
         filehandler.csv_write(
             table_new, self.csv_filename_new, ch.fieldnames_new)
 #         filehandler.csv_print(table_new, fieldnames_new)
 
 
 class TableFixer(object):
+
     '''
     Fix the data in the table, top level method is: fix_table
     clean_rows (trim leading and training white space
@@ -271,9 +282,12 @@ class TableFixer(object):
         '''Convert date of attainment (ie reach 18years old) to DoB.
             Use after converting to NB date format.
             yoa: year of attainment, yob: year of birth'''
-        (month, day, yoa) = doa.split('/')
-        yob = str(int(yoa) - 18)
-        return '/'.join([month, day, yob])
+        if doa:
+            (month, day, yoa) = doa.split('/')
+            yob = str(int(yoa) - 18)
+            return '/'.join([month, day, yob])
+        else:
+            return doa
 
     def fix_addresses(self, row, address_fields):
         '''Update row inplace. Given, say, 7 address fields fill thus:
@@ -441,5 +455,12 @@ if __name__ == '__main__':
         elif search('canvass', csv_filename):
             pass  # config= config_canvass
 
-        csvfixer = CsvFixer(csv_filename, config)
+        filehandler = FileHandler()
+        reader = None
+        if csv_filename.endswith('.csv'):
+            reader = filehandler.csv_read
+        elif csv_filename.endswith('.xlsx'):
+            reader = filehandler.xlsx_read
+
+        csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)

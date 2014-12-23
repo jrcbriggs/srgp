@@ -17,6 +17,10 @@ Sheffield City Council Electoral Registers:
     config_register_city2014_postal
 '''
 from collections import OrderedDict as OD
+
+nbslug = 'srgp.nationbuilder.com'
+nbtoken = '0734fabec6b9425e1cca7b6ab69c29a02f7d4d90f36802f3eba864cbcc72664e'
+
 config_members = {
     'address_fields': {
         'address1': 'Street Address',
@@ -250,7 +254,7 @@ config_register = {
         ('Address 6', 'registered_zip'),
         ('Address 7', 'registered_country_code'),
     ]),
-    'skip_lines': 1,
+    'skip_lines': 0,
     'fields_extra': OD([
         ('is_voter', 'is_voter'),
     ]),

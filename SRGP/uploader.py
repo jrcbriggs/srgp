@@ -20,7 +20,7 @@ import requests
 from sys import argv
 from time import sleep
 
-
+from configurations import nbslug, nbtoken
 class Uploader(object):
 
     '''Upload (NB format) csv file to NB.
@@ -32,8 +32,6 @@ class Uploader(object):
     endpoint_base = '/api/v1/imports'
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json', }
-    slug = 'srgp.nationbuilder.com'
-    token = '9c285c1ec7debb2d5cee02b6b9762d4b7e198697d63dcaa76b90a639f646e1c0'
     data = {'import': {
             'file': None,
             'type': 'people',
@@ -64,8 +62,10 @@ class Uploader(object):
     def base64_2csvfile(self, csv_b64_ascii, heading):
         '''Decode base64 ascii encoded string and append to csv file
         Prepend date and filename of csv upload'''
-        csv_b64 = bytearray(csv_b64_ascii, 'ascii')
-        csv = b64decode(csv_b64)
+        csv = b''
+        if csv_b64_ascii:
+            csv_b64 = bytearray(csv_b64_ascii, 'ascii')
+            csv = b64decode(csv_b64)
         with open(self.err_filename, 'a') as fh:
             fh.write(heading)
         with open(self.err_filename, 'ab') as fh:
@@ -80,7 +80,7 @@ class Uploader(object):
 
     def upload_status_get(self, response_id):
         '''Generator yielding the status name of successive status queries'''
-        url_status = self.url_join((str(response_id),))
+        url_status = self.url_join(nbslug,(str(response_id),),nbtoken)
         status_name = None
         while status_name not in ('completed', 'finished'):
             response = requests.get(url_status, headers=self.headers)
@@ -103,30 +103,30 @@ class Uploader(object):
         # Repeatedly check status until finished
         status_name = None
         for status_name in self.upload_status_get(upload_id):
+            yield status_name
             sleep(period)
-            print(status_name)
 
         # Examine result of import
         url_result = self.url_join((str(upload_id), 'result',))
         response = requests.get(url_result, headers=self.headers)
         result = self.json_extractor(response.text, ('result',))
 
-        # Save failure_csv if it exists
-        failure_csv = self.json_extractor(response.text,
-                                          ('result', 'failure_csv',))
-        if failure_csv:
-            self.base64_2csvfile(failure_csv, self.heading)
-        return sorted(result.items())
+        # Save csv_b64_ascii if it exists
+        csv_b64_ascii = self.json_extractor(response.text,
+                                            ('result', 'csv_b64_ascii',))
+        self.base64_2csvfile(csv_b64_ascii, self.heading)
+        yield sorted(result.items())
 
-    def url_join(self, endpoint_parts):
+    def url_join(self, nbslug, endpoint_parts, nbtoken):
         '''Assemble url for upload to NB endpoint'''
         endpoint = '/'.join((self.endpoint_base,) + endpoint_parts)
-        return ''.join(('https://', self.slug, endpoint, '?access_token=',
-                        self.token))
+        return ''.join(('https://', nbslug, endpoint, '?access_token=',
+                        nbtoken))
 
 if __name__ == "__main__":
-    err_filename = 'uploader_errors.csv'
+    err_filename = 'uploader_log.csv'
     for filename in argv[1:]:  # skip scriptname in argv[0]
         uploader = Uploader(filename, err_filename)
-        url_upload = uploader.url_join(())
-        print(uploader.upload(url_upload))
+        url_upload = uploader.url_join(nbslug, (), nbtoken)
+        for status in uploader.upload(url_upload):
+            print(status)
