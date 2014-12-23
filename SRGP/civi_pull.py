@@ -22,11 +22,10 @@ class Scrape(object):
             # Find the password form and fill it with the defined password
             b.find_by_id('edit-pass').first.fill(password)
             b.find_by_id('edit-submit').first.click()
-            b.click_link_by_text('Officers')
-            b.find_by_value('Export to CSV').first.click()
-#             with b.get_prompt() as prompt:
-#                 prompt.accept()
-            sleep(9)
+            # ,'Search'
+            for label in ('Officers', 'Supporters', 'Volunteers',):
+                b.click_link_by_text(label)
+                b.find_by_value('Export to CSV').first.click()
 
 
 if __name__ == '__main__':
