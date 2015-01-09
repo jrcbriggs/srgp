@@ -326,7 +326,7 @@ class TableFixer(object):
         '''
         if 'Contact Name' in row:
             contact_name = row['Contact Name']
-            names = contact_name.split(',')
+            names = contact_name.split()
             names.reverse()
             row['Contact Name'] = ' '.join(names)
 
@@ -360,7 +360,6 @@ class TableFixer(object):
         for field in ('Local party', 'Party'):
             if field in row:
                 row[field] = 'G'
-
 
     def fix_postcode(self, row, address_fields, field_postcode):
         for fieldname in address_fields.values():
