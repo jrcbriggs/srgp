@@ -41,11 +41,11 @@ class Test(unittest.TestCase):
             fh.write(csv_str)
         self.uploader = Uploader(self.filename, self.err_filename)
         self.response_post = MagicMock()
-        self.response_post.text = '{"import":{"id":5}}'
+        self.response_post.json = lambda: {"import":{"id":5}}
         self.response_get0 = MagicMock()
-        self.response_get0.text = '{"import":{"status":{"name":"working"}}}'
+        self.response_get0.json = lambda: {"import":{"status":{"name":"working"}}}
         self.response_get1 = MagicMock()
-        self.response_get1.text = '{"import":{"status":{"name":"finished"}}}'
+        self.response_get1.json = lambda: {"import":{"status":{"name":"finished"}}}
         self.response_get2 = MagicMock()
 
         # Test get csv from results failure_csv
@@ -55,6 +55,7 @@ class Test(unittest.TestCase):
         result = {'result': {'failure_csv': self.csv_b64_ascii}}
         self.response_get2.text = json.dumps(result)
         self.failure_csv = 'self.failure_csv'
+        
 
     def test_Uploader(self):
         self.assertIsInstance(self.uploader, Uploader)
@@ -91,8 +92,8 @@ class Test(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_json_extractor(self):
-        json_str = '{"a":{"b":{"c":3}}}'
-        actual = self.uploader.json_extractor(json_str, ('a', 'b', 'c',))
+        json = {"a":{"b":{"c":3}}}
+        actual = self.uploader.json_extractor(json, ('a', 'b', 'c',))
         expected = 3
         self.assertEqual(actual, expected)
 
@@ -133,7 +134,7 @@ class Test(unittest.TestCase):
         requests = uploader.requests
         requests.post = MagicMock(return_value=self.response_post)
 
-        # Return on 3 concequetive calls: working, finished, result
+        # Return on 3 consecquetive calls: working, finished, result
         requests.get = MagicMock()
         requests.get.side_effect = [self.response_get0, self.response_get1, self.response_get2, ]
         #
