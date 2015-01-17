@@ -16,6 +16,7 @@ from datetime import datetime
 import json
 from os import path
 from os.path import dirname, basename
+from pprint import pprint
 import requests
 from sys import argv
 import sys
@@ -72,9 +73,9 @@ class Uploader(object):
         with open(self.err_filename, 'ab') as fh:
             fh.write(csv)
 
-    def json_extractor(self, json_str, keys):
+    def json_extractor(self, data, keys):
         '''Extract a value from nested dict encoded as json string'''
-        v = json.loads(json_str)
+        v = data
         for k in keys:
             v = v.get(k)
         return v
@@ -85,7 +86,7 @@ class Uploader(object):
         status_name = None
         while status_name not in ('completed', 'finished'):
             response = requests.get(url_status, headers=self.headers)
-            status_name = self.json_extractor(response.text,
+            status_name = self.json_extractor(response.json(),
                                               ('import', 'status', 'name',))
             yield status_name
 
@@ -99,7 +100,8 @@ class Uploader(object):
         # Post import
         response = requests.post(url_upload, headers=self.headers,
                                  data=self.data_json)
-        upload_id = self.json_extractor(response.text, ('import', 'id',))
+        data = response.json()
+        upload_id = self.json_extractor(data, ('import', 'id',))
 
         # Repeatedly check status until finished
         status_name = None
@@ -110,10 +112,10 @@ class Uploader(object):
         # Examine result of import
         url_result = self.url_join(nbslug, (str(upload_id), 'result',), nbtoken)
         response = requests.get(url_result, headers=self.headers)
-        result = self.json_extractor(response.text, ('result',))
+        result = self.json_extractor(response.json(), ('result',))
 
         # Save csv_b64_ascii if it exists
-        csv_b64_ascii = self.json_extractor(response.text,
+        csv_b64_ascii = self.json_extractor(response.json(),
                                             ('result', 'csv_b64_ascii',))
         self.base64_2csvfile(csv_b64_ascii, self.heading)
         yield sorted(result.items())

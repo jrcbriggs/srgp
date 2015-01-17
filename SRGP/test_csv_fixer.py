@@ -8,6 +8,7 @@ import os
 import sys
 import unittest
 from csv_fixer import TableFixer, FileHandler, TableMapper, ConfigHandler
+from selenium.webdriver.support import expected_conditions
 
 
 class Test(unittest.TestCase):
@@ -256,6 +257,12 @@ class Test(unittest.TestCase):
         self.vh.fix_city(row, self.address_fields, 'A5')
         self.assertDictEqual(row, exp)
 
+    def test_fix_contact_name(self):
+        row={'Contact Name':'Briggs Julian'}
+        expected = {'Contact Name':'Julian Briggs'}
+        self.vh.fix_contact_name(row)
+        self.assertDictEqual(row, expected)
+        
     def test_fix_date(self):
         expected = '12/31/2014'
         actual = self.vh.fix_date(self.doa)

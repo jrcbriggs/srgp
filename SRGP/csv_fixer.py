@@ -103,7 +103,8 @@ class FileHandler(object):
                     fieldnames, fieldnames_expected)
                 raise ValueError('Unexpected fieldnames:\nactual: '
                                  + ','.join(fieldnames)
-                                 + '\nexpected: ' + ','.join(fieldnames_expected)
+                                 + '\nexpected: ' +
+                                 ','.join(fieldnames_expected)
                                  + '\nmismatch:' + ','.join(fields_odd))
         return (table, fieldnames)
 
@@ -171,7 +172,8 @@ class CsvFixer(object):
         table_new = d2d.data_new
 
         # Write the table to a new csv file for import to NB.
-        self.csv_filename_new = csv_filename.replace('.csv', 'NB.csv').replace('.xlsx', 'NB.csv')
+        self.csv_filename_new = csv_filename.replace(
+            '.csv', 'NB.csv').replace('.xlsx', 'NB.csv')
         filehandler.csv_write(
             table_new, self.csv_filename_new, ch.fieldnames_new)
 #         filehandler.csv_print(table_new, fieldnames_new)
@@ -316,7 +318,18 @@ class TableFixer(object):
                 row[fieldname] = ''
                 row[field_city] = v
 
-#     def fix_addresses_helper(self, row, ):
+    def fix_contact_name(self, row):
+        '''civi Contact name is 'last_name, first name' 
+        change this to 'first_name last_name'
+        used by: Officers, Supporters, Volunteers
+        Members have: 'Contact Name' and: 'First Name', 'Middle Name', 'Last Name'
+        '''
+        if 'Contact Name' in row:
+            contact_name = row['Contact Name']
+            names = contact_name.split()
+            names.reverse()
+            row['Contact Name'] = ' '.join(names)
+
     def fix_date(self, date):
         '''electoral roll date format: 31/12/2014
         NB date format: 11-16-2009
@@ -368,6 +381,7 @@ class TableFixer(object):
         skip_list = []
         for row in self.table:
             self.clean_row(row)
+            self.fix_contact_name(row)
             self.fix_dates(row)
             self.fix_doa(row, self.doa_fields)
             self.fix_addresses(row, self.address_fields)
