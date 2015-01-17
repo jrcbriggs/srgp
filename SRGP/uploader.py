@@ -18,11 +18,10 @@ from os import path
 from os.path import dirname, basename
 import requests
 from sys import argv
+import sys
 from time import sleep
 
 from configurations import nbslug, nbtoken
-
-
 class Uploader(object):
 
     '''Upload (NB format) csv file to NB.
@@ -131,4 +130,6 @@ if __name__ == "__main__":
         uploader = Uploader(filename, err_filename)
         url_upload = uploader.url_join(nbslug, (), nbtoken)
         for status in uploader.upload(url_upload):
-            print(status)
+            print(status, end = ' ')
+            sys.stdout.flush()
+            

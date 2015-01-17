@@ -15,6 +15,9 @@ Central GP civiCRM exports: config_members
 Sheffield City Council Electoral Registers:
     config_register
     config_register_city2014_postal
+    
+Changes:
+#Julian Briggs 11-jan-2015: do not assume ppl in SearchAll are supporters. Comment is_supporter extra_field
 '''
 from collections import OrderedDict as OD
 
@@ -42,7 +45,7 @@ config_members = {
         ('Last Name', 'last_name'),
         ('Do not mail', 'do_not_contact'),
         ('Addressee', None),
-        ('Contact ID', 'civiCRM_ID'),
+        ('Contact ID', 'civicrm_id'),
         ('Membership Type', None),  # consider 'tag_list' encode
         ('Start Date', None),
         ('End Date', 'expires_on'),
@@ -50,7 +53,8 @@ config_members = {
         # eg: Online Contribution: Individual Unwaged Membership
         ('Source', None),
         # Membership Status: Cancelled, Current, Deceased, Expired, New
-        ('Status', 'membership_name'),
+#         ('Status', 'membership_name'),
+        ('Status', 'membership_status'), #changed 16-jan-2015
         ('Street Address', 'address1'),
         ('Supplemental Address 1', 'address2'),
         ('Supplemental Address 2', 'address3'),
@@ -72,7 +76,7 @@ config_members = {
         ('is_deceased', 'is_deceased'),
         ('is_supporter', 'is_supporter'),
         ('party_member', 'party_member'),
-        ('status', 'status'),
+#         ('status', 'status'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (),  # Reverse Sense
@@ -100,7 +104,7 @@ config_officers = {
         ('Postal Code', 'zip'),
         ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
-        ('Status', 'membership_name'),
+        ('Status', 'membership_status'),
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
@@ -123,7 +127,7 @@ config_supporters = {
     'fieldmap': OD([
         ('Contact Name', 'name'),
         ('Do not mail', 'do_not_contact'),
-        ('Contact ID', 'civiCRM_ID'),
+        ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
         ('Street Address', 'address1'),
         ('Supplemental Address 1', 'address2'),
@@ -149,7 +153,7 @@ config_volunteers = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', 'name'),
-        ('Contact ID', 'civiCRM_ID'),
+        ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
@@ -183,7 +187,7 @@ config_search = {
     'date_format': '%Y-%m-%d',  # Membership date: 2014-05-17
     'doa_fields': (),
     'fieldmap': OD([
-        ('Internal Contact ID', 'civiCRM_ID'),
+        ('Internal Contact ID', 'civicrm_id'),
         ('Do Not Email', 'email opt in'),  # Reverse Sense
         ('Do Not Phone', 'mobile opt in'),  # Reverse Sense
         ('Do Not Mail', 'do_not_contact'),  # tag NoMail
@@ -205,7 +209,7 @@ config_search = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        ('is_supporter', 'is_supporter'),
+#         ('is_supporter', 'is_supporter'), 
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (  # Reverse Sense

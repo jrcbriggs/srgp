@@ -261,7 +261,7 @@ class TableFixer(object):
                 row[k] = 'active'
             elif k == 'support_level':
                 # assume strong support from all civi:
-                # (members, officers, supporters, volunteers and search)
+                # (members, officers, supporters, volunteers but not search
                 row[k] = 1
             else:
                 row[k] = v
@@ -355,6 +355,14 @@ class TableFixer(object):
                 row[fieldname] = ''
                 row[field_postcode] = v
 
+    def fix_status(self, row):
+        if 'Status' in row:
+            statusmap = {'Cancelled': 'canceled', 'Current': 'active',
+                         'Deceased': 'expired', 'Expired': 'expired',
+                         'New': 'active'}
+            if row['Status'] in statusmap: #needed to avoid updating Status in electoral register
+                row['Status'] = statusmap[row['Status']]
+
     def fix_table(self):
         '''in-place update row'''
         skip_list = []
@@ -364,6 +372,7 @@ class TableFixer(object):
             self.fix_doa(row, self.doa_fields)
             self.fix_addresses(row, self.address_fields)
             self.fix_local_party(row)
+            self.fix_status(row)
             self.extra_fields(row, self.fields_extra)
             self.flip_fields(row, self.fields_flip)
             row.update(self.tags_create(row, self.tagfields, self.tagtail))
@@ -371,13 +380,6 @@ class TableFixer(object):
         for row in skip_list:
             self.table.remove(row)  # Remove list element by value
         return self.table
-
-    def get_status(self, row):
-        statusmap = {'Cancelled': 'expired', 'Current': 'active',
-                     'Deceased': 'expired', 'Expired': 'expired',
-                     'New': 'active'}
-        status = row['Status']
-        return statusmap[status]
 
     def iscity(self, city):  # is value a city
         return self.regexes['city'].search(city)
@@ -395,7 +397,7 @@ class TableFixer(object):
         return [row for (k, v) in skip_dict.items() if row.get(k, None) == v]
 
     def ismember(self, row):
-        return row.get('Status', None) in ('Current', 'New')
+        return row.get('Status', None) == 'active'
 
     def ispostcode(self, postcode):  # is value a postcode
         return self.regexes['postcode'].search(postcode)
