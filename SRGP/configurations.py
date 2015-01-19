@@ -46,7 +46,7 @@ config_members = {
         ('Do not mail', 'do_not_contact'),
         ('Addressee', None),
         ('Contact ID', 'civicrm_id'),
-        ('Membership Type', None),  # consider 'tag_list' encode
+        ('Membership Type', 'membership_type'),  # consider 'tag_list' encode
         ('Start Date', None),
         ('End Date', 'expires_on'),
         ('Member Since', 'started_at'),
