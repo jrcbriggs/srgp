@@ -336,7 +336,8 @@ canvassing = {
         ('Comments', 'notes'),
         ('Local campaigns', 'tag_list'),
         ('Postal Vote (last election)', 'tag_list'),
-        ('13/14 canvass by', 'tag_list'),
+#         ('support_level', 'support_level'), #uncomment when support_level in canvassing sheet
+#         ('13/14 canvass by', 'tag_list'),
         ('13/14 local politics', 'tag_list'),
         ('E-mail address', 'email'),
         ('Home/Work Phone', 'phone_number'),
