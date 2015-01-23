@@ -246,8 +246,8 @@ class TableFixer(object):
             if k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_supporter':
-                # Set is_supporter flag if a member
-                row[k] = self.ismember(row)
+                # Set is_supporter extra field exists (change from if a member. Julian 23-jan-2015)
+                row[k] = True # self.ismember(row)
             elif k == 'is_volunteer':
                 # Set is_volunteer flag on all rows in the Volunteers csv
                 row[k] = True
@@ -373,7 +373,7 @@ class TableFixer(object):
             statusmap = {'Cancelled': 'canceled', 'Current': 'active',
                          'Deceased': 'expired', 'Expired': 'expired',
                          'New': 'active'}
-            if row['Status'] in statusmap: #needed to avoid updating Status in electoral register
+            if row['Status'] in statusmap:  # needed to avoid updating Status in electoral register
                 row['Status'] = statusmap[row['Status']]
 
     def fix_table(self):
@@ -421,6 +421,10 @@ class TableFixer(object):
 
     def isvoter(self, row):
         return row.get('Status', None) == 'E'
+
+    def merge_pd_eno(self, row):
+        if 'PD' in row and 'ENO' in row:
+            row['ENO'] = row['PD'] + str(row['ENO'])
 
     def tags_create(self, row, tagfields, tagtail):
         '''Assemble tag, append to @tags, create tag_list field.
