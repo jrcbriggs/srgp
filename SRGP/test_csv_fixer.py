@@ -9,6 +9,7 @@ import sys
 import unittest
 from csv_fixer import TableFixer, FileHandler, TableMapper, ConfigHandler
 
+
 class Test(unittest.TestCase):
 
     def setUp(self):
@@ -377,7 +378,7 @@ class Test(unittest.TestCase):
             self.tf.fix_status(self.row0)
             actual = self.row0['Status']
             expected = v
-            self.assertEqual(actual, expected, 'k {} v {}'.format(k,v))
+            self.assertEqual(actual, expected, 'k {} v {}'.format(k, v))
 
     def test_iscity(self):
         self.assertTrue(self.tf.iscity('Sheffield'), 'expected match:' + 'Sheffield')
@@ -445,19 +446,28 @@ class Test(unittest.TestCase):
         for street in 'Sheffield S10 Yorks'.split():
             self.assertFalse(self.tf.isstreet(street), 'unexpected match:' + street)
 
-    def test_isvoter_true(self):
+    def test_isvoter_register_true(self):
         for status in ('E'):
             self.row0.update({'Status': status})
             actual = self.tf.isvoter(self.row0)
             self.assertTrue(actual)
 
-    def test_isvoter_false(self):
+    def test_isvoter_register_false(self):
         for status in (''):
             self.row0.update({'Status': status})
             actual = self.tf.isvoter(self.row0)
             self.assertFalse(actual)
 
-    def test_isvoter_no_field(self):
+    def test_isvoter_register_no_field(self):
+        actual = self.tf.isvoter(self.row0)
+        self.assertFalse(actual)
+
+    def test_isvoter_canvassing_true(self):
+        self.row0.update({'Electoral roll number': 'GA123'})
+        actual = self.tf.isvoter(self.row0)
+        self.assertTrue(actual)
+
+    def test_isvoter_canvassing_false(self):
         actual = self.tf.isvoter(self.row0)
         self.assertFalse(actual)
 
@@ -471,11 +481,18 @@ class Test(unittest.TestCase):
         actual = self.tf.is_matching_row(self.row0, skip_dict)
         self.assertListEqual(actual, [])
 
-    def test_merge_pd_eno(self):
+    def test_merge_pd_eno_register(self):
         row = {'PD': 'GA', 'ENO': 123}
         expected = 'GA123'
         self.tf.merge_pd_eno(row)
         actual = row['ENO']
+        self.assertEqual(expected, actual)
+
+    def test_merge_pd_eno_canvassing(self):
+        row = {'Polling district': 'GA', 'Electoral roll number': 123}
+        expected = 'GA123'
+        self.tf.merge_pd_eno(row)
+        actual = row['Electoral roll number']
         self.assertEqual(expected, actual)
 
     def test_tags_create(self):

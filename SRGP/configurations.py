@@ -53,8 +53,8 @@ config_members = {
         # eg: Online Contribution: Individual Unwaged Membership
         ('Source', None),
         # Membership Status: Cancelled, Current, Deceased, Expired, New
-#         ('Status', 'membership_name'),
-        ('Status', 'membership_status'), #changed 16-jan-2015
+        #         ('Status', 'membership_name'),
+        ('Status', 'membership_status'),  # changed 16-jan-2015
         ('Street Address', 'address1'),
         ('Supplemental Address 1', 'address2'),
         ('Supplemental Address 2', 'address3'),
@@ -76,7 +76,7 @@ config_members = {
         ('is_deceased', 'is_deceased'),
         ('is_supporter', 'is_supporter'),
         ('party_member', 'party_member'),
-#         ('status', 'status'),
+        #         ('status', 'status'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (),  # Reverse Sense
@@ -209,7 +209,7 @@ config_search = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-#         ('is_supporter', 'is_supporter'), 
+        #         ('is_supporter', 'is_supporter'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (  # Reverse Sense
@@ -313,4 +313,50 @@ config_register_city2014_postal = {
         'Election_Title_1',
         'Election_Title_2',
     ),
+}
+
+canvassing = {
+    'address_fields': {
+        'address1': 'Address 1',
+        'address2': 'Address 2',
+        'address3': 'Address 3',
+        'address4': 'Address 4',
+        'city': 'Address 5',
+        'zip': 'Address 6',
+        'country_code': 'Address 7',
+    },
+        'date_fields': (),
+    'date_format': '%d/%m/%Y',  # _electoral_roll
+        'doa_fields': (),
+    'fieldmap': OD([
+        ('Polling district', 'city_sub_district'),  # city_sub_district
+        ('Electoral roll number', 'external_id'),  # merge_pd_eno prepends pd to ern
+        ('First name', 'first_name'),
+        ('Surname', 'last_name'),
+        ('Comments', 'notes'),
+        ('Local campaigns', 'tag_list'),
+        ('Postal Vote (last election)', 'tag_list'),
+        ('13/14 canvass by', 'tag_list'),
+        ('13/14 local politics', 'tag_list'),
+        ('E-mail address', 'email'),
+        ('Home/Work Phone', 'phone_number'),
+        ('Mobile phone', 'mobile_number'),
+        # ('TPS registered', 'mobile_opt_in'), #if we use this need to reverse sense
+
+        ('Address 1', 'registered_address1'),
+        ('Address 2', 'registered_address2'),
+        ('Address 3', 'registered_address3'),
+        # omitting this field did not make registered address visible
+        # immediately
+        ('Address 4', 'registered_address4'),
+        ('Address 5', 'registered_city'),
+        ('Postcode', 'registered_zip'),
+        ('Address 7', 'registered_country_code'),
+    ]),
+    'skip_lines': 0,
+    'fields_extra': OD([
+        ('is_voter', 'is_voter'),
+    ]),
+    'fields_flip': (),  # Reverse Sense
+
 }

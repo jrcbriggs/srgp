@@ -19,9 +19,7 @@ import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
-    config_volunteers
-
-
+    config_volunteers, canvassing
 class ConfigHandler(object):
 
     '''Parse the config dict to extract input params to table fixer and csv fixer:
@@ -389,6 +387,7 @@ class TableFixer(object):
             self.fix_status(row)
             self.extra_fields(row, self.fields_extra)
             self.flip_fields(row, self.fields_flip)
+            self.merge_pd_eno(row)
             row.update(self.tags_create(row, self.tagfields, self.tagtail))
             skip_list += self.is_matching_row(row, self.skip_dict)
         for row in skip_list:
@@ -420,11 +419,16 @@ class TableFixer(object):
         return self.regexes['street'].search(street)
 
     def isvoter(self, row):
-        return row.get('Status', None) == 'E'
+        return (row.get('Status', None) == 'E' #register
+                or
+                'Electoral roll number' in row #Canvassing
+                )
 
     def merge_pd_eno(self, row):
         if 'PD' in row and 'ENO' in row:
             row['ENO'] = row['PD'] + str(row['ENO'])
+        if 'Polling district' in row and 'Electoral roll number' in row:
+            row['Electoral roll number'] = row['Polling district'] + str(row['Electoral roll number'])
 
     def tags_create(self, row, tagfields, tagtail):
         '''Assemble tag, append to @tags, create tag_list field.
@@ -473,7 +477,7 @@ if __name__ == '__main__':
         elif search('Search', csv_filename,):
             config = config_search
         elif search('canvass', csv_filename):
-            pass  # config= config_canvass
+            config = canvassing
 
         filehandler = FileHandler()
         reader = None
