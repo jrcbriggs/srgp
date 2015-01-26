@@ -167,12 +167,35 @@ config_volunteers = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
+        ('party', 'party'),
         ('is_supporter', 'is_supporter'),
         ('is_volunteer', 'is_volunteer'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (),  # Reverse Sense
 }
+
+config_young_greens = {
+    'address_fields': { },
+    'date_fields': ('Start Date', 'End Date',),
+    'date_format': '%Y-%m-%d',  # Membershiip date: 2014-05-17
+    'doa_fields': (),
+    'fieldmap': OD([
+        ('First Name', 'first_name'),
+        ('Last Name', 'last_name'),
+        ('Start Date', 'started_at'),
+        ('End Date', 'expires_on'),
+        ('Status', 'membership_status'),
+        ('Email', 'email'),
+        ('Local party', 'party'),  # encode to G
+    ]),
+    'skip_lines': 0,
+    'fields_extra': OD([
+        ('Young Green', 'membership_name'), 
+    ]),
+    'fields_flip': (),  # Reverse Sense
+}
+
 
 config_search = {
     'address_fields': {
@@ -325,9 +348,9 @@ canvassing = {
         'zip': 'Address 6',
         'country_code': 'Address 7',
     },
-        'date_fields': (),
+    'date_fields': (),
     'date_format': '%d/%m/%Y',  # _electoral_roll
-        'doa_fields': (),
+    'doa_fields': (),
     'fieldmap': OD([
         ('Polling district', 'city_sub_district'),  # city_sub_district
         ('Electoral roll number', 'external_id'),  # merge_pd_eno prepends pd to ern
@@ -336,8 +359,8 @@ canvassing = {
         ('Comments', 'notes'),
         ('Local campaigns', 'tag_list'),
         ('Postal Vote (last election)', 'tag_list'),
-#         ('support_level', 'support_level'), #uncomment when support_level in canvassing sheet
-#         ('13/14 canvass by', 'tag_list'),
+        ('Last local politics canvassed', 'support_level'), 
+        #         ('13/14 canvass by', 'tag_list'),
         ('13/14 local politics', 'tag_list'),
         ('E-mail address', 'email'),
         ('Home/Work Phone', 'phone_number'),

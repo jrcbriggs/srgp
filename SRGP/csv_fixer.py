@@ -11,6 +11,7 @@ import datetime
 from importlib import import_module
 from io import StringIO
 import mmap
+import os
 from re import compile, IGNORECASE
 from re import search
 from sys import argv
@@ -19,7 +20,9 @@ import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
-    config_volunteers, canvassing
+    config_volunteers, canvassing, config_young_greens
+
+
 class ConfigHandler(object):
 
     '''Parse the config dict to extract input params to table fixer and csv fixer:
@@ -123,7 +126,7 @@ class FileHandler(object):
         dw.writeheader()
         dw.writerows(table)
 
-    def xlsx_read(self, pathname, fieldnames_expected, skip_lines=0, sheet_index=0):
+    def xlsx_read(self, pathname, fieldnames_expected, skip_lines=0, sheet_index=1):
         with open(pathname, 'r') as fh:
 
             data = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
@@ -245,24 +248,22 @@ class TableFixer(object):
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_supporter':
                 # Set is_supporter extra field exists (change from if a member. Julian 23-jan-2015)
-                row[k] = True # self.ismember(row)
+                row[k] = True  # self.ismember(row)
             elif k == 'is_volunteer':
                 # Set is_volunteer flag on all rows in the Volunteers csv
                 row[k] = True
             elif k == 'is_voter':
                 row[k] = self.isvoter(row)  # Set  flag
-            elif k == 'party':
+            elif k == 'party':  # volunteers have extra field party, set it to G
                 row[k] = 'G'
             elif k == 'party_member':
                 row[k] = self.ismember(row)  # Set is_member flag
-            elif k == 'status':
-                # Status must be either 'active', 'grace period', 'expired', or
-                # 'canceled'
-                row[k] = 'active'
             elif k == 'support_level':
                 # assume strong support from all civi:
                 # (members, officers, supporters, volunteers but not search
                 row[k] = 1
+            elif k == 'Young Green':
+                row[k] = k
             else:
                 row[k] = v
 
@@ -354,7 +355,14 @@ class TableFixer(object):
             row[doa_field] = self.doa2dob(row[doa_field])
 
     def fix_local_party(self, row):
-        '''members only: overwrite "Sheffield & Rotherham Green Party" by G'''
+        '''
+        Members: set civi field: Local party=G
+        Officers: set civi field: Party=G
+        Supporters: set civi field: Local party=G
+        Volunteers: not set here: extra_fields sets NB: party=G
+        canvassing: not set here: no Party or Local Party field
+        register: not set here: no Party or Local Party field
+        '''
         for field in ('Local party', 'Party'):
             if field in row:
                 row[field] = 'G'
@@ -370,7 +378,7 @@ class TableFixer(object):
         if 'Status' in row:
             statusmap = {'Cancelled': 'canceled', 'Current': 'active',
                          'Deceased': 'expired', 'Expired': 'expired',
-                         'New': 'active'}
+                         'New': 'active', 'Grace': 'grace period'}
             if row['Status'] in statusmap:  # needed to avoid updating Status in electoral register
                 row['Status'] = statusmap[row['Status']]
 
@@ -384,8 +392,10 @@ class TableFixer(object):
             self.fix_doa(row, self.doa_fields)
             self.fix_addresses(row, self.address_fields)
             self.fix_local_party(row)
-            self.fix_status(row)
+            # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
+            # Must call after extra_fields so extra_fields can identify is_deceased
+            self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
             row.update(self.tags_create(row, self.tagfields, self.tagtail))
@@ -419,27 +429,32 @@ class TableFixer(object):
         return self.regexes['street'].search(street)
 
     def isvoter(self, row):
-        return (row.get('Status', None) == 'E' #register
+        return (row.get('Status', None) == 'E'  # register
                 or
-                'Electoral roll number' in row #Canvassing
+                'Electoral roll number' in row  # Canvassing
                 )
 
     def merge_pd_eno(self, row):
         if 'PD' in row and 'ENO' in row:
             row['ENO'] = row['PD'] + str(row['ENO'])
         if 'Polling district' in row and 'Electoral roll number' in row:
-            row['Electoral roll number'] = row['Polling district'] + str(row['Electoral roll number'])
+            row['Electoral roll number'] = row[
+                'Polling district'] + str(row['Electoral roll number'])
 
     def tags_create(self, row, tagfields, tagtail):
         '''Assemble tag, append to @tags, create tag_list field.
         If tag field is blank then omit tag'''
+        tagdict = {
+            'Postal Vote (last election)': 'PV',
+            '': '',
+        }
         tags = []
         for tagfield in tagfields:
             value = str(row[tagfield]).strip()
             if value:
                 tagfield.replace(' ', '')
-#                 tag = '_'.join([value, tagfield, tagtail])
-                tag = '_'.join([tagfield, value])
+                tagfield = tagdict.get(tagfield, tagfield)
+                tag = '{}={}'.format(tagfield, value)
                 tags.append(tag)
         taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
@@ -474,6 +489,8 @@ if __name__ == '__main__':
             config = config_supporters
         elif search('Volunteers', csv_filename,):
             config = config_volunteers
+        elif search('YoungGreens', csv_filename,):
+            config = config_young_greens
         elif search('Search', csv_filename,):
             config = config_search
         elif search('canvass', csv_filename):
@@ -483,8 +500,11 @@ if __name__ == '__main__':
         reader = None
         if csv_filename.endswith('.csv'):
             reader = filehandler.csv_read
+        elif csv_filename.endswith('.xls'):
+            reader = filehandler.xlsx_read
         elif csv_filename.endswith('.xlsx'):
             reader = filehandler.xlsx_read
+        xls_pw = os.getenv('XLS_PASSWORD')
 
         csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)

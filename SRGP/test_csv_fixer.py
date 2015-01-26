@@ -240,12 +240,6 @@ class Test(unittest.TestCase):
         self.tf.extra_fields(self.row0, {'party': 'party'})
         self.assertDictEqual(self.row0, expected)
 
-    def test_fix_append_fields_status(self):
-        expected = self.row0.copy()
-        expected.update({'status': 'active'})
-        self.tf.extra_fields(self.row0, {'status': 'status'})
-        self.assertDictEqual(self.row0, expected)
-
     def test_fix_append_fields_support_level_member(self):
         self.row0.update({'Status': 'New'})
         expected = self.row0.copy()
@@ -498,7 +492,7 @@ class Test(unittest.TestCase):
     def test_tags_create(self):
         row = self.row0
         tagtail = 'julian'
-        expected = {'tag_list': 'd_3,e_4'}
+        expected = {'tag_list': 'd=3,e=4'}
         actual = self.tf.tags_create(row, self.tagfields, tagtail)
         self.assertEqual(expected, actual)
 if __name__ == "__main__":
