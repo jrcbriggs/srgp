@@ -23,6 +23,8 @@ import sys
 from time import sleep
 
 from configurations import nbslug, nbtoken
+
+
 class Uploader(object):
 
     '''Upload (NB format) csv file to NB.
@@ -110,7 +112,8 @@ class Uploader(object):
             sleep(period)
 
         # Examine result of import
-        url_result = self.url_join(nbslug, (str(upload_id), 'result',), nbtoken)
+        url_result = self.url_join(
+            nbslug, (str(upload_id), 'result',), nbtoken)
         response = requests.get(url_result, headers=self.headers)
         result = self.json_extractor(response.json(), ('result',))
 
@@ -132,6 +135,5 @@ if __name__ == "__main__":
         uploader = Uploader(filename, err_filename)
         url_upload = uploader.url_join(nbslug, (), nbtoken)
         for status in uploader.upload(url_upload):
-            print(status, end = ' ')
+            print(status, end=' ')
             sys.stdout.flush()
-            
