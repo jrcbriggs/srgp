@@ -489,6 +489,31 @@ class Test(unittest.TestCase):
         actual = row['Electoral roll number']
         self.assertEqual(expected, actual)
 
+    def test_pd2ward(self):
+        d = {
+            'EA': 'Broomhill',
+            'GB': 'Central',
+            'RC': 'Manor Castle',
+            'TD': 'Nether Edge',
+            'ZE': 'Walkley',
+        }
+        for (k, v) in d.items():
+            self.assertEqual(TableFixer.pd2ward(k), v)
+
+    def test_set_ward(self):
+        d = {
+            'EA': 'Broomhill',
+            'GB': 'Central',
+            'RC': 'Manor Castle',
+            'TD': 'Nether Edge',
+            'ZE': 'Walkley',
+        }
+        for (k, v) in d.items():
+            row = {}
+            row['PD'] = k
+            self.tf.set_ward(row)
+            self.assertEqual(row['ward'], v)
+
     def test_tags_create(self):
         row = self.row0
         tagtail = 'julian'

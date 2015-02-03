@@ -43,18 +43,15 @@ config_members = {
         ('Email Greeting', None),
         ('First Name', 'first_name'),
         ('Last Name', 'last_name'),
-        ('Do not mail', 'do_not_contact'),
+        ('Do not mail', 'tag_list'),
         ('Addressee', None),
         ('Contact ID', 'civicrm_id'),
-        ('Membership Type', 'membership_type'),  # consider 'tag_list' encode
+        ('Membership Type', 'membership_type'),
         ('Start Date', None),
         ('End Date', 'expires_on'),
         ('Member Since', 'started_at'),
-        # eg: Online Contribution: Individual Unwaged Membership
         ('Source', None),
-        # Membership Status: Cancelled, Current, Deceased, Expired, New
-        #         ('Status', 'membership_name'),
-        ('Status', 'membership_status'),  # changed 16-jan-2015
+        ('Status', 'membership_status'),
         ('Street Address', 'address1'),
         ('Supplemental Address 1', 'address2'),
         ('Supplemental Address 2', 'address3'),
@@ -64,7 +61,7 @@ config_members = {
         ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
-        ('Ward', None),  # Consider: 'ward_name'
+        ('Ward', 'ward_name'),  # Consider: 'ward_name'
         ('Local authority', None),
         ('Westminster parliament constituency', None),
         ('Local party', 'party'),  # encode to G
@@ -126,7 +123,7 @@ config_supporters = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', 'name'),
-        ('Do not mail', 'do_not_contact'),
+        ('Do not mail', 'tag_list'),
         ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
         ('Street Address', 'address1'),
@@ -213,9 +210,10 @@ config_search = {
         ('Internal Contact ID', 'civicrm_id'),
         ('Do Not Email', 'email opt in'),  # Reverse Sense
         ('Do Not Phone', 'mobile opt in'),  # Reverse Sense
-        ('Do Not Mail', 'do_not_contact'),  # tag NoMail
+        ('Do Not Mail', 'tag_list'),  # tag NoMail
         ('Do Not Sms', 'tag_list'),  # tag NoSMS
         ('First Name', 'first_name'),
+        ('Middle Name', 'middle_name'),
         ('Last Name', 'last_name'),
         ('Individual Prefix', 'prefix'),
         ('Gender', 'sex'),
@@ -232,8 +230,7 @@ config_search = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        #         ('is_supporter', 'is_supporter'),
-        ('support_level', 'support_level'),
+                        #Do not set  records support_level or is_supporter from SearchAll 
     ]),
     'fields_flip': (  # Reverse Sense
         'Do Not Email',
@@ -284,6 +281,7 @@ config_register = {
     'skip_lines': 0,
     'fields_extra': OD([
         ('is_voter', 'is_voter'),
+        ('ward_name', 'ward_name'),
     ]),
     'fields_flip': (),  # Reverse Sense
 }

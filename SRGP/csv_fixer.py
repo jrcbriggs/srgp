@@ -102,11 +102,11 @@ class FileHandler(object):
             if fieldnames != fieldnames_expected:
                 fields_odd = self.find_mismatch(
                     fieldnames, fieldnames_expected)
-                raise ValueError('Unexpected fieldnames:\nactual: '
-                                 + ','.join(fieldnames)
+                raise ValueError('Unexpected fieldnames:\nactual  : '
+                                 + ','.join(sorted(fieldnames))
                                  + '\nexpected: ' +
-                                 ','.join(fieldnames_expected)
-                                 + '\nmismatch:' + ','.join(fields_odd))
+                                 ','.join(sorted(fieldnames_expected))
+                                 + '\nmismatch:' + ','.join(sorted(fields_odd)))
         return (table, fieldnames)
 
     def find_mismatch(self, set0, set1):
@@ -217,6 +217,16 @@ class TableFixer(object):
     }
     # Skip Rows where (civi) contact type is Organization (not Individual)
     skip_dict = {'Contact Type': 'Organization'}
+
+    @staticmethod
+    def pd2ward(pd):
+        return {
+            'E': 'Broomhill',
+            'G': 'Central',
+            'R': 'Manor Castle',
+            'T': 'Nether Edge',
+            'Z': 'Walkley',
+        }[pd[0]]
 
     def __init__(self,
                  address_fields=(),
@@ -398,6 +408,7 @@ class TableFixer(object):
             self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
+            self.set_ward(row)
             row.update(self.tags_create(row, self.tagfields, self.tagtail))
             skip_list += self.is_matching_row(row, self.skip_dict)
         for row in skip_list:
@@ -420,7 +431,7 @@ class TableFixer(object):
         return [row for (k, v) in skip_dict.items() if row.get(k, None) == v]
 
     def ismember(self, row):
-        return row.get('Status', None) == 'active'
+        return row.get('Status', None) in ('Current', 'New', 'Grace', 'active')
 
     def ispostcode(self, postcode):  # is value a postcode
         return self.regexes['postcode'].search(postcode)
@@ -435,11 +446,17 @@ class TableFixer(object):
                 )
 
     def merge_pd_eno(self, row):
-        if 'PD' in row and 'ENO' in row:
+        if ('PD' in row) and ('ENO' in row):
             row['ENO'] = row['PD'] + str(row['ENO'])
         if 'Polling district' in row and 'Electoral roll number' in row:
             row['Electoral roll number'] = row[
                 'Polling district'] + str(row['Electoral roll number'])
+
+    def set_ward(self, row):
+        if 'PD' in row:
+            pd = row['PD']
+            ward = TableFixer.pd2ward(pd)
+            row['ward_name'] = ward
 
     def tags_create(self, row, tagfields, tagtail):
         '''Assemble tag, append to @tags, create tag_list field.
