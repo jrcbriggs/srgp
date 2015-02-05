@@ -130,6 +130,7 @@ class Uploader(object):
 if __name__ == "__main__":
     err_filename = 'uploader_log.csv'
     for filename in argv[1:]:  # skip scriptname in argv[0]
+        print(filename)
         uploader = Uploader(filename, err_filename)
         url_upload = uploader.url_join(nbslug, (), nbtoken)
         for status in uploader.upload(url_upload):

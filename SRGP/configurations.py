@@ -20,7 +20,7 @@ Changes:
 #Julian Briggs 11-jan-2015: do not assume ppl in SearchAll are supporters. Comment is_supporter extra_field
 '''
 from collections import OrderedDict as OD
-
+from copy import deepcopy
 nbslug = 'srgp.nationbuilder.com'
 nbtoken = '0734fabec6b9425e1cca7b6ab69c29a02f7d4d90f36802f3eba864cbcc72664e'
 
@@ -57,11 +57,11 @@ config_members = {
         ('Supplemental Address 2', 'address3'),
         ('City', 'city'),
         ('Postal Code', 'zip'),
-        ('Country', 'country_code'),  # encode
+        ('Country', 'country_code'),
         ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
-        ('Ward', 'ward_name'),  # Consider: 'ward_name'
+        ('Ward', 'ward_name'),
         ('Local authority', None),
         ('Westminster parliament constituency', None),
         ('Local party', 'party'),  # encode to G
@@ -173,7 +173,7 @@ config_volunteers = {
 }
 
 config_young_greens = {
-    'address_fields': { },
+    'address_fields': {},
     'date_fields': ('Start Date', 'End Date',),
     'date_format': '%Y-%m-%d',  # Membershiip date: 2014-05-17
     'doa_fields': (),
@@ -188,7 +188,7 @@ config_young_greens = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        ('Young Green', 'membership_name'), 
+        ('Young Green', 'membership_name'),
     ]),
     'fields_flip': (),  # Reverse Sense
 }
@@ -230,12 +230,21 @@ config_search = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-                        #Do not set  records support_level or is_supporter from SearchAll 
+        # Do not set  records support_level or is_supporter from SearchAll
     ]),
     'fields_flip': (  # Reverse Sense
         'Do Not Email',
         'Do Not Phone',),
 }
+config_members_mod = deepcopy(config_search)
+config_members_mod['fields_extra'] = OD([
+    ('is_supporter', 'is_supporter'),
+    ('party_member', 'party_member'),
+    ('support_level', 'support_level'),
+])
+
+config_members_new = deepcopy(config_members_mod)
+config_members_add = config_members_new
 
 '''
 config for Sheffield City Council electoral roll (register of electors) 2013
@@ -357,7 +366,7 @@ canvassing = {
         ('Comments', 'notes'),
         ('Local campaigns', 'tag_list'),
         ('Postal Vote (last election)', 'tag_list'),
-        ('Last local politics canvassed', 'support_level'), 
+        ('Last local politics canvassed', 'support_level'),
         #         ('13/14 canvass by', 'tag_list'),
         ('13/14 local politics', 'tag_list'),
         ('E-mail address', 'email'),

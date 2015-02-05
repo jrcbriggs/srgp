@@ -20,7 +20,8 @@ import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
-    config_volunteers, canvassing, config_young_greens
+    config_volunteers, canvassing, config_young_greens, config_members_mod,\
+    config_members_new, config_members_add
 
 
 class ConfigHandler(object):
@@ -81,8 +82,8 @@ class FileHandler(object):
     '''
 
     def config_load(self, modulename):
-        mod = import_module(modulename)
-        return mod.config
+        mods = import_module(modulename)
+        return mods.config
 
     def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
@@ -498,6 +499,12 @@ if __name__ == '__main__':
         # Find config varname to match csv filename
         if search('register', csv_filename):
             config = config_register
+        elif search('MembersAdd', csv_filename,):
+            config = config_members_add
+        elif search('MembersMod', csv_filename,):
+            config = config_members_mod
+        elif search('MembersNew', csv_filename,):
+            config = config_members_new
         elif search('Members', csv_filename,):
             config = config_members
         elif search('Officers', csv_filename,):
@@ -523,5 +530,6 @@ if __name__ == '__main__':
             reader = filehandler.xlsx_read
         xls_pw = os.getenv('XLS_PASSWORD')
 
+#         print('config ', config)
         csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)
