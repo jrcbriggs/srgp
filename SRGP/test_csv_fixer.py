@@ -35,10 +35,10 @@ class Test(unittest.TestCase):
             'tagfields': ('e', 'f'),
         }
         self.params = self.config.copy()
-        self.params.update({'fieldnames': ('a', 'b', 'c', 'd', 'e', 'f',), })
+        self.params.update({'nb_fieldnames': ('a', 'b', 'c', 'd', 'e', 'f',), })
         self.config_r2nb = self.config.copy()
         self.config_r2nb.update({
-            'fieldnames': ('a', 'b', 'c', 'd', 'e', 'f',),
+            'nb_fieldnames': ('a', 'b', 'c', 'd', 'e', 'f',),
             'fieldnames_new': ('A', 'B', 'C', 'tag_list',),
             'fieldmap_new': OD([
                 ('a', 'A'),
@@ -49,7 +49,7 @@ class Test(unittest.TestCase):
         })
         self.address_fields = self.config['address_fields']
         self.doa_fields = ('c',)
-        self.fieldnames = ('a', 'b', 'c', 'd', 'e', 'f',)
+        self.nb_fieldnames = ('a', 'b', 'c', 'd', 'e', 'f',)
         self.fieldnames_new = ('A', 'B', 'C', 'tag_list',)
         self.fieldmap = OD([('a', 'A',), ('b', 'B',), ('c', 'C',), ])
         self.tagfields = ('d', 'e',)
@@ -78,7 +78,7 @@ class Test(unittest.TestCase):
 
     def test_confighandler(self):
         ch = ConfigHandler(**self.config)
-        self.assertTupleEqual(ch.fieldnames, ('a', 'b', 'c', 'd', 'e', 'f',))
+        self.assertTupleEqual(ch.nb_fieldnames, ('a', 'b', 'c', 'd', 'e', 'f',))
         self.assertTupleEqual(ch.fieldnames_new, ('A', 'B', 'C', 'tag_list'))
         self.assertDictEqual(
             ch.fieldmap_new, {'a': 'A', 'b': 'B', 'c': 'C', 'tag_list': 'tag_list'})
@@ -95,29 +95,29 @@ class Test(unittest.TestCase):
         self.assertEquals(config['var0'], 123)
 
     def test_csv_print(self):
-        self.filehandler.csv_print(self.table, self.fieldnames)
+        self.filehandler.csv_print(self.table, self.nb_fieldnames)
 
     def test_csv_read(self):
-        self.filehandler.csv_write(self.table, self.pathname, self.fieldnames)
-        (table, fieldnames) = self.filehandler.csv_read(self.pathname, self.fieldnames)
+        self.filehandler.csv_write(self.table, self.pathname, self.nb_fieldnames)
+        (table, fieldnames) = self.filehandler.csv_read(self.pathname, self.nb_fieldnames)
         self.assertEqual(len(table), len(self.table))
         for i in range(len(table)):
             self.assertDictEqual(table[i], self.table[i])
-        self.assertTupleEqual(fieldnames, self.fieldnames)
+        self.assertTupleEqual(fieldnames, self.nb_fieldnames)
 
     def test_csv_read_skiplines(self):
         with open(self.pathname, 'w') as fh:
             fh.write('Line0\nLine1\nLine2\na,b,c,d,e,f\n0,1,2,3,4,5\n6,7,8,9,10,11\n')
         (table, fieldnames) = self.filehandler.csv_read(
-            self.pathname, self.fieldnames, skip_lines=3)
+            self.pathname, self.nb_fieldnames, skip_lines=3)
         self.assertEqual(len(table), len(self.table))
         for i in range(len(table)):
             self.assertDictEqual(table[i], self.table[i])
-        self.assertTupleEqual(fieldnames, self.fieldnames)
+        self.assertTupleEqual(fieldnames, self.nb_fieldnames)
 
     def test_csv_read_err(self):
-        self.filehandler.csv_write(self.table, self.pathname, self.fieldnames)
-        fieldnames_new = self.fieldnames[: -1] + ('Junk',)
+        self.filehandler.csv_write(self.table, self.pathname, self.nb_fieldnames)
+        fieldnames_new = self.nb_fieldnames[: -1] + ('Junk',)
         self.assertRaises(ValueError, self.filehandler.csv_read, self.pathname,
                           fieldnames_new)
     # TableMapper

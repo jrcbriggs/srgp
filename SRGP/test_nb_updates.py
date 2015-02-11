@@ -5,6 +5,7 @@ Created on 4 Feb 2015
 '''
 import unittest
 from nb_updates import NbUpdates
+from collections import OrderedDict as OD
 
 
 class Test(unittest.TestCase):
@@ -25,13 +26,26 @@ class Test(unittest.TestCase):
             3: r1,
         }
         self.d1 = {
+            9: r3,
             0: r0,
             3: r11,
             6: r2,
-            9: r3,
         }
         self.nbkey = 'a'
-        self.nu = NbUpdates(self.t0, self.t1, self.nbkey)
+        self.fieldmap = OD([
+            ('A', 'a',),
+            ('D', None),
+            ('B', 'b'),
+            ('E', None),
+            ('C', 'c',),
+        ])
+        self.nb_fieldmap = OD([
+            ('a', 'A', ),
+            ('b', 'B', ),
+            ('c', 'C',),
+        ])
+        self.nb_fieldnames = ('a', 'b', 'c', )
+        self.nu = NbUpdates(self.t0, self.t1, self.nbkey, self.nb_fieldmap)
 
     def test_NbUpdates(self):
         self.assertListEqual(self.nu.t0, self.t0)
@@ -39,6 +53,8 @@ class Test(unittest.TestCase):
         self.assertEqual(self.nu.nbkey, self.nbkey)
         self.assertDictEqual(self.nu.d0, self.d0)
         self.assertDictEqual(self.nu.d1, self.d1)
+        self.assertDictEqual(self.nu.fieldmap, self.nb_fieldmap)
+        self.assertTupleEqual(self.nu.nb_fieldnames, self.nb_fieldnames)
 
     def test_table2dict(self):
         actual = NbUpdates.table2dict(self.t0, 'a')
@@ -50,10 +66,15 @@ class Test(unittest.TestCase):
         expected = [self.r2, self.r3]
         self.assertListEqual(actual, expected)
 
-    def test_mod(self):
+    def test_mods(self):
         actual = self.nu.mods()
         expected = [self.r11]
         self.assertListEqual(actual, expected)
+
+    def test_invert_fieldmap(self):
+        actual = NbUpdates.invert_fieldmap(self.fieldmap)
+        expected = self.nb_fieldmap
+        self.assertDictEqual(actual, expected)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testtable2dict']

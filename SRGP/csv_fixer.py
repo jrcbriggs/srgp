@@ -385,6 +385,10 @@ class TableFixer(object):
                 row[fieldname] = ''
                 row[field_postcode] = v
 
+    def fix_state(self, row):
+        if 'registered_state' in row:
+            row['registered_state'] = 'Sheffield'
+
     def fix_status(self, row):
         if 'Status' in row:
             statusmap = {'Cancelled': 'canceled', 'Current': 'active',
@@ -406,6 +410,7 @@ class TableFixer(object):
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
             # Must call after extra_fields so extra_fields can identify is_deceased
+            self.fix_state(row)
             self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
