@@ -20,7 +20,7 @@ Changes:
 #Julian Briggs 11-jan-2015: do not assume ppl in SearchAll are supporters. Comment is_supporter extra_field
 '''
 from collections import OrderedDict as OD
-
+from copy import deepcopy
 nbslug = 'srgp.nationbuilder.com'
 nbtoken = '0734fabec6b9425e1cca7b6ab69c29a02f7d4d90f36802f3eba864cbcc72664e'
 
@@ -43,28 +43,25 @@ config_members = {
         ('Email Greeting', None),
         ('First Name', 'first_name'),
         ('Last Name', 'last_name'),
-        ('Do not mail', 'do_not_contact'),
+        ('Do not mail', 'tag_list'),
         ('Addressee', None),
         ('Contact ID', 'civicrm_id'),
-        ('Membership Type', 'membership_type'),  # consider 'tag_list' encode
+        ('Membership Type', 'membership_type'),
         ('Start Date', None),
         ('End Date', 'expires_on'),
         ('Member Since', 'started_at'),
-        # eg: Online Contribution: Individual Unwaged Membership
         ('Source', None),
-        # Membership Status: Cancelled, Current, Deceased, Expired, New
-        #         ('Status', 'membership_name'),
-        ('Status', 'membership_status'),  # changed 16-jan-2015
-        ('Street Address', 'address1'),
-        ('Supplemental Address 1', 'address2'),
-        ('Supplemental Address 2', 'address3'),
-        ('City', 'city'),
-        ('Postal Code', 'zip'),
-        ('Country', 'country_code'),  # encode
-        ('Email', 'email'),
+        ('Status', 'membership_status'),
+        ('Street Address', 'address_address1'),
+        ('Supplemental Address 1', 'address_address2'),
+        ('Supplemental Address 2', 'address_address3'),
+        ('City', 'address_city'),
+        ('Postal Code', 'address_zip'),
+        ('Country', 'address_country_code'),
+        ('Email', 'email1'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
-        ('Ward', None),  # Consider: 'ward_name'
+        ('Ward', 'precinct_name'),
         ('Local authority', None),
         ('Westminster parliament constituency', None),
         ('Local party', 'party'),  # encode to G
@@ -78,6 +75,7 @@ config_members = {
         ('party_member', 'party_member'),
         #         ('status', 'status'),
         ('support_level', 'support_level'),
+        ('registered_state', 'registered_state'),
     ]),
     'fields_flip': (),  # Reverse Sense
 }
@@ -126,7 +124,7 @@ config_supporters = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', 'name'),
-        ('Do not mail', 'do_not_contact'),
+        ('Do not mail', 'tag_list'),
         ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
         ('Street Address', 'address1'),
@@ -176,7 +174,7 @@ config_volunteers = {
 }
 
 config_young_greens = {
-    'address_fields': { },
+    'address_fields': {},
     'date_fields': ('Start Date', 'End Date',),
     'date_format': '%Y-%m-%d',  # Membershiip date: 2014-05-17
     'doa_fields': (),
@@ -191,7 +189,7 @@ config_young_greens = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        ('Young Green', 'membership_name'), 
+        ('Young Green', 'membership_name'),
     ]),
     'fields_flip': (),  # Reverse Sense
 }
@@ -213,9 +211,10 @@ config_search = {
         ('Internal Contact ID', 'civicrm_id'),
         ('Do Not Email', 'email opt in'),  # Reverse Sense
         ('Do Not Phone', 'mobile opt in'),  # Reverse Sense
-        ('Do Not Mail', 'do_not_contact'),  # tag NoMail
+        ('Do Not Mail', 'tag_list'),  # tag NoMail
         ('Do Not Sms', 'tag_list'),  # tag NoSMS
         ('First Name', 'first_name'),
+        ('Middle Name', 'middle_name'),
         ('Last Name', 'last_name'),
         ('Individual Prefix', 'prefix'),
         ('Gender', 'sex'),
@@ -232,13 +231,21 @@ config_search = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        #         ('is_supporter', 'is_supporter'),
-        ('support_level', 'support_level'),
+        # Do not set  records support_level or is_supporter from SearchAll
     ]),
     'fields_flip': (  # Reverse Sense
         'Do Not Email',
         'Do Not Phone',),
 }
+config_members_mod = deepcopy(config_search)
+config_members_mod['fields_extra'] = OD([
+    ('is_supporter', 'is_supporter'),
+    ('party_member', 'party_member'),
+    ('support_level', 'support_level'),
+])
+
+config_members_new = deepcopy(config_members_mod)
+config_members_add = config_members_new
 
 '''
 config for Sheffield City Council electoral roll (register of electors) 2013
@@ -257,19 +264,24 @@ config_register = {
         'zip': 'Address 6',
         'country_code': 'Address 7',
     },
-    'date_fields': ('Date of Attainment',),
+    #     'date_fields': ('Date of Attainment',),
+    'date_fields': ('Date Of Attainment',),
     'date_format': '%d/%m/%Y',  # _electoral_roll
-    'doa_fields': ('Date of Attainment',),
+    #     'doa_fields': ('Date of Attainment',),
+    'doa_fields': ('Date Of Attainment',),
     'fieldmap': OD([
         ('PD', 'tag_list'),  # city_sub_district
-        ('ENO', 'external_id'),
+        #         ('ENO', 'external_id'),
+        ('ENO', 'state_file_id'),
         ('Status', 'tag_list'),
         ('Title', 'prefix'),
-        ('First Names', 'first_name'),
+        #         ('First Names', 'first_name'),
+        ('First Name', 'first_name'),
         ('Initials', 'middle_name'),
         ('Surname', 'last_name'),
         ('Suffix', 'suffix'),
-        ('Date of Attainment', 'dob'),
+        #         ('Date of Attainment', 'dob'),
+        ('Date Of Attainment', 'dob'),
         ('Franchise Flag', 'tag_list'),
         ('Address 1', 'registered_address1'),
         ('Address 2', 'registered_address2'),
@@ -284,6 +296,8 @@ config_register = {
     'skip_lines': 0,
     'fields_extra': OD([
         ('is_voter', 'is_voter'),
+        ('ward_name', 'ward_name'),
+        ('registered_state', 'registered_state'),
     ]),
     'fields_flip': (),  # Reverse Sense
 }
@@ -359,8 +373,7 @@ canvassing = {
         ('Comments', 'notes'),
         ('Local campaigns', 'tag_list'),
         ('Postal Vote (last election)', 'tag_list'),
-        ('Last local politics canvassed', 'support_level'), 
-        #         ('13/14 canvass by', 'tag_list'),
+        ('Last local politics canvassed', 'support_level'),
         ('13/14 local politics', 'tag_list'),
         ('E-mail address', 'email'),
         ('Home/Work Phone', 'phone_number'),

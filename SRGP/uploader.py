@@ -102,6 +102,7 @@ class Uploader(object):
         # Post import
         response = requests.post(url_upload, headers=self.headers,
                                  data=self.data_json)
+        
         data = response.json()
         upload_id = self.json_extractor(data, ('import', 'id',))
 
@@ -132,6 +133,7 @@ class Uploader(object):
 if __name__ == "__main__":
     err_filename = 'uploader_log.csv'
     for filename in argv[1:]:  # skip scriptname in argv[0]
+        print(filename)
         uploader = Uploader(filename, err_filename)
         url_upload = uploader.url_join(nbslug, (), nbtoken)
         for status in uploader.upload(url_upload):

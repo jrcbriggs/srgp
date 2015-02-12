@@ -20,7 +20,8 @@ import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
-    config_volunteers, canvassing, config_young_greens
+    config_volunteers, canvassing, config_young_greens, config_members_mod,\
+    config_members_new, config_members_add
 
 
 class ConfigHandler(object):
@@ -81,8 +82,8 @@ class FileHandler(object):
     '''
 
     def config_load(self, modulename):
-        mod = import_module(modulename)
-        return mod.config
+        mods = import_module(modulename)
+        return mods.config
 
     def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
@@ -102,11 +103,11 @@ class FileHandler(object):
             if fieldnames != fieldnames_expected:
                 fields_odd = self.find_mismatch(
                     fieldnames, fieldnames_expected)
-                raise ValueError('Unexpected fieldnames:\nactual: '
-                                 + ','.join(fieldnames)
+                raise ValueError('Unexpected fieldnames:\nactual  : '
+                                 + ','.join(sorted(fieldnames))
                                  + '\nexpected: ' +
-                                 ','.join(fieldnames_expected)
-                                 + '\nmismatch:' + ','.join(fields_odd))
+                                 ','.join(sorted(fieldnames_expected))
+                                 + '\nmismatch:' + ','.join(sorted(fields_odd)))
         return (table, fieldnames)
 
     def find_mismatch(self, set0, set1):
@@ -217,6 +218,16 @@ class TableFixer(object):
     }
     # Skip Rows where (civi) contact type is Organization (not Individual)
     skip_dict = {'Contact Type': 'Organization'}
+
+    @staticmethod
+    def pd2ward(pd):
+        return {
+            'E': 'Broomhill',
+            'G': 'Central',
+            'R': 'Manor Castle',
+            'T': 'Nether Edge',
+            'Z': 'Walkley',
+        }[pd[0]]
 
     def __init__(self,
                  address_fields=(),
@@ -374,6 +385,10 @@ class TableFixer(object):
                 row[fieldname] = ''
                 row[field_postcode] = v
 
+    def fix_state(self, row):
+        if 'registered_state' in row:
+            row['registered_state'] = 'Sheffield'
+
     def fix_status(self, row):
         if 'Status' in row:
             statusmap = {'Cancelled': 'canceled', 'Current': 'active',
@@ -395,9 +410,11 @@ class TableFixer(object):
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
             # Must call after extra_fields so extra_fields can identify is_deceased
+            self.fix_state(row)
             self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
+            self.set_ward(row)
             row.update(self.tags_create(row, self.tagfields, self.tagtail))
             skip_list += self.is_matching_row(row, self.skip_dict)
         for row in skip_list:
@@ -420,7 +437,7 @@ class TableFixer(object):
         return [row for (k, v) in skip_dict.items() if row.get(k, None) == v]
 
     def ismember(self, row):
-        return row.get('Status', None) == 'active'
+        return row.get('Status', None) in ('Current', 'New', 'Grace', 'active')
 
     def ispostcode(self, postcode):  # is value a postcode
         return self.regexes['postcode'].search(postcode)
@@ -435,11 +452,17 @@ class TableFixer(object):
                 )
 
     def merge_pd_eno(self, row):
-        if 'PD' in row and 'ENO' in row:
+        if ('PD' in row) and ('ENO' in row):
             row['ENO'] = row['PD'] + str(row['ENO'])
         if 'Polling district' in row and 'Electoral roll number' in row:
             row['Electoral roll number'] = row[
                 'Polling district'] + str(row['Electoral roll number'])
+
+    def set_ward(self, row):
+        if 'PD' in row:
+            pd = row['PD']
+            ward = TableFixer.pd2ward(pd)
+            row['ward_name'] = ward
 
     def tags_create(self, row, tagfields, tagtail):
         '''Assemble tag, append to @tags, create tag_list field.
@@ -481,6 +504,12 @@ if __name__ == '__main__':
         # Find config varname to match csv filename
         if search('register', csv_filename):
             config = config_register
+        elif search('MembersAdd', csv_filename,):
+            config = config_members_add
+        elif search('MembersMod', csv_filename,):
+            config = config_members_mod
+        elif search('MembersNew', csv_filename,):
+            config = config_members_new
         elif search('Members', csv_filename,):
             config = config_members
         elif search('Officers', csv_filename,):
@@ -506,5 +535,6 @@ if __name__ == '__main__':
             reader = filehandler.xlsx_read
         xls_pw = os.getenv('XLS_PASSWORD')
 
+#         print('config ', config)
         csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)
