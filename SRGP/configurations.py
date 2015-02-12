@@ -34,7 +34,7 @@ config_members = {
         'country_code': 'Country',
     },
     'date_fields': ('Start Date', 'End Date', 'Member Since',),
-    'date_format': '%Y-%m-%d',  # Membershiip date: 2014-05-17
+    'date_format': '%Y-%m-%d',  # Membership date: 2014-05-17
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', None),
