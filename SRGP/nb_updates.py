@@ -42,16 +42,11 @@ class CsvHandler(object):
 
 class NbUpdates(object):
 
-    def __init__(self, t0, t1, nbkey, fieldmap, fieldnames_mods):
-        self.t0 = t0
-        self.t1 = t1
-        self.nbkey = nbkey
-        self.d0 = self.table2dict(self.t0, nbkey)
-        self.d1 = self.table2dict(self.t1, nbkey)
+    def __init__(self, t0, t1, nbkey, fieldmap):
+        self.d0 = self.table2dict(t0, nbkey)
+        self.d1 = self.table2dict(t1, nbkey)
         self.fieldmap = fieldmap
         self.nb_fieldnames = tuple(sorted(self.fieldmap.keys()))
-        self.fieldnames_mods = fieldnames_mods
-        self.mods = []
 
     @staticmethod
     def invert_fieldmap(fm):
@@ -78,7 +73,7 @@ class NbUpdates(object):
 
     def find_mods(self):
         '''Return list of modified fields:
-        {CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE,} 
+        {CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE,}
         Where record exists (smae nb_key) in old and new CSV
         '''
         mods = []
@@ -107,22 +102,15 @@ class Main(object):
         omits = ['expires_on', 'membership_status', 'membership_type',
                  #              'mobile_number', 'phone_number',
                  'precinct_name', 'started_at', 'tag_list', ]
-        fieldnames_mods = [
-            'CIVICRM_ID',
-            'FIRST_NAME',
-            'LAST_NAME',
-            'FIELDNAME',
-            'OLD_VALUE',
-            'NEW_VALUE',
-        ]
+        fieldnames_mods = 'CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE'.split(',')
         for omit in omits:
             del fieldmap[omit]
-        nu = NbUpdates(ch.t0, ch.t1, nbkey, fieldmap, fieldnames_mods)
+        nu = NbUpdates(ch.t0, ch.t1, nbkey, fieldmap)
         new = nu.new()
         ch.csv_write(new, fn1.replace('.csv', 'NEW.csv'))
-        self.mods = nu.find_mods()
-        ch.csv_write(self.mods, fn1.replace('.csv', 'MODS.csv'), fieldnames=fieldnames_mods)
-        ch.csv_print(self.mods, fieldnames=fieldnames_mods)
+        mods = nu.find_mods()
+        ch.csv_write(mods, fn1.replace('.csv', 'MODS.csv'), fieldnames=fieldnames_mods)
+        ch.csv_print(mods, fieldnames=fieldnames_mods)
 
 if __name__ == '__main__':
     (fn0, fn1) = sys.argv[1:3]
