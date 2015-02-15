@@ -102,7 +102,7 @@ class Uploader(object):
         # Post import
         response = requests.post(url_upload, headers=self.headers,
                                  data=self.data_json)
-        
+        pprint(response)
         data = response.json()
         upload_id = self.json_extractor(data, ('import', 'id',))
 

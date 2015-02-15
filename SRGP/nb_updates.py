@@ -21,7 +21,7 @@ class CsvHandler(object):
 
     def csv_read(self, pathname):
         '''Read csv file (excluding 1st row) into self.table.
-        Populate self.nb_fieldnames with fields from 1st row in order'''
+        Populate self.fieldnames with fields from 1st row in order'''
         with open(pathname, 'r') as fh:
             dr = DictReader(fh)
             self.fieldnames = dr.fieldnames
@@ -46,7 +46,7 @@ class NbUpdates(object):
         self.d0 = self.table2dict(t0, nbkey)
         self.d1 = self.table2dict(t1, nbkey)
         self.fieldmap = fieldmap
-        self.nb_fieldnames = tuple(sorted(self.fieldmap.keys()))
+        self.fieldnames = tuple(sorted(self.fieldmap.keys()))
 
     @staticmethod
     def invert_fieldmap(fm):
@@ -80,7 +80,7 @@ class NbUpdates(object):
         for k in sorted(set(self.d0.keys()) & set(self.d1.keys())):
             row_old = self.d0[k]
             row_new = self.d1[k]
-            for f in self.nb_fieldnames:
+            for f in self.fieldnames:
                 if row_old[f] != row_new[f]:
                     mods.append({
                         'CIVICRM_ID': row_new['civicrm_id'],
@@ -99,16 +99,15 @@ class Main(object):
         ch = CsvHandler(fn0, fn1)
         config = configurations.config_members
         fieldmap = NbUpdates.invert_fieldmap(config['fieldmap'])
-        omits = ['expires_on', 'membership_status', 'membership_type',
-                 #              'mobile_number', 'phone_number',
-                 'precinct_name', 'started_at', 'tag_list', ]
-        fieldnames_mods = 'CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE'.split(',')
+        omits = 'expires_on,membership_status,membership_type,mobile_number,phone_number,precinct_name,started_at,tag_list'.split(
+            ',')
         for omit in omits:
             del fieldmap[omit]
         nu = NbUpdates(ch.t0, ch.t1, nbkey, fieldmap)
         new = nu.new()
         ch.csv_write(new, fn1.replace('.csv', 'NEW.csv'))
         mods = nu.find_mods()
+        fieldnames_mods = 'CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE'.split(',')
         ch.csv_write(mods, fn1.replace('.csv', 'MODS.csv'), fieldnames=fieldnames_mods)
         ch.csv_print(mods, fieldnames=fieldnames_mods)
 
