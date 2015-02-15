@@ -169,8 +169,11 @@ class CsvFixer(object):
         # Fix the data in table
         (csv_basename, _) = splitext(basename(csv_filename))
         vh = TableFixer(table=table, csv_basename=csv_basename, **ch.params)
-#         table_fixed = vh.fix_table()
-        table_fixed = vh.fix_table_street_address()
+        table_fixed = None
+        if csv_basename.contains('nationbuilder'):
+            table_fixed = vh.fix_table_street_address()
+        else:
+            table_fixed = vh.fix_table()
 
         # Create new table: with NB table column headings
         d2d = TableMapper(table_fixed, ch.fieldmap_new)
