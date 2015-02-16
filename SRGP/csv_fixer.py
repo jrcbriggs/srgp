@@ -22,7 +22,7 @@ import xlrd
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
     config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod,\
-    config_nationbuilder, config_nationbuilder2, regexes
+    config_nationbuilder, config_nationbuilderNB, regexes
 
 
 class ConfigHandler(object):
@@ -318,19 +318,19 @@ class TableFixer(object):
         4. Prepend it to the list
         5. Copy array elements back into address fields in row.
         '''
-#         afns=[address_fields[k] for k in address_fields.keys()]
         afns = list(address_fields.values())[:-3]  # omit rightmost 3 fields (city, zip, country)
-        alist = [row[afn] for afn in afns]
-        for i in range(len(alist) - 1, -1, -1):
-            if self.isstreet(alist[i]) and not self.islocality(alist[i]):
-                v = alist.pop(i)
-                alist.insert(0, v)
-                break
-        else:
-            if alist[0]:
-                print('Street not found {}'.format(alist))
-        for i in range(len(alist)):
-            row[afns[i]] = alist[i]
+        if afns:
+            alist = [row[afn] for afn in afns]
+            for i in range(len(alist) - 1, -1, -1):
+                if self.isstreet(alist[i]) and not self.islocality(alist[i]):
+                    v = alist.pop(i)
+                    alist.insert(0, v)
+                    break
+            else:
+                if alist[0]:
+                    print('Street not found {}'.format(alist))
+            for i in range(len(alist)):
+                row[afns[i]] = alist[i]
 
     def fix_city(self, row, address_fields, field_city):
         for fieldname in address_fields.values():
@@ -547,9 +547,9 @@ if __name__ == '__main__':
             config = config_search
         elif search('canvass', csv_filename, IGNORECASE):
             config = canvassing
-        elif search('nationbuilder.+NB', csv_filename, IGNORECASE):
-            config = config_nationbuilder2
-        elif search('nationbuilder', csv_filename, IGNORECASE):
+        elif search('nationbuilder.+NB', csv_filename):
+            config = config_nationbuilderNB
+        elif search('nationbuilder', csv_filename):
             config = config_nationbuilder
         else:
             raise Exception('Cannot find config for csv {}'.format(csv_filename))
@@ -564,6 +564,6 @@ if __name__ == '__main__':
             reader = filehandler.xlsx_read
         xls_pw = os.getenv('XLS_PASSWORD')
 
-#         print('config ', config)
+        print('config_name: ', config['config_name'])
         csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)

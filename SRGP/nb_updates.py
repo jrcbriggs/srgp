@@ -73,7 +73,7 @@ class NbUpdates(object):
 
     def find_mods(self):
         '''Return list of modified fields:
-        {CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE,}
+        {NB_ID,CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE,}
         Where record exists (smae nb_key) in old and new CSV
         '''
         mods = []
@@ -83,6 +83,7 @@ class NbUpdates(object):
             for f in self.fieldnames:
                 if row_old[f] != row_new[f]:
                     mods.append({
+                        'NB_ID': row_new['nationbuilder_id'],
                         'CIVICRM_ID': row_new['civicrm_id'],
                         'FIRST_NAME': row_new['first_name'],
                         'LAST_NAME': row_new['last_name'],
@@ -107,7 +108,7 @@ class Main(object):
         new = nu.new()
         ch.csv_write(new, fn1.replace('.csv', 'NEW.csv'))
         mods = nu.find_mods()
-        fieldnames_mods = 'CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE'.split(',')
+        fieldnames_mods = 'NB_ID,CIVICRM_ID,FIRST_NAME,LAST_NAME,FIELDNAME,OLD_VALUE,NEW_VALUE'.split(',')
         ch.csv_write(mods, fn1.replace('.csv', 'MODS.csv'), fieldnames=fieldnames_mods)
         ch.csv_print(mods, fieldnames=fieldnames_mods)
 

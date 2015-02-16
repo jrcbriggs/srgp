@@ -62,8 +62,9 @@ regexes = {
                       'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|The Lawns|The Nook|'
                       'Other Electors)',
                       IGNORECASE),
-    }
+}
 config_members = {
+    'config_name': 'config_members',
     'address_fields': OD([
         ('address1', 'Street Address',),
         ('address2', 'Supplemental Address 1',),
@@ -120,6 +121,7 @@ config_members = {
 }
 
 config_officers = {
+    'config_name': 'config_officers',
     'address_fields': OD([
         ('address1', 'Street Address',),
         ('address2', 'Supplemental Address 1',),
@@ -152,6 +154,7 @@ config_officers = {
 }
 
 config_supporters = {
+    'config_name': 'config_supporters',
     'address_fields': OD([
         ('address1', 'Street Address',),
         ('address2', 'Supplemental Address 1',),
@@ -184,6 +187,7 @@ config_supporters = {
 }
 
 config_volunteers = {
+    'config_name': 'config_volunteers',
     'address_fields': {},
     'date_fields': (),
     'date_format': '%Y-%m-%d',  # Membershiip date: 2014-05-17
@@ -213,6 +217,7 @@ config_volunteers = {
 }
 
 config_young_greens = {
+    'config_name': 'config_young_greens',
     'address_fields': {},
     'date_fields': ('Start Date', 'End Date',),
     'date_format': '%Y-%m-%d',  # Membershiip date: 2014-05-17
@@ -235,6 +240,7 @@ config_young_greens = {
 
 
 config_search = {
+    'config_name': 'config_search',
     'address_fields': OD([
         ('address1', 'Street Address',),
         ('address2', 'Supplemental Address 1',),
@@ -277,6 +283,7 @@ config_search = {
         'Do Not Phone',),
 }
 config_search_add = deepcopy(config_search)
+config_search_add['config_name'] = 'config_search_add'
 config_search_add['fields_extra'] = OD([
     ('is_supporter', 'is_supporter'),
     ('party_member_true', 'party_member'),
@@ -284,6 +291,7 @@ config_search_add['fields_extra'] = OD([
 ])
 
 config_search_mod = deepcopy(config_search_add)
+config_search_mod['config_name'] = 'config_search_mod'
 
 '''
 config for Sheffield City Council electoral roll (register of electors) 2013
@@ -293,6 +301,7 @@ Date of Attainment, Franchise Flag, Address 1, Address 2, Address 3,
 Address 4, Address 5, Address 6, Address 7
 '''
 config_register = {
+    'config_name': 'config_register',
     'address_fields': OD([
         ('address1', 'Address 1',),
         ('address2', 'Address 2',),
@@ -341,6 +350,7 @@ config_register = {
 }
 
 config_register_update = deepcopy(config_register)
+config_register_update['config_name'] = ('config_register_update',)
 config_register_update['date_fields'] = ('Date Of Attainment',)
 config_register_update['doa_fields'] = ('Date Of Attainment',)
 for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First Names', 'First Name',), ]:
@@ -348,6 +358,7 @@ for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First Names', 
         (k1 if k == k0 else k, v) for (k, v,) in config_register['fieldmap'].items())
 
 config_register_city2014_postal = {
+    'config_name': 'config_register_city2014_postal',
     'address_fields': OD([
         ('address1', 'Qualifying_Address_1',),
         ('address2', 'Qualifying_Address_2',),
@@ -398,6 +409,7 @@ config_register_city2014_postal = {
 }
 
 canvassing = {
+    'config_name': 'canvassing',
     'address_fields': OD([
         ('address1', 'Address 1',),
         ('address2', 'Address 2',),
@@ -444,13 +456,14 @@ canvassing = {
 }
 
 config_nationbuilder = {
+    'config_name': 'config_nationbuilder',
     'address_fields': OD([
-        ('registered_address1', 'registered_address1',),
-        ('registered_address2', 'registered_address2',),
-        ('registered_address3', 'registered_address3',),
-        ('registered_city', 'registered_city'),
-        ('registered_zip', 'registered_zip'),
-        ('registered_country_code', 'registered_country_code'),
+        ('address_address1', 'address_address1',),
+        ('address_address2', 'address_address2',),
+        ('address_address3', 'address_address3',),
+        ('address_city', 'address_city'),
+        ('address_zip', 'address_zip'),
+        ('address_country_code', 'address_country_code'),
     ]),
     'date_fields': (),
     'date_format': '%d/%m/%Y',  # _electoral_roll
@@ -474,14 +487,15 @@ config_nationbuilder = {
     'fields_extra': {},
     'fields_flip': (),  # Reverse Sense
 }
-config_nationbuilder2 = {
+config_nationbuilderNB = {
+    'config_name': 'config_nationbuilderNB',
     'address_fields': OD([
-        ('address_address1', 'address_address1',),
-        ('address_address2', 'address_address2',),
-        ('address_address3', 'address_address3',),
-        ('address_city', 'address_city'),
-        ('address_zip', 'address_zip'),
-        ('address_country_code', 'address_country_code'),
+        ('registered_address1', 'registered_address1',),
+        ('registered_address2', 'registered_address2',),
+        ('registered_address3', 'registered_address3',),
+        ('registered_city', 'registered_city'),
+        ('registered_zip', 'registered_zip'),
+        ('registered_country_code', 'registered_country_code'),
     ]),
     'date_fields': (),
     'date_format': '%d/%m/%Y',  # _electoral_roll
