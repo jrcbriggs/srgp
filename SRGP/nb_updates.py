@@ -39,16 +39,10 @@ class CsvHandler(object):
 
 class NbUpdates(object):
 
-    def __init__(self, t0, t1, nbkey, fieldmap, fieldnames_mods):
-        self.t0 = t0
-        self.t1 = t1
-        self.nbkey = nbkey
-        self.d0 = self.table2dict(self.t0, nbkey)
-        self.d1 = self.table2dict(self.t1, nbkey)
-        self.fieldmap = fieldmap
-        self.nb_fieldnames = tuple(sorted(self.fieldmap.keys()))
-        self.fieldnames_mods = fieldnames_mods
-        self.mods = []
+    def __init__(self, t0, t1, nbkey, fieldmap):
+        self.d0 = self.table2dict(t0, nbkey)
+        self.d1 = self.table2dict(t1, nbkey)
+        self.nb_fieldnames = tuple(sorted(fieldmap.keys()))
 
     @staticmethod
     def invert_fieldmap(fm):
@@ -94,17 +88,10 @@ class NbUpdates(object):
                         'NEW_VALUE': row_new[f], }
                     row_new.update(update)
                     mods.append(row_new)
-                    self.mods.append(update)
-                    print(k, row_old['civicrm_id'], row_old['first_name'],
-                          row_old['last_name'], ':', f, row_old[f], row_new[f])
                     break
         return mods
 
 if __name__ == '__main__':
-    #     civi = '/home/julian/SRGP/civi/'
-    #     stem = civi + 'test/nationbuilder-people-export-'
-    #     fn0 = stem + '29-2015-02-05.csv'
-    #     fn1 = stem + '31-2015-02-07.csv'
     (fn0, fn1) = sys.argv[1:3]
     nbkey = 'nationbuilder_id'
     ch = CsvHandler(fn0, fn1)
@@ -113,26 +100,17 @@ if __name__ == '__main__':
     omits = ['expires_on', 'membership_status', 'membership_type',
              #              'mobile_number', 'phone_number',
              'precinct_name', 'started_at', 'tag_list', ]
-    fieldnames_mods = [
-                       'CIVICRM_ID', 
-                       'FIRST_NAME',
-                       'LAST_NAME',
-                       'UPDATE',
-                       'OLD_VALUE',
-                       'NEW_VALUE',
-                       ]
+    fieldnames_mods = 'CIVICRM_ID FIRST_NAME LAST_NAME UPDATE OLD_VALUE NEW_VALUE'.split()
     for omit in omits:
         del fieldmap[omit]
+    fieldnames_mods0 = ch.fieldnames + fieldnames_mods
     nu = NbUpdates(ch.t0, ch.t1, nbkey, fieldmap, fieldnames_mods)
     new = nu.new()
     ch.csv_write(new, fn1.replace('.csv', 'NEW.csv'))
     mods = nu.find_mods()
-    ch.fieldnames.insert(0, 'NEW_VALUE')
-    ch.fieldnames.insert(0, 'OLD_VALUE')
-    ch.fieldnames.insert(0, 'UPDATE')
-    ch.fieldnames.insert(0, 'LAST_NAME')
-    ch.fieldnames.insert(0, 'FIRST_NAME')
-    ch.fieldnames.insert(0, 'CIVICRM_ID')
-    ch.csv_write(mods, fn1.replace('.csv', 'MODS.csv'))
-    ch.csv_write(nu.mods, fn1.replace('.csv', 'MODS2.csv'), fieldnames=fieldnames_mods)
+
+    ch.csv_write(
+        mods, fn1.replace('.csv', 'MODS.csv'), fieldnames=fieldnames_mods)
+    ch.csv_write(
+        nu.mods, fn1.replace('.csv', 'MODS2.csv'), fieldnames=fieldnames_mods)
     print('Done')
