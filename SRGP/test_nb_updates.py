@@ -44,7 +44,7 @@ class Test(unittest.TestCase):
             ('b', 'B', ),
             ('c', 'C',),
         ])
-        self.nb_fieldnames = ('a', 'b', 'c', )
+        self.fieldnames = ('a', 'b', 'c', )
         self.nu = NbUpdates(self.t0, self.t1, self.nbkey, self.nb_fieldmap)
 
     def test_NbUpdates(self):
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
         self.assertDictEqual(self.nu.d0, self.d0)
         self.assertDictEqual(self.nu.d1, self.d1)
         self.assertDictEqual(self.nu.fieldmap, self.nb_fieldmap)
-        self.assertTupleEqual(self.nu.nb_fieldnames, self.nb_fieldnames)
+        self.assertTupleEqual(self.nu.fieldnames, self.fieldnames)
 
     def test_table2dict(self):
         actual = NbUpdates.table2dict(self.t0, 'a')

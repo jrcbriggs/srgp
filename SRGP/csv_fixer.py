@@ -12,6 +12,7 @@ from importlib import import_module
 from io import StringIO
 import mmap
 import os
+from os.path import basename, splitext
 from re import compile, IGNORECASE
 from re import search
 from sys import argv
@@ -20,8 +21,8 @@ import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
-    config_volunteers, canvassing, config_young_greens, config_members_mod,\
-    config_members_new, config_members_add
+    config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod,\
+    config_nationbuilder, config_nationbuilderNB, regexes
 
 
 class ConfigHandler(object):
@@ -166,8 +167,13 @@ class CsvFixer(object):
             csv_filename, ch.fieldnames, skip_lines)
 
         # Fix the data in table
-        vh = TableFixer(table=table, tagtail='tagtail', **ch.params)
-        table_fixed = vh.fix_table()
+        (csv_basename, _) = splitext(basename(csv_filename))
+        vh = TableFixer(table=table, csv_basename=csv_basename, **ch.params)
+        table_fixed = None
+        if 'nationbuilder' in csv_basename:
+            table_fixed = vh.fix_table_street_address()
+        else:
+            table_fixed = vh.fix_table()
 
         # Create new table: with NB table column headings
         d2d = TableMapper(table_fixed, ch.fieldmap_new)
@@ -196,26 +202,7 @@ class TableFixer(object):
     skip_list: skip matching rows (eg Organisation row in civi Search csv)
     '''
     date_format_nb = '%m/%d/%Y'
-    regexes = {
-        'city': compile('^(Rotherham|Sheffield)$', IGNORECASE),
-        'county': compile('^South Yorks$', IGNORECASE),
-        'house': compile('Barn|Building|College|Cottage|Farm|Hall|House|'
-                         'Lodge|Mansion|Mill|Residence', IGNORECASE),
-        'postcode': compile('^S\d\d? \d\w\w$'),
-        'street': compile(r'Approach|Avenue|Bank|Bridge|Close|Common|Court|'
-                          'Crescent|Croft|Dell|Drive|Gardens|Gate|Glen|Green|'
-                          'Grove|Head|Hill|Lane|Mews|Parade|Park|Place|Rise|'
-                          'Road|Row|Square|Street|Terrace|Town|Turn|View|'
-                          'Walk|Way|Wharf|'
-                          # Localities
-                          'Backfields|Birkendale|Castlegate|Cracknell|'
-                          'Cross Smithfield|Kelham Island|Shalesmoor|'
-                          'Summerfield|Upperthorpe|Wicker|'
-                          # blocks
-                          'Foster|Millsands|Pinsent|Redgrave|'
-                          'Other Electors',
-                          IGNORECASE),
-    }
+
     # Skip Rows where (civi) contact type is Organization (not Individual)
     skip_dict = {'Contact Type': 'Organization'}
 
@@ -240,7 +227,7 @@ class TableFixer(object):
                  fields_flip=(),
                  table=(),
                  tagfields=None,
-                 tagtail=None
+                 csv_basename=None
                  ):
         self.address_fields = address_fields
         self.date_fields = date_fields
@@ -251,7 +238,7 @@ class TableFixer(object):
         self.fields_flip = fields_flip
         self.table = table
         self.tagfields = tagfields
-        self.tagtail = tagtail
+        self.csv_basename = csv_basename
 
     def extra_fields(self, row, fields_extra):
         for k, v in fields_extra.items():
@@ -259,7 +246,7 @@ class TableFixer(object):
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_supporter':
                 # Set is_supporter extra field exists (change from if a member. Julian 23-jan-2015)
-                row[k] = True  # self.ismember(row)
+                row[k] = True  # self.is_party_member(row)
             elif k == 'is_volunteer':
                 # Set is_volunteer flag on all rows in the Volunteers csv
                 row[k] = True
@@ -268,7 +255,9 @@ class TableFixer(object):
             elif k == 'party':  # volunteers have extra field party, set it to G
                 row[k] = 'G'
             elif k == 'party_member':
-                row[k] = self.ismember(row)  # Set is_member flag
+                row[k] = self.is_party_member(row)  # Set is_member flag
+            elif k == 'party_member_true':
+                row[k] = True  # Set is_member flag
             elif k == 'support_level':
                 # assume strong support from all civi:
                 # (members, officers, supporters, volunteers but not search
@@ -320,6 +309,28 @@ class TableFixer(object):
         field_city = address_fields.get('city', None)
         if field_city:
             self.fix_city(row, address_fields, field_city)
+
+    def fix_address_street(self, row, address_fields):
+        '''Move street address to address1:
+        1. Copy address values from row into a list.
+        2. Find street address.
+        3. Pop it (ie remove from list)
+        4. Prepend it to the list
+        5. Copy array elements back into address fields in row.
+        '''
+        afns = list(address_fields.values())[:-3]  # omit rightmost 3 fields (city, zip, country)
+        if afns:
+            alist = [row[afn] for afn in afns]
+            for i in range(len(alist) - 1, -1, -1):
+                if self.isstreet(alist[i]) and not self.islocality(alist[i]):
+                    v = alist.pop(i)
+                    alist.insert(0, v)
+                    break
+            else:
+                if alist[0]:
+                    print('Street not found {}'.format(alist))
+            for i in range(len(alist)):
+                row[afns[i]] = alist[i]
 
     def fix_city(self, row, address_fields, field_city):
         for fieldname in address_fields.values():
@@ -406,6 +417,7 @@ class TableFixer(object):
             self.fix_dates(row)
             self.fix_doa(row, self.doa_fields)
             self.fix_addresses(row, self.address_fields)
+            self.fix_address_street(row, self.address_fields)
             self.fix_local_party(row)
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
@@ -415,38 +427,48 @@ class TableFixer(object):
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
             self.set_ward(row)
-            row.update(self.tags_create(row, self.tagfields, self.tagtail))
+            row.update(self.tags_create(row, self.tagfields, self.csv_basename))
             skip_list += self.is_matching_row(row, self.skip_dict)
         for row in skip_list:
             self.table.remove(row)  # Remove list element by value
         return self.table
 
+    def fix_table_street_address(self):
+        '''Just fix the street address.
+        in-place update row'''
+        for row in self.table:
+            self.fix_address_street(row, self.address_fields)
+        return self.table
+
     def iscity(self, city):  # is value a city
-        return self.regexes['city'].search(city)
+        return regexes['city'].search(city)
 
     def iscounty(self, county):  # is value a county
-        return self.regexes['county'].search(county)
+        return regexes['county'].search(county)
 
     def isdeceased(self, row):
         return row.get('Status', None) == 'Deceased'
 
-    def ishouse(self, house):  # is value a house name
-        return self.regexes['house'].search(house)
+    def ishouse(self, value):  # is value a house name
+        return regexes['house'].search(value)
+
+    def islocality(self, value):  # is value a locality (eg Broomhall
+        return regexes['locality'].match(value)
 
     def is_matching_row(self, row, skip_dict):
         return [row for (k, v) in skip_dict.items() if row.get(k, None) == v]
 
-    def ismember(self, row):
+    def is_party_member(self, row):
         return row.get('Status', None) in ('Current', 'New', 'Grace', 'active')
 
     def ispostcode(self, postcode):  # is value a postcode
-        return self.regexes['postcode'].search(postcode)
+        return regexes['postcode'].search(postcode)
 
-    def isstreet(self, street):  # is value a street
-        return self.regexes['street'].search(street)
+    def isstreet(self, value):  # is value a street
+        return regexes['street'].search(value)
 
     def isvoter(self, row):
-        return (row.get('Status', None) == 'E'  # register
+        return (row.get('Status', 'None') in 'AEM'  # register
                 or
                 'Electoral roll number' in row  # Canvassing
                 )
@@ -464,7 +486,7 @@ class TableFixer(object):
             ward = TableFixer.pd2ward(pd)
             row['ward_name'] = ward
 
-    def tags_create(self, row, tagfields, tagtail):
+    def tags_create(self, row, tagfields, csv_basename):
         '''Assemble tag, append to @tags, create tag_list field.
         If tag field is blank then omit tag'''
         tagdict = {
@@ -479,6 +501,7 @@ class TableFixer(object):
                 tagfield = tagdict.get(tagfield, tagfield)
                 tag = '{}={}'.format(tagfield, value)
                 tags.append(tag)
+        tags.append(csv_basename)
         taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
 
@@ -502,28 +525,34 @@ if __name__ == '__main__':
     config = None
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
-        if search('register', csv_filename):
+        if search('register', csv_filename, IGNORECASE):
             config = config_register
-        elif search('MembersAdd', csv_filename,):
-            config = config_members_add
-        elif search('MembersMod', csv_filename,):
-            config = config_members_mod
-        elif search('MembersNew', csv_filename,):
-            config = config_members_new
-        elif search('Members', csv_filename,):
+        elif search('SearchAdd', csv_filename, IGNORECASE):
+            config = config_search_add
+        elif search('SearchMod', csv_filename, IGNORECASE):
+            config = config_search_mod
+#         elif search('MembersNew', csv_filename,):
+#             config = config_members_new
+        elif search('Members', csv_filename, IGNORECASE):
             config = config_members
-        elif search('Officers', csv_filename,):
+        elif search('Officers', csv_filename, IGNORECASE):
             config = config_officers
-        elif search('Supporters', csv_filename,):
+        elif search('Supporters', csv_filename, IGNORECASE):
             config = config_supporters
-        elif search('Volunteers', csv_filename,):
+        elif search('Volunteers', csv_filename, IGNORECASE):
             config = config_volunteers
-        elif search('YoungGreens', csv_filename,):
+        elif search('YoungGreens', csv_filename, IGNORECASE):
             config = config_young_greens
-        elif search('Search', csv_filename,):
+        elif search('Search', csv_filename, IGNORECASE):
             config = config_search
-        elif search('canvass', csv_filename):
+        elif search('canvass', csv_filename, IGNORECASE):
             config = canvassing
+        elif search('nationbuilder.+NB', csv_filename):
+            config = config_nationbuilderNB
+        elif search('nationbuilder', csv_filename):
+            config = config_nationbuilder
+        else:
+            raise Exception('Cannot find config for csv {}'.format(csv_filename))
 
         filehandler = FileHandler()
         reader = None
@@ -535,6 +564,6 @@ if __name__ == '__main__':
             reader = filehandler.xlsx_read
         xls_pw = os.getenv('XLS_PASSWORD')
 
-#         print('config ', config)
+        print('config_name: ', config['config_name'])
         csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)
