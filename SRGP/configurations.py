@@ -50,7 +50,7 @@ regexes = {
                         'Upperthorpe|Wales Bar|Walkley|Waterthorpe|Wath upon Dearne|Wath-upon-Dearne|'
                         'Well Court|Wellgate|Wentworth|Whiston|Wickersley|Wincobank|Wingfield|'
                         'Woodhouse|Woodseats|Woodsetts|Worksop|Worrall)$', IGNORECASE),
-    'street': compile(r'\b(\d+|Anglo Works|Approach|Ashgrove|Ave|Avenue|Bank|Bridge|'
+    'street': compile(r'\b(\d+|Anglo Works|Approach|Ashgrove|Ave|Avenue|Bank|Brg|Bridge|'
                       'Brookside|Cir|Close|Common|Crossways|Court|Cres|Crescent|Croft|Ct|Dell|'
                       'Dl|Dr|Drive|Endcliffe Village|Fields|Gdns|Gardens|Gate|Glade|Glen|Gr|Green|'
                       'Grove|Hartshead|Head|Hl|Hill|Ln|Lane|Mdws|Mews|Mt|Parade|Park|Pl|Place|Rd|Rise|'
@@ -98,7 +98,7 @@ config_members = {
         ('City', 'address_city'),
         ('Postal Code', 'address_zip'),
         ('Country', 'address_country_code'),
-        ('Email', 'email1'),
+        ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
         ('Ward', 'precinct_name'),
@@ -112,7 +112,8 @@ config_members = {
     'fields_extra': OD([
         ('is_deceased', 'is_deceased'),
         ('is_supporter', 'is_supporter'),
-        ('party_member', 'party_member'),
+#         ('party_member', 'party_member'),
+        ('party_member_true', 'party_member'),
         #         ('status', 'status'),
         ('support_level', 'support_level'),
         ('registered_state', 'registered_state'),
@@ -198,13 +199,13 @@ config_volunteers = {
         ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
-        ('Help: Doorknock', 'tag_list'),
-        ('Help: Leaflet', 'tag_list'),
-        ('Help: Make Phone Calls', 'tag_list'),
-        ('Skills: List', 'tag_list'),
-        ('Skills: Any Other', 'tag_list'),
-        ('General Availability', 'tag_list'),
-        ('Where Help From', 'tag_list'),
+#         ('Help: Doorknock', 'tag_list'),
+#         ('Help: Leaflet', 'tag_list'),
+#         ('Help: Make Phone Calls', 'tag_list'),
+#         ('Skills: List', 'tag_list'),
+#         ('Skills: Any Other', 'tag_list'),
+#         ('General Availability', 'tag_list'),
+#         ('Where Help From', 'tag_list'),
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
@@ -350,12 +351,13 @@ config_register = {
 }
 
 config_register_update = deepcopy(config_register)
-config_register_update['config_name'] = ('config_register_update',)
+config_register_update['config_name'] = 'config_register_update'
 config_register_update['date_fields'] = ('Date Of Attainment',)
 config_register_update['doa_fields'] = ('Date Of Attainment',)
-for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First Names', 'First Name',), ]:
-    config_register_update['fieldmap'] = OD(
-        (k1 if k == k0 else k, v) for (k, v,) in config_register['fieldmap'].items())
+# for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First Names', 'First Name',), ]:
+d = {'Date of Attainment': 'Date Of Attainment', 'First Names': 'First Name', }
+config_register_update['fieldmap'] = OD(
+    (d[k] if k in d else k, v) for (k, v,) in config_register['fieldmap'].items())
 
 config_register_city2014_postal = {
     'config_name': 'config_register_city2014_postal',
@@ -519,4 +521,3 @@ config_nationbuilderNB = {
     'fields_extra': {},
     'fields_flip': (),  # Reverse Sense
 }
-

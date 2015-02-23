@@ -45,12 +45,8 @@ class NbUpdates(object):
     def __init__(self, t0, t1, nbkey, fieldmap):
         self.d0 = self.table2dict(t0, nbkey)
         self.d1 = self.table2dict(t1, nbkey)
-<<<<<<< HEAD
-        self.nb_fieldnames = tuple(sorted(fieldmap.keys()))
-=======
         self.fieldmap = fieldmap
         self.fieldnames = tuple(sorted(self.fieldmap.keys()))
->>>>>>> 3266fcdcc9e3d2010ef31d2df14c2e0601130924
 
     @staticmethod
     def invert_fieldmap(fm):
@@ -93,14 +89,7 @@ class NbUpdates(object):
                         'LAST_NAME': row_new['last_name'],
                         'FIELDNAME': f,
                         'OLD_VALUE': row_old[f],
-<<<<<<< HEAD
-                        'NEW_VALUE': row_new[f], }
-                    row_new.update(update)
-                    mods.append(row_new)
-                    break
-=======
                         'NEW_VALUE': row_new[f], })
->>>>>>> 3266fcdcc9e3d2010ef31d2df14c2e0601130924
         return mods
 
 
@@ -125,28 +114,5 @@ class Main(object):
 
 if __name__ == '__main__':
     (fn0, fn1) = sys.argv[1:3]
-<<<<<<< HEAD
-    nbkey = 'nationbuilder_id'
-    ch = CsvHandler(fn0, fn1)
-    config = configurations.config_members
-    fieldmap = NbUpdates.invert_fieldmap(config['fieldmap'])
-    omits = ['expires_on', 'membership_status', 'membership_type',
-             #              'mobile_number', 'phone_number',
-             'precinct_name', 'started_at', 'tag_list', ]
-    fieldnames_mods = 'CIVICRM_ID FIRST_NAME LAST_NAME UPDATE OLD_VALUE NEW_VALUE'.split()
-    for omit in omits:
-        del fieldmap[omit]
-    fieldnames_mods0 = ch.fieldnames + fieldnames_mods
-    nu = NbUpdates(ch.t0, ch.t1, nbkey, fieldmap, fieldnames_mods)
-    new = nu.new()
-    ch.csv_write(new, fn1.replace('.csv', 'NEW.csv'))
-    mods = nu.find_mods()
-
-    ch.csv_write(
-        mods, fn1.replace('.csv', 'MODS.csv'), fieldnames=fieldnames_mods)
-    ch.csv_write(
-        nu.mods, fn1.replace('.csv', 'MODS2.csv'), fieldnames=fieldnames_mods)
-=======
     m = Main(fn0, fn1)
->>>>>>> 3266fcdcc9e3d2010ef31d2df14c2e0601130924
     print('Done')

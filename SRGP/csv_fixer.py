@@ -22,7 +22,8 @@ import xlrd
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
     config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod,\
-    config_nationbuilder, config_nationbuilderNB, regexes
+    config_nationbuilder, config_nationbuilderNB, regexes,\
+    config_register_update
 
 
 class ConfigHandler(object):
@@ -525,7 +526,9 @@ if __name__ == '__main__':
     config = None
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
-        if search('register', csv_filename, IGNORECASE):
+        if search('register_update', csv_filename, IGNORECASE):
+            config = config_register_update
+        elif search('register', csv_filename, IGNORECASE):
             config = config_register
         elif search('SearchAdd', csv_filename, IGNORECASE):
             config = config_search_add
