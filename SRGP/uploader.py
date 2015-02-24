@@ -139,3 +139,5 @@ if __name__ == "__main__":
         for status in uploader.upload(url_upload):
             print(status, end=' ')
             sys.stdout.flush()
+    print()
+            
