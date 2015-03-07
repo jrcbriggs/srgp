@@ -2,12 +2,12 @@
 Created on 24 Feb 2015
 
 @author: ph1jb
+
+Update the Register of electors 
 '''
 from copy import deepcopy
 from csv import DictReader, DictWriter
 import sys
-
-import configurations
 
 
 class CsvHandler(object):
@@ -39,40 +39,48 @@ class CsvHandler(object):
 
 class UpdateRegister(object):
 
-    def __init__(self, ld0, ld1, k0, k1, status):
-        d0 = self.ld2dd(ld0, k0, k1)
-        d1 = self.ld2dd(ld1, k0, k1)
+    def __init__(self, t0, t1, k0, k1, status):
+        d0 = self.table2dict(t0, k0, k1)
+        d1 = self.table2dict(t1, k0, k1)
         d2 = self.update(d0, d1, status)
-        self.ld2 = self.dd2ld(d2)
+        self.ld2 = self.dict2table(d2)
 
-    def ld2dd(self, l0, k0, k1):
+    def table2dict(self, l0, k0, k1):
         '''Create a dict of rows from a table of rows.
         {(row[k0], row[k1]):row, ...}
         '''
-        return {(row[k0], row[k1]): row for row in l0}
+        return {(row[k0], int(row[k1])): row for row in l0}
 
     def update(self, d0, d1, status):
-        '''Update table d0 with table d1.
-        d0 and d1 list of rows where a row is a dictionary {colname:value, ...}
+        '''Update dict d0 with dict d1.
+        d0 and d1 are dicts of rows where a row is a dictionary {colname:value, ...}
         d1 contains rows with Status='D'. Delete these rows from d0. 
         '''
         d2 = deepcopy(d0)
         d2.update(d1)
         # Delete records with Status='D'
-        return {k: v for (k, v) in d2.items() if v[status] != 'D'}
+#         return {k: v for (k, v) in d2.items() if v[status] != 'D'}
+        return d2
 
-    def dd2ld(self, dd):
-        return sorted(dd.values())
+    def dict2table(self, d):
+        return [d[k] for k in sorted(d.keys())]
 
 
 class Main(object):
 
     def __init__(self, fn0, fn1):
         ch = CsvHandler(fn0, fn1)
-        ud = UpdateRegister(ch.t0, ch.t1, status='Status')
-        ch.csv_write(ud.ld2, fn0.replace('.csv', 'NEW.csv'))
+        k0 = 'PD'
+        k1 = 'ENO'
+        ud = UpdateRegister(ch.t0, ch.t1, k0, k1, status='Status')
+        ch.csv_write(ud.ld2, fn0.replace('.csv', 'UPDATED.csv'))
 
 if __name__ == '__main__':
+
+#     sys.argv.append('/home/julian/SRGP/register/central/CentralWardRegister2014-12-01.csv')
+    sys.argv.append('/home/julian/SRGP/register/central/CentralConstituencyRegister2014-12-01.csv')
+    sys.argv.append('/home/julian/SRGP/register/central/CentralConstituencyRegisterUpdate_20150302.csv')
+
     (fn0, fn1) = sys.argv[1:3]
     m = Main(fn0, fn1)
     print('Done')
