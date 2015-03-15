@@ -21,8 +21,8 @@ import xlrd
 
 from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
-    config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod,\
-    config_nationbuilder, config_nationbuilderNB, regexes,\
+    config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod, \
+    config_nationbuilder, config_nationbuilderNB, regexes, \
     config_register_update
 
 
@@ -311,6 +311,19 @@ class TableFixer(object):
         if field_city:
             self.fix_city(row, address_fields, field_city)
 
+#     def fix_address_street0(self, row, address_fields):
+#         '''Merge fields address1-4 into  address1'''
+#         if self.csv_basename.startswith('CentralConstituencyRegister'):
+#             af = list(address_fields.values())[0:5]  # address1-4
+#             row[af[0]] = ' '.join([row[af[0]], row[af[1]], row[af[2]], row[af[3]]])
+#             for i in range(1, 4):
+#                 row[af[i]] = ''
+
+    def fix_address_street0(self, row, address_fields):
+        '''Merge fields address2,3,4 into  address1, add1 to add2 add5 to add3'''
+        if self.csv_basename.startswith('CentralConstituencyRegister'):
+            (row['Address 1'], row['Address 2'], row['Address 3'],) = (row['Address 2'] + ' ' + row['Address 3'] + ' ' + row['Address 4'], row['Address 1'], row['Address 5'])
+
     def fix_address_street(self, row, address_fields):
         '''Move street address to address1:
         1. Copy address values from row into a list.
@@ -341,7 +354,7 @@ class TableFixer(object):
                 row[field_city] = v
 
     def fix_contact_name(self, row):
-        '''civi Contact name is 'last_name, first name' 
+        '''civi Contact name is 'last_name, first name'
         change this to 'first_name last_name'
         used by: Officers, Supporters, Volunteers
         Members have: 'Contact Name' and: 'First Name', 'Middle Name', 'Last Name'
@@ -418,7 +431,10 @@ class TableFixer(object):
             self.fix_dates(row)
             self.fix_doa(row, self.doa_fields)
             self.fix_addresses(row, self.address_fields)
-            self.fix_address_street(row, self.address_fields)
+#             if self.csv_basename.startswith('CentralConstituencyRegister'):
+#                 self.fix_address_street0(row, self.address_fields)
+#             else:
+            self.fix_address_street0(row, self.address_fields)
             self.fix_local_party(row)
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)

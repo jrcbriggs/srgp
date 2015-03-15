@@ -15,7 +15,7 @@ Central GP civiCRM exports: config_members
 Sheffield City Council Electoral Registers:
     config_register
     config_register_city2014_postal
-    
+
 Changes:
 # Julian Briggs 11-jan-2015: do not assume ppl in SearchAll are
 # supporters. Comment is_supporter extra_field
@@ -280,7 +280,7 @@ config_search = {
     'fields_extra': OD([
         # Do not set  records support_level or is_supporter from SearchAll
     ]),
-    'fields_flip': (  # Reverse Sense
+    'fields_flip': (# Reverse Sense
         'Do Not Email',
         'Do Not Phone',),
 }
@@ -309,9 +309,12 @@ config_register = {
         ('address2', 'Address 2',),
         ('address3', 'Address 3',),
         ('address4', 'Address 4',),
-        ('city', 'Address 5',),
-        ('zip', 'Address 6',),
-        ('country_code', 'Address 7',),
+#         ('city', 'Address 5',),
+#         ('zip', 'Address 6',),
+#         ('country_code', 'Address 7',),
+        ('city', 'Address 6',),
+        ('country_code', 'Address 9',),
+        ('zip', 'Postcode',),
     ]),
     'date_fields': ('Date of Attainment',),
     #     'date_fields': ('Date Of Attainment',),
@@ -337,10 +340,13 @@ config_register = {
         ('Address 3', 'registered_address3'),
         # omitting this field did not make registered address visible
         # immediately
-        ('Address 4', 'registered_address4'),
-        ('Address 5', 'registered_city'),
-        ('Address 6', 'registered_zip'),
-        ('Address 7', 'registered_country_code'),
+#         ('Address 4', 'registered_address4'),
+#         ('Address 5', 'registered_city'),
+#         ('Address 6', 'registered_zip'),
+#         ('Address 7', 'registered_country_code'),
+        ('Address 6', 'registered_city'),
+        ('Postcode', 'registered_zip'),
+        ('Address 9', 'registered_country_code'),
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
