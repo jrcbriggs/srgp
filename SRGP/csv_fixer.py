@@ -518,7 +518,7 @@ class TableFixer(object):
                 tagfield = tagdict.get(tagfield, tagfield)
                 tag = '{}={}'.format(tagfield, value)
                 tags.append(tag)
-        tags.append(csv_basename)
+#         tags.append(csv_basename)
         taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
 

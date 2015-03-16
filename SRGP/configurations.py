@@ -111,7 +111,7 @@ config_members = {
     'skip_lines': 0,
     'fields_extra': OD([
         ('is_deceased', 'is_deceased'),
-        ('is_supporter', 'is_supporter'),
+#         ('is_supporter', 'is_supporter'),
         #         ('party_member', 'party_member'),
         ('party_member_true', 'party_member'),
         #         ('status', 'status'),
@@ -148,7 +148,7 @@ config_officers = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        ('is_supporter', 'is_supporter'),
+#         ('is_supporter', 'is_supporter'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (),  # Reverse Sense
@@ -181,7 +181,7 @@ config_supporters = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-        ('is_supporter', 'is_supporter'),
+#         ('is_supporter', 'is_supporter'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (),  # Reverse Sense
