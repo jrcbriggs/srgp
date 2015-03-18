@@ -23,6 +23,7 @@ class CsvHandler(object):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
         with open(pathname, 'r') as fh:
+#         with open(pathname, 'r', encoding='utf8') as fh:
             dr = DictReader(fh)
             self.fieldnames = dr.fieldnames
             return [row for row in dr]
