@@ -23,7 +23,7 @@ from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
     config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod, \
     config_nationbuilder, config_nationbuilderNB, regexes, \
-    config_register_update
+    config_register_update, config_register_postal
 
 
 class ConfigHandler(object):
@@ -270,6 +270,8 @@ class TableFixer(object):
 
     def flip_fields(self, row, fieldnames):
         for fn in fieldnames:
+            if row[fn] in (0, '0', '', 'False', False):
+                row[fn] = False
             row[fn] = not row[fn]
 
     def clean_value(self, value):
@@ -319,11 +321,6 @@ class TableFixer(object):
 #             for i in range(1, 4):
 #                 row[af[i]] = ''
 
-    def fix_address_street0(self, row, address_fields):
-        '''Merge fields address2,3,4 into  address1, add1 to add2 add5 to add3'''
-        if self.csv_basename.startswith('CentralConstituencyRegister'):
-            (row['Address 1'], row['Address 2'], row['Address 3'],) = (row['Address 2'] + ' ' + row['Address 3'] + ' ' + row['Address 4'], row['Address 1'], row['Address 5'])
-
     def fix_address_street(self, row, address_fields):
         '''Move street address to address1:
         1. Copy address values from row into a list.
@@ -345,6 +342,23 @@ class TableFixer(object):
                     print('Street not found {}'.format(alist))
             for i in range(len(alist)):
                 row[afns[i]] = alist[i]
+
+    def fix_address_street0(self, row, address_fields):
+        '''Merge fields address2,3,4 into  address1, add1 to add2 add5 to add3'''
+        if self.csv_basename.startswith('CentralConstituencyRegister2015'):
+            (row['Address 1'], row['Address 2'], row['Address 3'],) = (row['Address 2'] + ' ' + row['Address 3'] + ' ' + row['Address 4'], row['Address 1'], row['Address 5'])
+
+    def fix_address_street1(self, row, address_fields):
+        '''Move Street address to Corres Addr 5 (which maps to NB address1)
+        See config fieldmap: Corres Addr 1 maps to address2 etc.'''
+        if self.csv_basename.startswith('CentralConstituencyRegisterPV2015'):
+            field_address1 = address_fields.get('address1', None)
+            for fn in ['Corres Address Line 5', 'Corres Address Line 4', 'Corres Address Line 3', 'Corres Address Line 2', 'Corres Address Line 1', ]:
+                if self.isstreet(row[fn]):
+                    tmp = row[fn]
+                    row[fn] = ''
+                    row[field_address1] = tmp
+                    break
 
     def fix_city(self, row, address_fields, field_city):
         for fieldname in address_fields.values():
@@ -434,7 +448,9 @@ class TableFixer(object):
 #             if self.csv_basename.startswith('CentralConstituencyRegister'):
 #                 self.fix_address_street0(row, self.address_fields)
 #             else:
+            self.fix_address_street(row, self.address_fields)
             self.fix_address_street0(row, self.address_fields)
+            self.fix_address_street1(row, self.address_fields)
             self.fix_local_party(row)
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
@@ -496,6 +512,8 @@ class TableFixer(object):
         if 'Polling district' in row and 'Electoral roll number' in row:
             row['Electoral roll number'] = row[
                 'Polling district'] + str(row['Electoral roll number'])
+        if 'PD/ENO' in row:
+            row['PD/ENO'] = row['PD/ENO'].replace('/', '')
 
     def set_ward(self, row):
         if 'PD' in row:
@@ -508,6 +526,7 @@ class TableFixer(object):
         If tag field is blank then omit tag'''
         tagdict = {
             'Postal Vote (last election)': 'PV',
+            'AV Type': '',  # strip field name so tag is just value (Postal or Proxy)
             '': '',
         }
         tags = []
@@ -516,9 +535,12 @@ class TableFixer(object):
             if value:
                 tagfield.replace(' ', '')
                 tagfield = tagdict.get(tagfield, tagfield)
-                tag = '{}={}'.format(tagfield, value)
+                if tagfield:
+                    tag = '{}={}'.format(tagfield, value)
+                else:
+                    tag = value
                 tags.append(tag)
-#         tags.append(csv_basename)
+        tags.append(csv_basename)
         taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
 
@@ -542,8 +564,10 @@ if __name__ == '__main__':
     config = None
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
-        if search('register_update', csv_filename, IGNORECASE):
+        if search('registerUpdate', csv_filename, IGNORECASE):
             config = config_register_update
+        elif search('RegisterPV', csv_filename, IGNORECASE):
+            config = config_register_postal
         elif search('register', csv_filename, IGNORECASE):
             config = config_register
         elif search('SearchAdd', csv_filename, IGNORECASE):
