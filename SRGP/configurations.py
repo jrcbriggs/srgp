@@ -83,7 +83,7 @@ config_members = {
         ('Email Greeting', None),
         ('First Name', 'first_name'),
         ('Last Name', 'last_name'),
-#         ('Do not mail', 'tag_list'),
+        #         ('Do not mail', 'tag_list'),
         ('Do not mail', 'email opt in'),  # Reverse Sense
         ('Addressee', None),
         ('Contact ID', 'civicrm_id'),
@@ -112,14 +112,14 @@ config_members = {
     'skip_lines': 0,
     'fields_extra': OD([
         ('is_deceased', 'is_deceased'),
-#         ('is_supporter', 'is_supporter'),
+        #         ('is_supporter', 'is_supporter'),
         #         ('party_member', 'party_member'),
         ('party_member_true', 'party_member'),
         #         ('status', 'status'),
         ('support_level', 'support_level'),
         ('registered_state', 'registered_state'),
     ]),
-    'fields_flip': (# Reverse Sense
+    'fields_flip': (  # Reverse Sense
         'Do not mail',),
 }
 
@@ -150,7 +150,7 @@ config_officers = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-#         ('is_supporter', 'is_supporter'),
+        #         ('is_supporter', 'is_supporter'),
         ('support_level', 'support_level'),
     ]),
     'fields_flip': (),  # Reverse Sense
@@ -169,7 +169,7 @@ config_supporters = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', 'name'),
-#         ('Do not mail', 'tag_list'),
+        #         ('Do not mail', 'tag_list'),
         ('Do not mail', 'email opt in'),  # Reverse Sense
         ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
@@ -184,10 +184,10 @@ config_supporters = {
     ]),
     'skip_lines': 0,
     'fields_extra': OD([
-#         ('is_supporter', 'is_supporter'),
+        #         ('is_supporter', 'is_supporter'),
         ('support_level', 'support_level'),
     ]),
-    'fields_flip': (# Reverse Sense
+    'fields_flip': (  # Reverse Sense
         'Do not mail',),
 }
 
@@ -284,7 +284,7 @@ config_search = {
     'fields_extra': OD([
         # Do not set  records support_level or is_supporter from SearchAll
     ]),
-    'fields_flip': (# Reverse Sense
+    'fields_flip': (  # Reverse Sense
         'Do Not Email',
         'Do Not Phone',),
 }
@@ -313,12 +313,12 @@ config_register = {
         ('address2', 'Address 2',),
         ('address3', 'Address 3',),
         ('address4', 'Address 4',),
-        ('city', 'Address 5',),
-        ('zip', 'Address 6',),
+        ('city', 'Address 6',),
+        ('zip', 'Postcode',),
         ('country_code', 'Address 7',),
-#         ('city', 'Address 6',),
-#         ('country_code', 'Address 9',),
-#         ('zip', 'Postcode',),
+        #         ('city', 'Address 6',),
+        #         ('country_code', 'Address 9',),
+        #         ('zip', 'Postcode',),
     ]),
     'date_fields': ('Date of Attainment',),
     #     'date_fields': ('Date Of Attainment',),
@@ -344,15 +344,15 @@ config_register = {
         ('Address 3', 'registered_address3'),
         # omitting this field did not make registered address visible
         # immediately
-#         ('Address 4', 'registered_address4'),
-        ('Address 5', 'registered_city'),
-        ('Address 6', 'registered_zip'),
+        #         ('Address 4', 'registered_address4'),
+        ('Address 6', 'registered_city'),
+        ('Postcode', 'registered_zip'),
         ('Address 7', 'registered_country_code'),
-#         ('Address 6', 'registered_city'),
-#         ('Postcode', 'registered_zip'),
-#         ('Address 9', 'registered_country_code'),
+        #         ('Address 6', 'registered_city'),
+        #         ('Postcode', 'registered_zip'),
+        #         ('Address 9', 'registered_country_code'),
     ]),
-    'skip_lines': 0,
+    'skip_lines': 1,
     'fields_extra': OD([
         ('is_voter', 'is_voter'),
         ('ward_name', 'ward_name'),
@@ -365,7 +365,8 @@ config_register_update = deepcopy(config_register)
 config_register_update['config_name'] = 'config_register_update'
 config_register_update['date_fields'] = ('Date Of Attainment',)
 config_register_update['doa_fields'] = ('Date Of Attainment',)
-# for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First Names', 'First Name',), ]:
+# for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First
+# Names', 'First Name',), ]:
 d = {'Date of Attainment': 'Date Of Attainment', 'First Names': 'First Name', }
 config_register_update['fieldmap'] = OD(
     (d[k] if k in d else k, v) for (k, v,) in config_register['fieldmap'].items())
@@ -387,7 +388,8 @@ canvassing = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Polling district', 'city_sub_district'),  # city_sub_district
-        ('Electoral roll number', 'external_id'),  # merge_pd_eno prepends pd to ern
+        # merge_pd_eno prepends pd to ern
+        ('Electoral roll number', 'external_id'),
         ('First name', 'first_name'),
         ('Surname', 'last_name'),
         ('Comments', 'notes'),
@@ -493,7 +495,7 @@ config_register_postal = {
         ('city', 'Corres Address Line 5',),
         ('zip', 'Corres Address Postcode',),
         ('country_code', 'Corres Address Country',),
-        ]),
+    ]),
     'date_fields': (),
     'date_format': '%d/%m/%Y',  # _electoral_roll
     'doa_fields': (),
@@ -506,13 +508,14 @@ config_register_postal = {
         ('Elector Suffix', 'suffix'),
         ('Elector Title', 'prefix'),
         ('Corres Address Line 4', 'registered_address1'),  # NB Street address
-        ('Corres Address Line 1', 'registered_address2'),  # shift addresses up one
+        # shift addresses up one
+        ('Corres Address Line 1', 'registered_address2'),
         ('Corres Address Line 2', 'registered_address3'),
         ('Corres Address Line 3', 'registered_address4'),
         ('Corres Address Line 5', 'registered_city'),
         ('Corres Address Postcode', 'registered_zip'),
         ('Corres Address Country', 'registered_country_code'),
-        ]),
+    ]),
     'fields_extra': OD([
         ('registered_state', 'registered_state'),
     ]),

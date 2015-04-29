@@ -246,14 +246,16 @@ class TableFixer(object):
             if k == 'is_deceased':
                 row[k] = self.isdeceased(row)  # Set is_deceased flag
             elif k == 'is_supporter':
-                # Set is_supporter extra field exists (change from if a member. Julian 23-jan-2015)
+                # Set is_supporter extra field exists (change from if a member.
+                # Julian 23-jan-2015)
                 row[k] = True  # self.is_party_member(row)
             elif k == 'is_volunteer':
                 # Set is_volunteer flag on all rows in the Volunteers csv
                 row[k] = True
             elif k == 'is_voter':
                 row[k] = self.isvoter(row)  # Set  flag
-            elif k == 'party':  # volunteers have extra field party, set it to G
+            # volunteers have extra field party, set it to G
+            elif k == 'party':
                 row[k] = 'G'
             elif k == 'party_member':
                 row[k] = self.is_party_member(row)  # Set is_member flag
@@ -316,7 +318,7 @@ class TableFixer(object):
 #     def fix_address_street0(self, row, address_fields):
 #         '''Merge fields address1-4 into  address1'''
 #         if self.csv_basename.startswith('CentralConstituencyRegister'):
-#             af = list(address_fields.values())[0:5]  # address1-4
+# af = list(address_fields.values())[0:5]  # address1-4
 #             row[af[0]] = ' '.join([row[af[0]], row[af[1]], row[af[2]], row[af[3]]])
 #             for i in range(1, 4):
 #                 row[af[i]] = ''
@@ -329,7 +331,8 @@ class TableFixer(object):
         4. Prepend it to the list
         5. Copy array elements back into address fields in row.
         '''
-        afns = list(address_fields.values())[:-3]  # omit rightmost 3 fields (city, zip, country)
+        afns = list(address_fields.values())[
+            :-3]  # omit rightmost 3 fields (city, zip, country)
         if afns:
             alist = [row[afn] for afn in afns]
             for i in range(len(alist) - 1, -1, -1):
@@ -346,7 +349,8 @@ class TableFixer(object):
     def fix_address_street0(self, row, address_fields):
         '''Merge fields address2,3,4 into  address1, add1 to add2 add5 to add3'''
         if self.csv_basename.startswith('CentralConstituencyRegister2015'):
-            (row['Address 1'], row['Address 2'], row['Address 3'],) = (row['Address 2'] + ' ' + row['Address 3'] + ' ' + row['Address 4'], row['Address 1'], row['Address 5'])
+            (row['Address 1'], row['Address 2'], row['Address 3'],) = (row[
+                'Address 2'] + ' ' + row['Address 3'] + ' ' + row['Address 4'], row['Address 1'], row['Address 5'])
 
     def fix_address_street1(self, row, address_fields):
         '''Move Street address to Corres Addr 5 (which maps to NB address1)
@@ -433,7 +437,8 @@ class TableFixer(object):
             statusmap = {'Cancelled': 'canceled', 'Current': 'active',
                          'Deceased': 'expired', 'Expired': 'expired',
                          'New': 'active', 'Grace': 'grace period'}
-            if row['Status'] in statusmap:  # needed to avoid updating Status in electoral register
+            # needed to avoid updating Status in electoral register
+            if row['Status'] in statusmap:
                 row['Status'] = statusmap[row['Status']]
 
     def fix_table(self):
@@ -448,19 +453,21 @@ class TableFixer(object):
 #             if self.csv_basename.startswith('CentralConstituencyRegister'):
 #                 self.fix_address_street0(row, self.address_fields)
 #             else:
-            self.fix_address_street(row, self.address_fields)
+#             self.fix_address_street(row, self.address_fields)
             self.fix_address_street0(row, self.address_fields)
             self.fix_address_street1(row, self.address_fields)
             self.fix_local_party(row)
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
-            # Must call after extra_fields so extra_fields can identify is_deceased
+            # Must call after extra_fields so extra_fields can identify
+            # is_deceased
             self.fix_state(row)
             self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
             self.set_ward(row)
-            row.update(self.tags_create(row, self.tagfields, self.csv_basename))
+            row.update(
+                self.tags_create(row, self.tagfields, self.csv_basename))
             skip_list += self.is_matching_row(row, self.skip_dict)
         for row in skip_list:
             self.table.remove(row)  # Remove list element by value
@@ -526,7 +533,8 @@ class TableFixer(object):
         If tag field is blank then omit tag'''
         tagdict = {
             'Postal Vote (last election)': 'PV',
-            'AV Type': '',  # strip field name so tag is just value (Postal or Proxy)
+            # strip field name so tag is just value (Postal or Proxy)
+            'AV Type': '',
             '': '',
         }
         tags = []
@@ -595,7 +603,8 @@ if __name__ == '__main__':
         elif search('nationbuilder', csv_filename):
             config = config_nationbuilder
         else:
-            raise Exception('Cannot find config for csv {}'.format(csv_filename))
+            raise Exception(
+                'Cannot find config for csv {}'.format(csv_filename))
 
         filehandler = FileHandler()
         reader = None
