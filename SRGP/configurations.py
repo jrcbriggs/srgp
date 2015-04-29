@@ -203,6 +203,7 @@ config_volunteers = {
         ('Email', 'email'),
         ('Phone (primary)', 'phone_number'),
         ('Mobile', 'mobile_number'),
+        ('Actions', 'tag_list'),
         #         ('Help: Doorknock', 'tag_list'),
         #         ('Help: Leaflet', 'tag_list'),
         #         ('Help: Make Phone Calls', 'tag_list'),
@@ -483,7 +484,8 @@ config_nationbuilderNB = {
     'fields_flip': (),  # Reverse Sense
 }
 
-config_register_postal = {
+
+config_register_postal20150318 = {
     'config_name': 'config_register_postal',
     'address_fields': OD([
         ('address1', 'Corres Address Line 4',),
@@ -515,6 +517,65 @@ config_register_postal = {
         ]),
     'fields_extra': OD([
         ('registered_state', 'registered_state'),
+    ]),
+    'fields_flip': (),  # Reverse Sense
+    'skip_lines': 0,
+}
+
+# Authority_Name,Area_Name,PD_Letters,Alternate_PD,Published_ENo,Supplementary,Forename,Initials,Surname,Proxy_Name,Send_Address_1,Send_Address_2,Send_Address_3,Send_Address_4,Send_Address_5,Send_Postcode,Qualifying_Address_1,Qualifying_Address_2,Qualifying_Address_3,Qualifying_Address_4,Qualifying_Address_5,Qualifying_Address_6,Qualifying_Address_7,Qualifying_Address_8,Qualifying_Address_9,Absent_Status,Overseas_Address,Away_Address,Election_Date,Election_Title_1,Election_Title_2
+config_register_postal = {
+    'config_name': 'config_register_postal',
+    'address_fields': OD([
+        ('registered_address1', 'Qualifying_Address_1',),
+        ('registered_address2', 'Qualifying_Address_2',),
+        ('registered_address3', 'Qualifying_Address_3',),
+        ('city', 'Qualifying_Address_4',),
+        ('zip', 'Qualifying_Address_6',),
+        ('country_code', 'Qualifying_Address_7',),
+        ]),
+    'date_fields': (),
+    'date_format': '%d/%m/%Y',  # _electoral_roll
+    'doa_fields': (),
+    'fieldmap': OD([
+        ('Published_ENo', 'state_file_id'),
+        ('Surname', 'last_name'),
+        ('Forename', 'first_name'),
+        ('Initials', 'middle_name'),
+        ('Qualifying_Address_1', 'registered_address1'),  # NB Street address
+        ('Qualifying_Address_2', 'registered_address2'),  # NB Street address
+        ('Qualifying_Address_3', 'registered_address3'),  # NB Street address
+        ('Qualifying_Address_4', 'registered_city'),  #
+        ('Qualifying_Address_6', 'registered_zip'),  # Hghes QA used
+        ('Qualifying_Address_7', 'registered_country_code'),  #
+        ]),
+    'fields_extra': OD([
+        ('registered_state', 'registered_state'),
+        ('ward_name', 'ward_name'),
+#         ('Postal', 'tag_list'),
+    ]),
+    'fields_flip': (),  # Reverse Sense
+    'skip_lines': 0,
+}
+# nationbuilder_id    first_name    last_name    is_deceased    email1    email_opt_in    mobile_number    mobile_opt_in    address_zip
+config_textable = {
+    'config_name': 'config_textable',
+    'address_fields': OD([
+        ]),
+    'date_fields': (),
+    'date_format': '%d/%m/%Y',  # _electoral_roll
+    'doa_fields': (),
+    'fieldmap': OD([
+        ('nationbuilder_id', 'nationbuilder_id',),
+        ('first_name', 'first_name',),
+        ('last_name', 'last_name',),
+        ('is_deceased', 'is_deceased',),
+        ('email1', 'email1',),
+        ('email_opt_in', 'email_opt_in',),
+        ('mobile_number', 'mobile_number',),
+        ('mobile_opt_in', 'mobile_opt_in',),
+        ('address_zip', 'address_zip',),
+        ]),
+    'fields_extra': OD([
     ]),
     'fields_flip': (),  # Reverse Sense
     'skip_lines': 0,
