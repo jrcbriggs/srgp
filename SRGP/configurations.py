@@ -600,12 +600,14 @@ config_support1_2 = {
         ('mobile_number', 'mobile_number',),
         ('phone_number', 'phone_number',),
         ('address_zip', 'address_zip',),
+        ('support_level', 'support_level',),
         ('nationbuilder_id', 'nationbuilder_id',),
         ]),
     'fields_extra': OD([
                                  ('knockedUp', 'knockedUp',),
                                  ('phoned', 'phoned',),
                                  ('voted', 'voted',),
+                                 ('street_name', 'street_name',),
     ]),
     'fields_flip': (),  # Reverse Sense
     'skip_lines': 0,

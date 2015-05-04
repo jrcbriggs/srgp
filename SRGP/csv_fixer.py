@@ -13,7 +13,7 @@ from io import StringIO
 import mmap
 import os
 from os.path import basename, splitext
-from re import compile, IGNORECASE
+from re import compile, IGNORECASE, sub
 from re import search
 from sys import argv
 from sys import stdout
@@ -268,11 +268,13 @@ class TableFixer(object):
             elif k == 'Young Green':
                 row[k] = k
             elif k == 'knockedUp':
-                row[k] = 'n'
+                row[k] = ''
             elif k == 'phoned':
-                row[k] = 'n'
+                row[k] = ''
             elif k == 'voted':
-                row[k] = 'n'
+                row[k] = ''
+            elif k == 'street_name':
+                row[k] = sub('^[\s\d-]+', '', row['registered_address1'])  # split()[1:]
             else:
                 row[k] = v
 
@@ -560,7 +562,7 @@ class TableFixer(object):
                 else:
                     tag = value
                 tags.append(tag)
-        tags.append(csv_basename)
+#         tags.append(csv_basename)
         taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
 
