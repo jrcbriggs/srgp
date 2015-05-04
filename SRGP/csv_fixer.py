@@ -23,7 +23,8 @@ from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
     config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod, \
     config_nationbuilder, config_nationbuilderNB, regexes, \
-    config_register_update, config_register_postal, config_textable
+    config_register_update, config_register_postal, config_textable, \
+    config_support1_2
 
 
 class ConfigHandler(object):
@@ -52,6 +53,7 @@ class ConfigHandler(object):
         self.tagfields = ()
         # for writing csv (append new fields later)
         self.fieldmap_new = OD()
+        self.fieldmap_new.update(fields_extra)
         for k, v in fieldmap.items():
             if v == 'tag_list':
                 self.tagfields += (k,)  # Put original fieldname on taglist
@@ -61,7 +63,7 @@ class ConfigHandler(object):
                 self.fieldmap_new[k] = v
 
         # Update properties
-        self.fieldmap_new.update(fields_extra)
+#         self.fieldmap_new.update(fields_extra)
         self.fieldmap_new.update({'tag_list': 'tag_list', })
         self.fieldnames_new = tuple(self.fieldmap_new.values())
 
@@ -265,6 +267,12 @@ class TableFixer(object):
                 row[k] = 1
             elif k == 'Young Green':
                 row[k] = k
+            elif k == 'knockedUp':
+                row[k] = 'n'
+            elif k == 'phoned':
+                row[k] = 'n'
+            elif k == 'voted':
+                row[k] = 'n'
             else:
                 row[k] = v
 
@@ -592,6 +600,8 @@ if __name__ == '__main__':
             config = config_search_mod
         elif search('textable', csv_filename, IGNORECASE):
             config = config_textable
+        elif search('support1_2', csv_filename, IGNORECASE):
+            config = config_support1_2
 #         elif search('MembersNew', csv_filename,):
 #             config = config_members_new
         elif search('Members', csv_filename, IGNORECASE):
