@@ -569,16 +569,48 @@ config_textable = {
     'doa_fields': (),
     'fieldmap': OD([
         ('nationbuilder_id', 'nationbuilder_id',),
+        ('state_file_id', 'PD_ENO',),
         ('first_name', 'first_name',),
         ('last_name', 'last_name',),
         ('is_deceased', 'is_deceased',),
         ('email1', 'email1',),
         ('email_opt_in', 'email_opt_in',),
         ('mobile_number', 'mobile_number',),
+        ('phone_number', 'phone_number',),
         ('mobile_opt_in', 'mobile_opt_in',),
         ('address_zip', 'address_zip',),
         ]),
     'fields_extra': OD([
+    ]),
+    'fields_flip': (),  # Reverse Sense
+    'skip_lines': 0,
+}
+config_support1_2 = {
+    'config_name': 'config_support1_2',
+    'address_fields': OD([
+        ]),
+    'date_fields': (),
+    'date_format': '%d/%m/%Y',  # _electoral_roll
+    'doa_fields': (),
+    'fieldmap': OD([
+        ('state_file_id', 'PD_ENO',),
+        ('first_name', 'first_name',),
+        ('last_name', 'last_name',),
+        ('registered_address1', 'registered_address1',),
+        ('registered_address2', 'registered_address2',),
+        ('registered_address3', 'registered_address3',),
+        ('email1', 'email1',),
+        ('mobile_number', 'mobile_number',),
+        ('phone_number', 'phone_number',),
+        ('address_zip', 'address_zip',),
+        ('support_level', 'support_level',),
+        ('nationbuilder_id', 'nationbuilder_id',),
+        ]),
+    'fields_extra': OD([
+                                 ('knockedUp', 'knockedUp',),
+                                 ('phoned', 'phoned',),
+                                 ('voted', 'voted',),
+                                 ('street_name', 'street_name',),
     ]),
     'fields_flip': (),  # Reverse Sense
     'skip_lines': 0,
