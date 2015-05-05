@@ -274,7 +274,7 @@ class TableFixer(object):
             elif k == 'voted':
                 row[k] = ''
             elif k == 'street_name':
-                row[k] = sub('^[\s\d-]+', '', row['registered_address1'])  # split()[1:]
+                row[k] = sub('^[\d-]+\w?\s+', '', row['registered_address1'])  # split()[1:]
             else:
                 row[k] = v
 
