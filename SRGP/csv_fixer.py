@@ -23,7 +23,7 @@ from configurations import config_members, config_register, \
     config_search, config_officers, config_supporters, \
     config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod, \
     config_nationbuilder, config_nationbuilderNB, regexes, \
-    config_register_update, config_register_postal
+    config_register_update, config_register_postal, config_textable
 
 
 class ConfigHandler(object):
@@ -90,7 +90,7 @@ class FileHandler(object):
     def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
-        with open(pathname, 'r') as fh:
+        with open(pathname, 'r', encoding='utf-8', errors='ignore') as fh:
             return self.csv_read_fh(fh, fieldnames_expected, skip_lines)
 
     def csv_read_fh(self, fh, fieldnames_expected, skip_lines=0):
@@ -277,7 +277,7 @@ class TableFixer(object):
             row[fn] = not row[fn]
 
     def clean_value(self, value):
-        return value.replace(',', ' ').strip()
+        return value.replace(',', ';').strip()
 
     def clean_row(self, row):
         '''Clean all the values (but not the keys) in a row'''
@@ -466,8 +466,8 @@ class TableFixer(object):
             self.flip_fields(row, self.fields_flip)
             self.merge_pd_eno(row)
             self.set_ward(row)
-            row.update(
-                self.tags_create(row, self.tagfields, self.csv_basename))
+            tags = self.tags_create(row, self.tagfields, self.csv_basename)
+            row.update(tags)
             skip_list += self.is_matching_row(row, self.skip_dict)
         for row in skip_list:
             self.table.remove(row)  # Remove list element by value
@@ -514,6 +514,9 @@ class TableFixer(object):
                 )
 
     def merge_pd_eno(self, row):
+        if ('PD_Letters' in row) and ('Published_ENo' in row):
+            row['Published_ENo'] = row[
+                'PD_Letters'] + str(row['Published_ENo'])
         if ('PD' in row) and ('ENO' in row):
             row['ENO'] = row['PD'] + str(row['ENO'])
         if 'Polling district' in row and 'Electoral roll number' in row:
@@ -527,6 +530,10 @@ class TableFixer(object):
             pd = row['PD']
             ward = TableFixer.pd2ward(pd)
             row['ward_name'] = ward
+        if 'PD_Letters' in row:
+            pd = row['PD_Letters']
+            ward = TableFixer.pd2ward(pd)
+            row['ward_name'] = ward
 
     def tags_create(self, row, tagfields, csv_basename):
         '''Assemble tag, append to @tags, create tag_list field.
@@ -538,6 +545,12 @@ class TableFixer(object):
             '': '',
         }
         tags = []
+        # Handle civi Vounteers actions
+        if csv_basename.startswith('SRGP_Volunteers'):
+            if 'Actions' in row:
+                tags = [
+                    'Volunteer_' + action for action in row['Actions'].split(';')]
+                row['Actions'] = ''
         for tagfield in tagfields:
             value = str(row[tagfield]).strip()
             if value:
@@ -576,12 +589,18 @@ if __name__ == '__main__':
             config = config_register_update
         elif search('RegisterPV', csv_filename, IGNORECASE):
             config = config_register_postal
+        elif search('CentralConsituencyPostal', csv_filename, IGNORECASE):
+            config = config_register_postal
+        elif search('CentralWardPostal', csv_filename, IGNORECASE):
+            config = config_register_postal
         elif search('register', csv_filename, IGNORECASE):
             config = config_register
         elif search('SearchAdd', csv_filename, IGNORECASE):
             config = config_search_add
         elif search('SearchMod', csv_filename, IGNORECASE):
             config = config_search_mod
+        elif search('textable', csv_filename, IGNORECASE):
+            config = config_textable
 #         elif search('MembersNew', csv_filename,):
 #             config = config_members_new
         elif search('Members', csv_filename, IGNORECASE):
