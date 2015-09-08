@@ -147,30 +147,49 @@ class TableFixer(object):
 
     def ward_update(self, register, street_names, street_fieldname):
         ''' register: [{'PD':...,...},...]
-        street_names: {(<ward_old>, <street_name>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        street_names: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
         odd_even: '', 'odd', 'even'
         street_fieldname: eg 'Address 4' 
         '''
         table_new = deepcopy(register)
         for row in table_new:
-            street_name = row[street_fieldname].strip()
+            street_address = row[street_fieldname].strip()
             pd=row['PD']
-            ward_old = row['ward_old'].strip()
+            ward_old = pd2ward(pd)
             try:
-            (street_number, street_name) = re.match('(\d+)\s+(.+)', street_name)
-                ward_old=row['ward_old']
-                specs=street_names.get((ward_old, street_name),[])
-                for spec in specs:
+                (street_number, street_name) = re.match('(\d+)\s+(.+)', street_address)
+                for spec in street_names.get((ward_old, street_name),[]):
+                    
                     odd_even = spec['odd_even']
                     numbers = spec['numbers'] 
                     ward_new = spec['ward_new']
+                    
                     row['ward_new'] = 'Crookes & Crosspool'
                 else:
                     row['ward_new'] = 'UNKNOWN'
                     print('Street Name not matched:', row[street_fieldname])
-            catch:
+            except:
                 pass
             return table_new
+        
+    def is_in_ward(self, street_number, odd_even, numbers):
+        if odd_even=='':
+            if numbers:
+                return street_number in numbers
+            else:
+                return True
+        elif odd_even=='odd':
+            if numbers:
+                return (street_number % 2 == 1) and street_number in numbers
+            else:
+                return (street_number % 2 == 1)
+        elif odd_even=='even':
+            if numbers:
+                return (street_number % 2 == 0) and street_number in numbers
+            else:
+                return (street_number % 2 == 0)
+        else:
+            raise Exception('Unexpected value for odd_even {}'.format (odd_even))
 
 
 class StreetName(object):

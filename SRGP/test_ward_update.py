@@ -10,11 +10,15 @@ Crookes    Crookesmoor Road    evens    2-428    Broomhill
 '''
 
 import unittest
-from ward_update import street_names2ward_street_name
+
+from ward_update import street_names2ward_street_name, TableFixer
+
+
 class Test(unittest.TestCase):
 
 
     def setUp(self):
+        self.tf=TableFixer()
         self.street_names = [
                            {'ward_old': 'Crookes', 'street_name': 'Aldred Road' , 'odds_evens':'' , 'numbers':'' , 'ward_new': 'Crookes & Crosspool', 'notes': 'added (Spring Hill - Roslin Road)', },
                            {'ward_old': 'Crookes', 'street_name': 'Crookesmoor Road' , 'odds_evens':'odds' , 'numbers':'' , 'ward_new': 'Broomhill', 'notes': '', },
@@ -39,7 +43,32 @@ class Test(unittest.TestCase):
         print(self.street_spec)
         print(street_spec)        
         self.assertDictEqual(street_spec, self.street_spec)
-
+        
+    def test_is_in_ward(self):
+        '''        def is_in_ward(self, street_number, odd_even, numbers):
+        '''
+        rows=[
+               {'street_number':3,'odd_even': '','numbers': [], 'result':True },
+               {'street_number':3,'odd_even': '','numbers': [1,2,3], 'result':True },
+               {'street_number':3,'odd_even': '','numbers': [1,2], 'result':False },
+               
+               {'street_number':3,'odd_even': 'odd','numbers': [], 'result':True },
+               {'street_number':3,'odd_even': 'odd','numbers': [1,2,3], 'result':True },
+               {'street_number':3,'odd_even': 'odd','numbers': [1,2], 'result':False },
+               {'street_number':2,'odd_even': 'odd','numbers': [], 'result':False },
+               {'street_number':2,'odd_even': 'odd','numbers': [1,2], 'result':False },
+               #
+               {'street_number':2,'odd_even': 'even','numbers': [], 'result':True },
+               {'street_number':2,'odd_even': 'even','numbers': [1,2,3], 'result':True },
+               {'street_number':2,'odd_even': 'even','numbers': [3,4,5], 'result':False },
+               {'street_number':3,'odd_even': 'even','numbers': [], 'result':False },
+               {'street_number':3,'odd_even': 'even','numbers': [1,2,3], 'result':False },
+               #
+               ]
+        for row in rows:
+            self.assertEqual(self.tf.is_in_ward(row['street_number'],row['odd_even'],row['numbers']),row['result'])
+            
+            
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
