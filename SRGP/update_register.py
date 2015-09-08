@@ -3,7 +3,8 @@ Created on 24 Feb 2015
 
 @author: ph1jb
 
-Update the Register of electors 
+Update the Register of electors
+one two three
 '''
 from copy import deepcopy
 from csv import DictReader, DictWriter
@@ -54,7 +55,7 @@ class UpdateRegister(object):
     def update(self, d0, d1, status):
         '''Update dict d0 with dict d1.
         d0 and d1 are dicts of rows where a row is a dictionary {colname:value, ...}
-        d1 contains rows with Status='D'. Delete these rows from d0. 
+        d1 contains rows with Status='D'. Delete these rows from d0.
         '''
         d2 = deepcopy(d0)
         d2.update(d1)

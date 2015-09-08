@@ -53,7 +53,7 @@ class ConfigHandler(object):
         self.tagfields = ()
         # for writing csv (append new fields later)
         self.fieldmap_new = OD()
-        self.fieldmap_new.update(fields_extra)
+#         self.fieldmap_new.update(fields_extra)
         for k, v in fieldmap.items():
             if v == 'tag_list':
                 self.tagfields += (k,)  # Put original fieldname on taglist
@@ -63,7 +63,7 @@ class ConfigHandler(object):
                 self.fieldmap_new[k] = v
 
         # Update properties
-#         self.fieldmap_new.update(fields_extra)
+        self.fieldmap_new.update(fields_extra)
         self.fieldmap_new.update({'tag_list': 'tag_list', })
         self.fieldnames_new = tuple(self.fieldmap_new.values())
 
@@ -161,16 +161,16 @@ class CsvFixer(object):
     Write the table to a new csv file for import to NB.
     '''
 
-    def __init__(self, csv_filename, config, filereader):
+    def __init__(self, csv_register, config, filereader):
         ch = ConfigHandler(**config)
 
         # Read csv data file into a table
         skip_lines = config.get('skip_lines', 0)
         (table, unused) = filereader(
-            csv_filename, ch.fieldnames, skip_lines)
+            csv_register, ch.fieldnames, skip_lines)
 
         # Fix the data in table
-        (csv_basename, _) = splitext(basename(csv_filename))
+        (csv_basename, _) = splitext(basename(csv_register))
         vh = TableFixer(table=table, csv_basename=csv_basename, **ch.params)
         table_fixed = None
         if 'nationbuilder' in csv_basename:
@@ -183,7 +183,7 @@ class CsvFixer(object):
         table_new = d2d.data_new
 
         # Write the table to a new csv file for import to NB.
-        self.csv_filename_new = csv_filename.replace(
+        self.csv_filename_new = csv_register.replace(
             '.csv', 'NB.csv').replace('.xlsx', 'NB.csv')
         filehandler.csv_write(
             table_new, self.csv_filename_new, ch.fieldnames_new)
@@ -197,7 +197,7 @@ class TableFixer(object):
     clean_rows (trim leading and training white space
     fix_dates: from dd/mm/yyyy etc. to mm/dd/yyyy
     fix_doa: change date of attainment (18yo can vote) to DoB
-    fix_addresses: move city, postcode and country to names fields
+    fix_addresses_city_postcode_countrycode: move city, postcode and country to names fields
     fix_local_party: change 'Sheffield & Rotherham Green Party' to G
     extra_fields: append and populate extra fields
     flip_fields: reverse the (boolean) sense of field, eg do_not_email to email_opt_in
@@ -214,6 +214,9 @@ class TableFixer(object):
         return {
             'E': 'Broomhill',
             'G': 'Central',
+            # ~ 'H': 'Crookes & Crosspool',
+            'H': 'Crookes',
+            'L': 'Ecclesall',
             'R': 'Manor Castle',
             'T': 'Nether Edge',
             'Z': 'Walkley',
@@ -305,7 +308,7 @@ class TableFixer(object):
         else:
             return doa
 
-    def fix_addresses(self, row, address_fields):
+    def fix_addresses_city_postcode_countrycode(self, row, address_fields):
         '''Update row inplace. Given, say, 7 address fields fill thus:
         put country_code (GB) in country_code field
         move postcode (S10 1ST) to postcode field
@@ -357,8 +360,11 @@ class TableFixer(object):
                 row[afns[i]] = alist[i]
 
     def fix_address_street0(self, row, address_fields):
-        '''Merge fields address2,3,4 into  address1, add1 to add2 add5 to add3'''
-        if self.csv_basename.startswith('CentralConstituencyRegister2015'):
+        '''Merge and shift address fields:
+        Address2,3,4 => address1
+        Address1 => address2
+        Address5 => address3'''
+        if self.csv_basename.startswith('CentralConstituencyRegister2015') or (self.csv_basename.find('WardRegister2015') > -1):
             (row['Address 1'], row['Address 2'], row['Address 3'],) = (row[
                 'Address 2'] + ' ' + row['Address 3'] + ' ' + row['Address 4'], row['Address 1'], row['Address 5'])
 
@@ -373,6 +379,19 @@ class TableFixer(object):
                     row[fn] = ''
                     row[field_address1] = tmp
                     break
+
+    def fix_address_street_postal(self, row, address_fields):
+        '''Move Street address to Qualifying_Address_5 (which maps to NB address1)
+        See config fieldmap: Qualifying_Address_1 maps to address2 etc.'''
+        if self.csv_basename.startswith('Crookes_Ecclesall_Postal'):
+#             print('fix_address_street_postal')
+            field_address1 = address_fields.get('registered_address1', None)
+            field_address2 = address_fields.get('registered_address2', None)
+            field_address3 = address_fields.get('registered_address3', None)
+            row[field_address1] = row['Qualifying_Address_1'] + ' ' + row['Qualifying_Address_2'] + ' ' + row['Qualifying_Address_3']
+            row[field_address2] = ''
+            row[field_address3] = ''
+
 
     def fix_city(self, row, address_fields, field_city):
         for fieldname in address_fields.values():
@@ -459,13 +478,14 @@ class TableFixer(object):
             self.fix_contact_name(row)
             self.fix_dates(row)
             self.fix_doa(row, self.doa_fields)
-            self.fix_addresses(row, self.address_fields)
+            self.fix_addresses_city_postcode_countrycode(row, self.address_fields)
 #             if self.csv_basename.startswith('CentralConstituencyRegister'):
 #                 self.fix_address_street0(row, self.address_fields)
 #             else:
 #             self.fix_address_street(row, self.address_fields)
             self.fix_address_street0(row, self.address_fields)
             self.fix_address_street1(row, self.address_fields)
+            self.fix_address_street_postal(row, self.address_fields)
             self.fix_local_party(row)
             # Must call before fix_status to identify is_deceased
             self.extra_fields(row, self.fields_extra)
@@ -602,6 +622,8 @@ if __name__ == '__main__':
         elif search('CentralConsituencyPostal', csv_filename, IGNORECASE):
             config = config_register_postal
         elif search('CentralWardPostal', csv_filename, IGNORECASE):
+            config = config_register_postal
+        elif search('Crookes_Ecclesall_Postal', csv_filename, IGNORECASE):
             config = config_register_postal
         elif search('register', csv_filename, IGNORECASE):
             config = config_register

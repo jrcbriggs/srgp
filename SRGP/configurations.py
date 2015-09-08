@@ -83,7 +83,6 @@ config_members = {
         ('Email Greeting', None),
         ('First Name', 'first_name'),
         ('Last Name', 'last_name'),
-        #         ('Do not mail', 'tag_list'),
         ('Do not mail', 'email opt in'),  # Reverse Sense
         ('Addressee', None),
         ('Contact ID', 'civicrm_id'),
@@ -119,7 +118,7 @@ config_members = {
         ('support_level', 'support_level'),
         ('registered_state', 'registered_state'),
     ]),
-    'fields_flip': (  # Reverse Sense
+    'fields_flip': (# Reverse Sense
         'Do not mail',),
 }
 
@@ -169,7 +168,6 @@ config_supporters = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', 'name'),
-        #         ('Do not mail', 'tag_list'),
         ('Do not mail', 'email opt in'),  # Reverse Sense
         ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
@@ -187,7 +185,7 @@ config_supporters = {
         #         ('is_supporter', 'is_supporter'),
         ('support_level', 'support_level'),
     ]),
-    'fields_flip': (  # Reverse Sense
+    'fields_flip': (# Reverse Sense
         'Do not mail',),
 }
 
@@ -285,7 +283,7 @@ config_search = {
     'fields_extra': OD([
         # Do not set  records support_level or is_supporter from SearchAll
     ]),
-    'fields_flip': (  # Reverse Sense
+    'fields_flip': (# Reverse Sense
         'Do Not Email',
         'Do Not Phone',),
 }
@@ -532,9 +530,12 @@ config_register_postal = {
         ('registered_address1', 'Qualifying_Address_1',),
         ('registered_address2', 'Qualifying_Address_2',),
         ('registered_address3', 'Qualifying_Address_3',),
-        ('city', 'Qualifying_Address_4',),
-        ('zip', 'Qualifying_Address_6',),
-        ('country_code', 'Qualifying_Address_7',),
+        ('registered_address4', 'Qualifying_Address_4',),
+        ('registered_address5', 'Qualifying_Address_5',),
+        ('registered_address6', 'Qualifying_Address_6',),
+        ('city', 'Qualifying_Address_7',),
+        ('zip', 'Qualifying_Address_8',),
+        ('country_code', 'Qualifying_Address_9',),
         ]),
     'date_fields': (),
     'date_format': '%d/%m/%Y',  # _electoral_roll
@@ -547,9 +548,9 @@ config_register_postal = {
         ('Qualifying_Address_1', 'registered_address1'),  # NB Street address
         ('Qualifying_Address_2', 'registered_address2'),  # NB Street address
         ('Qualifying_Address_3', 'registered_address3'),  # NB Street address
-        ('Qualifying_Address_4', 'registered_city'),  #
-        ('Qualifying_Address_6', 'registered_zip'),  # Hghes QA used
-        ('Qualifying_Address_7', 'registered_country_code'),  #
+        ('Qualifying_Address_7', 'registered_city'),  #
+        ('Qualifying_Address_8', 'registered_zip'),  # Hghes QA used
+        ('Qualifying_Address_9', 'registered_country_code'),  #
         ]),
     'fields_extra': OD([
         ('registered_state', 'registered_state'),

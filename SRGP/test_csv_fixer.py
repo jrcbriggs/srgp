@@ -193,7 +193,7 @@ class Test(unittest.TestCase):
                'A3': 'S10 1ST', 'A4': '', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': '220 SVR', 'A2': '', 'A3': '',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_addresses(row, self.address_fields)
+        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_addresses1(self):
@@ -201,7 +201,7 @@ class Test(unittest.TestCase):
                'A4': 'S10 1ST', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': 'Attic', 'A2': '220 SVR', 'A3': '',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_addresses(row, self.address_fields)
+        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_addresses2(self):
@@ -209,7 +209,7 @@ class Test(unittest.TestCase):
                'A4': 'Sheffield', 'A5': 'S10 1ST', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': 'Flat 1', 'A2': 'Crookes Hall', 'A3': '220 SVR',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_addresses(row, self.address_fields)
+        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_address_street_1(self):
@@ -250,7 +250,7 @@ class Test(unittest.TestCase):
                'A3': '', 'A4': '', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': 'Other Electors', 'A2': '',
                'A3': '', 'A4': '', 'A5': '', 'A6': '', 'A7': 'GB', }
-        self.tf.fix_addresses(row, self.address_fields)
+        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_append_fields(self):
