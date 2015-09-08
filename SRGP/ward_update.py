@@ -43,14 +43,18 @@ def pd2ward(pd):
 def rangeexpand(txt):
     ''''1-3,6,8-10' -> [1, 2, 3, 6, 8, 9, 10]
     '''
-    spans = (el.partition('-')[::2] for el in txt.split(','))
-    ranges = (range(int(s), int(e) + 1 if e else int(s) + 1) for s, e in spans)
-    return list(chain.from_iterable(ranges))
+    if txt:
+        spans = (el.partition('-')[::2] for el in txt.split(','))
+        ranges = (range(int(s), int(e) + 1 if e else int(s) + 1) for s, e in spans)
+        return tuple(chain.from_iterable(ranges))
+    else:
+        return tuple()
 
 def street_names2ward_street_name(street_names):
     ward_street_name = {}
     for row in street_names:
-        ward_street_name.setdefault((row['ward_old'], row['street_name']), []).append(row)
+        row['numbers']=rangeexpand(row['numbers'])
+        ward_street_name.setdefault((row['ward_old'], row['street_name']), []).append(row)        
     return ward_street_name
 
 class CsvFixer(object):
@@ -142,16 +146,31 @@ class FileHandler(object):
 class TableFixer(object):
 
     def ward_update(self, register, street_names, street_fieldname):
+        ''' register: [{'PD':...,...},...]
+        street_names: {(<ward_old>, <street_name>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        odd_even: '', 'odd', 'even'
+        street_fieldname: eg 'Address 4' 
+        '''
         table_new = deepcopy(register)
         for row in table_new:
             street_name = row[street_fieldname].strip()
-            street_name = re.sub('^\d+\w*\s+', '', street_name)
-            if street_name in street_names:
-                row['ward_new'] = 'Crookes & Crosspool'
-            else:
-                row['ward_new'] = 'UNKNOWN'
-                print('Street Name not matched:', row[street_fieldname])
-        return table_new
+            pd=row['PD']
+            ward_old = row['ward_old'].strip()
+            try:
+            (street_number, street_name) = re.match('(\d+)\s+(.+)', street_name)
+                ward_old=row['ward_old']
+                specs=street_names.get((ward_old, street_name),[])
+                for spec in specs:
+                    odd_even = spec['odd_even']
+                    numbers = spec['numbers'] 
+                    ward_new = spec['ward_new']
+                    row['ward_new'] = 'Crookes & Crosspool'
+                else:
+                    row['ward_new'] = 'UNKNOWN'
+                    print('Street Name not matched:', row[street_fieldname])
+            catch:
+                pass
+            return table_new
 
 
 class StreetName(object):
