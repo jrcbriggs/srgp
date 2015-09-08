@@ -27,18 +27,6 @@ from sys import argv
 from sys import stdout
 
 
-def pd2ward(pd):
-    return {
-        'E': 'Broomhill',
-        'G': 'Central',
-        # ~ 'H': 'Crookes & Crosspool',
-        'H': 'Crookes',
-        'L': 'Ecclesall',
-        'R': 'Manor Castle',
-        'T': 'Nether Edge',
-        'Z': 'Walkley',
-    }[pd[0]]
-
 
 def rangeexpand(txt):
     ''''1-3,6,8-10' -> [1, 2, 3, 6, 8, 9, 10]
@@ -145,6 +133,19 @@ class FileHandler(object):
 
 class TableFixer(object):
 
+    def pd2ward(self,pd):
+        return {
+            'E': 'Broomhill',
+            'G': 'Central',
+            # ~ 'H': 'Crookes & Crosspool',
+            'H': 'Crookes',
+            'L': 'Ecclesall',
+            'R': 'Manor Castle',
+            'T': 'Nether Edge',
+            'Z': 'Walkley',
+        }[pd[0]]
+
+
     def ward_update(self, register, street_names, street_fieldname):
         ''' register: [{'PD':...,...},...]
         street_names: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
@@ -155,19 +156,22 @@ class TableFixer(object):
         for row in table_new:
             street_address = row[street_fieldname].strip()
             pd=row['PD']
-            ward_old = pd2ward(pd)
+            ward_old = self.pd2ward(pd)
             try:
-                (street_number, street_name) = re.match('(\d+)\s+(.+)', street_address)
-                for spec in street_names.get((ward_old, street_name),[]):
-                    
+                (street_number,) = re.match('(\d+)\s+(.+)', street_address)
+                street_name = re.sub('^\d+[-/\d]+\s+','', street_address)
+                specs= street_names.get((ward_old, street_name),[])
+                for spec in specs:
                     odd_even = spec['odd_even']
                     numbers = spec['numbers'] 
                     ward_new = spec['ward_new']
                     
-                    row['ward_new'] = 'Crookes & Crosspool'
-                else:
-                    row['ward_new'] = 'UNKNOWN'
-                    print('Street Name not matched:', row[street_fieldname])
+                    if self.is_in_ward(street_number, odd_even, numbers):
+                        row['ward'] = ward_new
+                    else:
+                        pass # leave ward field unchanged 
+                if not specs:
+                    print('Street Name not matched:', street_address)
             except:
                 pass
             return table_new
