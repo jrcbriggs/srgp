@@ -53,9 +53,6 @@ def street_names2ward_street_name(street_names):
         ward_street_name.setdefault((row['ward_old'], row['street_name']), []).append(row)
     return ward_street_name
 
-
-
-
 class CsvFixer(object):
 
     '''The top level class.
