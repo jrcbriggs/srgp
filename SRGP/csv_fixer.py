@@ -152,7 +152,7 @@ class FileHandler(object):
             return self.csv_read_fh(csv, fieldnames_expected, skip_lines)
 
 
-class CsvFixer(object):
+class CsvWardUpdate(object):
 
     '''The top level class.
     Read csv data file into a table
@@ -171,7 +171,7 @@ class CsvFixer(object):
 
         # Fix the data in table
         (csv_basename, _) = splitext(basename(csv_register))
-        vh = TableFixer(table=table, csv_basename=csv_basename, **ch.params)
+        vh = TableWardUpdate(table=table, csv_basename=csv_basename, **ch.params)
         table_fixed = None
         if 'nationbuilder' in csv_basename:
             table_fixed = vh.fix_table_street_address()
@@ -190,7 +190,7 @@ class CsvFixer(object):
 #         filehandler.csv_print(table_new, fieldnames_new)
 
 
-class TableFixer(object):
+class TableWardUpdate(object):
 
     '''
     Fix the data in the table, top level method is: fix_table
@@ -558,11 +558,11 @@ class TableFixer(object):
     def set_ward(self, row):
         if 'PD' in row:
             pd = row['PD']
-            ward = TableFixer.pd2ward(pd)
+            ward = TableWardUpdate.pd2ward(pd)
             row['ward_name'] = ward
         if 'PD_Letters' in row:
             pd = row['PD_Letters']
-            ward = TableFixer.pd2ward(pd)
+            ward = TableWardUpdate.pd2ward(pd)
             row['ward_name'] = ward
 
     def tags_create(self, row, tagfields, csv_basename):
@@ -670,5 +670,5 @@ if __name__ == '__main__':
         xls_pw = os.getenv('XLS_PASSWORD')
 
         print('config_name: ', config['config_name'])
-        csvfixer = CsvFixer(csv_filename, config, reader)
+        csvfixer = CsvWardUpdate(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)

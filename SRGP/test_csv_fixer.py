@@ -7,7 +7,7 @@ from collections import OrderedDict as OD
 import os
 import sys
 import unittest
-from csv_fixer import TableFixer, FileHandler, TableMapper, ConfigHandler
+from csv_fixer import TableWardUpdate, FileHandler, TableMapper, ConfigHandler
 
 
 class Test(unittest.TestCase):
@@ -63,7 +63,7 @@ class Test(unittest.TestCase):
         # OD
         self.od = OD([('a', 0), ('b', 1), ('c', 2), ])
         self.od1 = OD([('z', 9), ('y', 8), ('x', 7), ])
-        # TableFixer
+        # TableWardUpdate
         self.doa = '31/12/2014'
         self.dob_nb = '12/31/1996'  # Date of Birth = Date of Attainment less 18 years
         self.date_fields = ['Election_Date']
@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
             {'col0': 'a', 'col1': 'b', },
         ]
         self.csv_basename = 'SRGP_MembersAll_2015-02-13'
-        self.tf = TableFixer(table=self.table, csv_basename=self.csv_basename, **self.config)
+        self.tf = TableWardUpdate(table=self.table, csv_basename=self.csv_basename, **self.config)
     # ConfigHandler
 
     def test_confighandler(self):
@@ -153,7 +153,7 @@ class Test(unittest.TestCase):
         expected = [9, 8, 7]
         actual = list(self.od1.values())
         self.assertListEqual(actual, expected)
-    # TableFixer
+    # TableWardUpdate
 
     def test_append_fields_other(self):
         for isness in ('is_supporter', 'is_volunteer'):
@@ -366,7 +366,7 @@ class Test(unittest.TestCase):
         addresses_dict = dict(zip(self.address_fields, self.address_fields))
         # put a valid doa in the Date of Attainment field
         self.params['fieldmap'].update(addresses_dict)
-        tf = TableFixer(table=self.table, csv_basename=self.csv_basename, **self.params)
+        tf = TableWardUpdate(table=self.table, csv_basename=self.csv_basename, **self.params)
         table_fixed = tf.fix_table()
         row0 = self.row0.copy()
         row0.update({'c': self.dob_nb, 'A1': '220 SVR', 'A2': '', 'A3': '',
@@ -530,7 +530,7 @@ class Test(unittest.TestCase):
             'ZE': 'Walkley',
         }
         for (k, v) in d.items():
-            self.assertEqual(TableFixer.pd2ward(k), v)
+            self.assertEqual(TableWardUpdate.pd2ward(k), v)
 
     def test_set_ward(self):
         d = {

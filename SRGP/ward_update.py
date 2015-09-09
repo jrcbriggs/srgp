@@ -8,53 +8,74 @@ Created on 5 Sep 2015
 
 '''
 from _csv import writer
-from collections import OrderedDict as OD
 from copy import deepcopy
 from csv import DictReader, DictWriter
 import csv
-from datetime import datetime as dt
-import datetime
 from importlib import import_module
-from io import StringIO
 from itertools import chain
-import mmap
-import os
-from os.path import basename, splitext
-from re import compile, IGNORECASE, sub
-from re import search
 import re
 from sys import argv
 from sys import stdout
 
 
+def pd2ward(pd):
+    return {
+        'E': 'Broomhill',
+        'G': 'Central',
+        # ~ 'H': 'Crookes & Crosspool',
+        'H': 'Crookes',
+        'L': 'Ecclesall',
+        'R': 'Manor Castle',
+        'T': 'Nether Edge',
+        'Z': 'Walkley',
+    }[pd[0]]
 
-def rangeexpand(txt):
-    ''''1-3,6,8-10' -> [1, 2, 3, 6, 8, 9, 10]
+
+def rangeexpand(numbers):
+    ''''1-3,6,8-10' -> {1, 2, 3, 6, 8, 9, 10}
+    '' -> {} #empty set
     '''
-    if txt:
-        spans = (el.partition('-')[::2] for el in txt.split(','))
+    if numbers:
+        spans = (el.partition('-')[::2] for el in numbers.split(','))
         ranges = (range(int(s), int(e) + 1 if e else int(s) + 1) for s, e in spans)
-        return tuple(chain.from_iterable(ranges))
+        return set(chain.from_iterable(ranges))
     else:
-        return tuple()
+        return set()
 
-def street_names2ward_street_name(street_names):
+
+def rangeexpand_odd_even(odd_even, numbers):
+    ''''1-3,6,8-10' -> {1, 2, 3, 6, 8, 9, 10}
+    TODO
+    '''
+    r = rangeexpand(numbers)
+    if r:
+        if odd_even == '':
+            return ('', r)
+        elif odd_even == 'odd':
+            return ('', {e for e in r if e % 2 == 1})
+        elif odd_even == 'even':
+            return ('', {e for e in r if e % 2 == 0})
+    else:
+        return (odd_even, set())
+
+
+def street_spec2ward_street_name(street_spec):
     ward_street_name = {}
-    for row in street_names:
-        row['numbers']=rangeexpand(row['numbers'])
-        ward_street_name.setdefault((row['ward_old'], row['street_name']), []).append(row)        
+    for row in street_spec:
+        row['numbers'] = rangeexpand(row['numbers'])
+        ward_street_name.setdefault((row['ward_old'], row['street_name']), []).append(row)
     return ward_street_name
 
-class CsvFixer(object):
+
+class CsvWardUpdate(object):
 
     '''The top level class.
     Read csv data file into a table
-    Fix the data in table
-    Create new table: with NB table column headings
-    Write the table to a new csv file for import to NB.
+    Update the wards
+    Write  to a new csv file.
     '''
 
-    def __init__(self, csv_register, csv_street_names):
+    def __init__(self, csv_register, csv_street_spec):
         fieldnames = ['PD', 'ENO', 'Status', 'Title', 'First Names', 'Initials', 'Surname', 'Suffix', 'Date of Attainment', 'Franchise Flag', 'Address 1', 'Address 2', 'Address 3', 'Address 4', 'Address 5', 'Address 6', 'Address 7', 'Address 8', 'Address 9', 'Postcode']
         skip_lines = 1
         filehandler = FileHandler()
@@ -62,15 +83,14 @@ class CsvFixer(object):
         # Read csv data file into a table
         (table, unused) = filehandler.csv_read(csv_register, fieldnames, skip_lines)
 
-        # Read csv street names into a dict
-        (street_names_array, unused) = filehandler.csv_read(csv_street_names, ['StreetNames'])
-        street_names = {row['StreetNames'] for row in street_names_array}  # set
-#         print(street_names)
+        # Read csv street spec into a dict
+        (street_spec_array, unused) = filehandler.csv_read(csv_street_spec, ['street_name'])
+        street_names = {row['street_name'] for row in street_spec_array}  # set
 
         # Update table
-        tf = TableFixer()
+        twu = TableWardUpdate()
         street_fieldname = 'Address 4'
-        table_new = tf.ward_update(table, street_names, street_fieldname)
+        table_new = twu.ward_update(table, street_names, street_fieldname)
 
         # Write the updated table to a new csv file
         self.csv_filename_new = csv_register.replace('.csv', 'WardUpdated.csv')
@@ -131,66 +151,46 @@ class FileHandler(object):
         dw.writerows(table)
 
 
-class TableFixer(object):
+class TableWardUpdate(object):
 
-    def pd2ward(self,pd):
-        return {
-            'E': 'Broomhill',
-            'G': 'Central',
-            # ~ 'H': 'Crookes & Crosspool',
-            'H': 'Crookes',
-            'L': 'Ecclesall',
-            'R': 'Manor Castle',
-            'T': 'Nether Edge',
-            'Z': 'Walkley',
-        }[pd[0]]
-
-
-    def ward_update(self, register, street_names, street_fieldname):
+    def ward_update(self, register, street_spec, street_fieldname):
         ''' register: [{'PD':...,...},...]
-        street_names: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        street_spec: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
         odd_even: '', 'odd', 'even'
-        street_fieldname: eg 'Address 4' 
+        street_fieldname: eg 'Address 4'
         '''
         table_new = deepcopy(register)
         for row in table_new:
             street_address = row[street_fieldname].strip()
-            pd=row['PD']
-            ward_old = self.pd2ward(pd)
+            pd = row['PD']
+            ward_old = pd2ward(pd)
             try:
                 (street_number,) = re.match('(\d+)\s+(.+)', street_address)
-                street_name = re.sub('^\d+[-/\d]+\s+','', street_address)
-                specs= street_names.get((ward_old, street_name),[])
+                street_name = re.sub('^\d+[-/\d]+\s+', '', street_address)
+                specs = street_spec.get((ward_old, street_name), [])
                 for spec in specs:
                     odd_even = spec['odd_even']
-                    numbers = spec['numbers'] 
+                    numbers = spec['numbers']
                     ward_new = spec['ward_new']
-                    
+
                     if self.is_in_ward(street_number, odd_even, numbers):
                         row['ward'] = ward_new
                     else:
-                        pass # leave ward field unchanged 
+                        pass  # leave ward field unchanged
                 if not specs:
                     print('Street Name not matched:', street_address)
             except:
                 pass
             return table_new
-        
+
     def is_in_ward(self, street_number, odd_even, numbers):
-        if odd_even=='':
-            if numbers:
-                return street_number in numbers
-            else:
-                return True
-        elif odd_even=='odd':
-            if numbers:
-                return (street_number % 2 == 1) and street_number in numbers
-            else:
+        ''' odd_even and numbers are pre-processed so either odd_even or numbers are set , never both
+        '''
+        if odd_even == '':
+                return street_number in numbers if numbers else True
+        elif odd_even == 'odd':
                 return (street_number % 2 == 1)
-        elif odd_even=='even':
-            if numbers:
-                return (street_number % 2 == 0) and street_number in numbers
-            else:
+        elif odd_even == 'even':
                 return (street_number % 2 == 0)
         else:
             raise Exception('Unexpected value for odd_even {}'.format (odd_even))
@@ -233,14 +233,31 @@ class StreetName(object):
             for row in street_names_table:
                 csv_writer.writerow(row)
 
-if __name__ == '__main__':
-#     csv_register = '/home/julian/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv'
-#     csv_street_names = '/home/julian/SRGP/register/crookes/street_names.csv'
-#     csv_fixer = CsvFixer(csv_register, csv_street_names)
 
-#     csv_register = '/home/julian/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv'
-#     street_fieldname = 'Address 4'
-#     sn = StreetName(csv_register, street_fieldname)
-#     csv_street_names = csv_register.replace('.csv', '_STREET_NAMES.csv')
-#     sn.write(csv_street_names)
-    print(rangeexpand('1-3,6,8-10'))
+class Main(object):
+
+    def create_street_names_by_ward(self, csv_register):
+        ''' Extract street names by ward from register and write to csv
+        '''
+        street_fieldname = 'Address 4'
+        sn = StreetName(csv_register, street_fieldname)
+        csv_street_names = csv_register.replace('.csv', '_St.csv')
+        sn.write(csv_street_names)
+
+    def ward_update(self, csv_register, csv_street_spec):
+        '''Update ward names in register
+        '''
+        csv_street_names = '/home/julian/SRGP/register/crookes/street_names.csv'
+        cwu = CsvWardUpdate(csv_register, csv_street_spec)
+
+
+if __name__ == '__main__':
+    m = Main()
+    csv_register = '/home/julian/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv'
+#     m.create_street_names_by_ward(csv_register)
+
+    csv_register = '/home/julian/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv'
+    csv_street_spec = '/home/julian/SRGP/register/crookes/CrookesStreetSpec.csv'
+    m.ward_update(csv_register, csv_street_spec)
+
+
