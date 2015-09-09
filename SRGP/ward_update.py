@@ -85,12 +85,12 @@ class CsvWardUpdate(object):
 
         # Read csv street spec into a dict
         (street_spec_array, unused) = filehandler.csv_read(csv_street_spec, ['street_name'])
-        street_names = {row['street_name'] for row in street_spec_array}  # set
+        street_spec = {(row['ward_old'], row['street_name']): row for row in street_spec_array}
 
         # Update table
         twu = TableWardUpdate()
         street_fieldname = 'Address 4'
-        table_new = twu.ward_update(table, street_names, street_fieldname)
+        table_new = twu.ward_update(table, street_spec, street_fieldname)
 
         # Write the updated table to a new csv file
         self.csv_filename_new = csv_register.replace('.csv', 'WardUpdated.csv')
@@ -175,6 +175,7 @@ class TableWardUpdate(object):
 
                     if self.is_in_ward(street_number, odd_even, numbers):
                         row['ward'] = ward_new
+                        break
                     else:
                         pass  # leave ward field unchanged
                 if not specs:
