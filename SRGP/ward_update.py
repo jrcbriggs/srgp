@@ -138,14 +138,6 @@ class FileHandler(object):
                                  + '\nmismatch:' + ','.join(sorted(fields_odd)))
         return (table, fieldnames)
 
-    def find_mismatch(self, set0, set1):
-        '''return difference of 2 iterables (lists, sets, tuples)
-        as sorted list'''
-        return sorted(list(set(set0).difference(set(set1))))
-
-    def csv_print(self, table, fieldnames2):
-        self.csv_write_fh(table, stdout, fieldnames2)
-
     def csv_write(self, table, pathname, fieldnames2):
         with open(pathname, 'w') as fh:
             self. csv_write_fh(table, fh, fieldnames2)
@@ -158,46 +150,39 @@ class FileHandler(object):
 
 class TableWardUpdate(object):
 
-    def ward_update(self, register, ward_street_spec, number_fieldname, street_fieldname):
-        ''' register: [{'PD':...,...},...]
-        ward_street_spec: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
-        odd_even: '', 'odd', 'even'
-        street_fieldname: eg 'Address 4'
-        '''
-        for row in register:
-            try:
-                street_number = row[number_fieldname].strip()
-                street_name = row[street_fieldname].strip()
-                m=re.match('(\d+[-/a-zA-Z]*)\s+(.+)', street_name)
-                if m:
-                    (street_number, street_name) = m.groups()
-                street_number=re.sub('[^\d]','',street_number) #123A -> 123
-                street_number=street_number.strip()
-                if street_number=='':
-                    street_number='0'
-                street_number=int(street_number)
-                pd = row['PD']
-                ward_old = pd2ward(pd)
-                specs = ward_street_spec.get((ward_old, street_name), [])
-                for spec in specs:
-                    odd_even = spec['odd_even']
-                    numbers = spec['numbers']
-                    ward_new = spec['ward_new']
-    
-                    if self.is_in_ward(street_number, odd_even, numbers):
-                        row['ward_new'] = ward_new
-                        break
-                    else:
-                        row['ward_new'] = ward_old # leave ward field unchanged
-                if not specs:
-                    print('Street Name not matched:', street_name)
-            except Exception as e:
-                print (e)
-        return register
 
-    def is_in_ward(self, street_number, odd_even, numbers):
+    def clean_street_number_and_name(self, street_number, street_name):
+        '''In the register (2015-04-20):
+        street number is usually in column: Address 2
+        street name is usually in column: Address 4
+        Sometimes the number (Address 2) looks like: 12A, 12-14, 12/3, 
+        For ward allocation we can strip all these down to 12.
+        Sometimes Address 2 holds a flat number (or similar) and the street number is prepended to the street address (Address 4):
+        3 Arran Road. In this case we extract the number for Address 4. 
+        '''
+        #strip leading and trailing spaces
+        street_number=street_number.strip()
+        street_name=street_name.strip()
+        #
+        #If Address 4 has a leading number split Address 4 into: street number and street name 
+        m = re.match('(\d+[-/a-zA-Z]*)\s+(.+)', street_name)
+        if m:
+            street_number, street_name = m.groups()
+        
+        #Remove all but digits from street number
+        street_number = re.sub('[^\d]', '', street_number) #123A -> 123 but also 12-14 -> 1214 :(
+        
+        #If Address 2 held a house name (no digits) then street number may now be ''. Change it to 0. TODO: This might set wrong ward on Boundary or Cross Streets.
+        if street_number == '':
+            street_number = '0'
+        street_number = int(street_number)
+        return (street_name, street_number)
+
+    def is_in_ward_new(self, street_number, odd_even, numbers):
         ''' odd_even and numbers are pre-processed so either odd_even or numbers are set , never both
         '''
+        if street_number==0:
+            return False #Street number field likely held a house name. We cannot handle this. 
         if odd_even == '':
                 return street_number in numbers if numbers else True
         elif odd_even == 'odd':
@@ -206,6 +191,28 @@ class TableWardUpdate(object):
                 return (street_number % 2 == 0)
         else:
             raise Exception('Unexpected value for odd_even {}'.format (odd_even))
+
+    def ward_update(self, register, ward_street_spec, number_fieldname, street_fieldname):
+        ''' register: [{'PD':...,...},...]
+        ward_street_spec: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        odd_even: '', 'odd', 'even'
+        street_fieldname: eg 'Address 4'
+        '''
+        for row in register:
+            ward_old = pd2ward(row['PD'])
+            (street_name, street_number) = self.clean_street_number_and_name(row[number_fieldname], row[street_fieldname])
+            specs = ward_street_spec.get((ward_old, street_name), []) # street number spec for a single (ward, street)
+            if specs:
+                for spec in specs:
+                    if self.is_in_ward_new(street_number, spec['odd_even'], spec['numbers']):
+                        row['ward_new'] = spec['ward_new']
+                        break #exit on first match
+                else: #this a a for else. It executes if the for loop completes but not if break exits the for loop 
+                    row['ward_new'] = ward_old
+            else:
+                row['ward_new'] = ward_old
+                print('Street Name not matched:', street_name) #(ward, street) not found in dict ward_street_spec
+        return register 
 
 
 class StreetName(object):
@@ -268,7 +275,7 @@ if __name__ == '__main__':
     csv_register = path.expanduser('~/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv')
 #     m.create_street_names_by_ward(csv_register)
 
-    csv_register = path.expanduser('~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv')
-#     csv_register = path.expanduser('~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv')
+#     csv_register = path.expanduser('~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv')
+    csv_register = path.expanduser('~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv')
     csv_street_spec = path.expanduser('~/SRGP/register/crookes/CrookesStreetSpec.csv')
     m.ward_update(csv_register, csv_street_spec)

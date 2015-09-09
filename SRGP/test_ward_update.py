@@ -92,7 +92,7 @@ class Test(unittest.TestCase):
                #
                ]
         for row in rows:
-            self.assertEqual(self.tf.is_in_ward(row['street_number'], row['odd_even'], row['numbers']), row['expected'],
+            self.assertEqual(self.tf.is_in_ward_new(row['street_number'], row['odd_even'], row['numbers']), row['expected'],
                              (row['street_number'], row['odd_even'], row['numbers']))
 
 
