@@ -170,7 +170,7 @@ class Test(unittest.TestCase):
             'asdf ': 'asdf',
             '  asdf  ': 'asdf',
             'asdf jkl': 'asdf jkl',
-            'asdf,jkl': 'asdf jkl',
+            'asdf,jkl': 'asdf;jkl',
         }
         for fixture, expected in fixtures.items():
             actual = self.tf.clean_value(fixture)
@@ -549,7 +549,7 @@ class Test(unittest.TestCase):
     def test_tags_create(self):
         row = self.row0
         csv_basename = 'SRGP_MembersAll_2015-01-13'
-        expected = {'tag_list': 'd=3,e=4,SRGP_MembersAll_2015-01-13'}
+        expected = {'tag_list': 'd=3,e=4'}
         actual = self.tf.tags_create(row, self.tagfields, csv_basename)
         self.assertEqual(expected, actual)
 if __name__ == "__main__":
