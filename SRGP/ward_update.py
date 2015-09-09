@@ -84,13 +84,13 @@ class CsvWardUpdate(object):
         (table, unused) = filehandler.csv_read(csv_register, fieldnames, skip_lines)
 
         # Read csv street spec into a dict
-        (street_spec_array, unused) = filehandler.csv_read(csv_street_spec, ['street_name'])
-        street_spec = {(row['ward_old'], row['street_name']): row for row in street_spec_array}
+        (street_spec, unused) = filehandler.csv_read(csv_street_spec, ['street_name'])
+        ward_street_spec = street_spec2ward_street_name(street_spec)
 
         # Update table
         twu = TableWardUpdate()
         street_fieldname = 'Address 4'
-        table_new = twu.ward_update(table, street_spec, street_fieldname)
+        table_new = twu.ward_update(table, ward_street_spec, street_fieldname)
 
         # Write the updated table to a new csv file
         self.csv_filename_new = csv_register.replace('.csv', 'WardUpdated.csv')
@@ -153,9 +153,9 @@ class FileHandler(object):
 
 class TableWardUpdate(object):
 
-    def ward_update(self, register, street_spec, street_fieldname):
+    def ward_update(self, register, ward_street_spec, street_fieldname):
         ''' register: [{'PD':...,...},...]
-        street_spec: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        ward_street_spec: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
         odd_even: '', 'odd', 'even'
         street_fieldname: eg 'Address 4'
         '''
@@ -167,7 +167,7 @@ class TableWardUpdate(object):
             try:
                 (street_number,) = re.match('(\d+)\s+(.+)', street_address)
                 street_name = re.sub('^\d+[-/\d]+\s+', '', street_address)
-                specs = street_spec.get((ward_old, street_name), [])
+                specs = ward_street_spec.get((ward_old, street_name), [])
                 for spec in specs:
                     odd_even = spec['odd_even']
                     numbers = spec['numbers']
