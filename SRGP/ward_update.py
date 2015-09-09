@@ -71,7 +71,9 @@ def street_spec2ward_street_spec(street_spec):
 class CsvWardUpdate(object):
 
     '''The top level class.
-    Read csv data file into a table
+    Read register csv file into a table (list of dict)
+    Read street_spec csv file into a table (list of dict)
+    Create ward_street_spec: {(ward, street_name): [ street_number_spec, street_number_spec,...], ...}
     Update the wards
     Write  to a new csv file.
     
@@ -79,7 +81,7 @@ class CsvWardUpdate(object):
     '''
 
     def __init__(self, csv_register, csv_street_spec):
-        fieldnames = ['PD', 'ENO', 'Status', 'Title', 'First Names', 'Initials', 'Surname', 'Suffix', 'Date of Attainment', 'Franchise Flag', 'Address 1', 'Address 2', 'Address 3', 'Address 4', 'Address 5', 'Address 6', 'Address 7', 'Address 8', 'Address 9', 'Postcode']
+        fieldnames = ('PD', 'ENO', 'Status', 'Title', 'First Names', 'Initials', 'Surname', 'Suffix', 'Date of Attainment', 'Franchise Flag', 'Address 1', 'Address 2', 'Address 3', 'Address 4', 'Address 5', 'Address 6', 'Address 7', 'Address 8', 'Address 9', 'Postcode')
         skip_lines = 1
         filehandler = FileHandler()
 
@@ -87,7 +89,8 @@ class CsvWardUpdate(object):
         (register, unused) = filehandler.csv_read(csv_register, fieldnames, skip_lines)
 
         # Read csv street spec into a dict
-        (street_spec, unused) = filehandler.csv_read(csv_street_spec, ['street_name'])
+        fieldnames2=('ward_old', 'street_name', 'odd_even', 'numbers', 'ward_new', 'notes')
+        (street_spec, unused) = filehandler.csv_read(csv_street_spec, fieldnames2)
         ward_street_spec = street_spec2ward_street_spec(street_spec)
 
         # Update register
@@ -98,7 +101,7 @@ class CsvWardUpdate(object):
 
         # Write the updated register to a new csv file
         self.csv_register_updated = csv_register.replace('.csv', 'WardUpdated.csv')
-        fieldnames_new = fieldnames + ['ward_new']
+        fieldnames_new = fieldnames + ('ward_new',)
         filehandler.csv_write(
             register_updated, self.csv_register_updated, fieldnames_new)
 
@@ -107,10 +110,6 @@ class FileHandler(object):
 
     '''Handle reading and writing files, including the config file which is loaded as a Python module.
     '''
-
-    def config_load(self, modulename):
-        mods = import_module(modulename)
-        return mods.config
 
     def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
@@ -126,15 +125,17 @@ class FileHandler(object):
         dr = DictReader(fh)
         table = [row for row in dr]
         fieldnames = tuple(dr.fieldnames)
-#         if len(fieldnames) == len(fieldnames_expected):
-#             if fieldnames != fieldnames_expected:
-#                 fields_odd = self.find_mismatch(
-#                     fieldnames, fieldnames_expected)
-#                 raise ValueError('Unexpected fieldnames:\nactual  : '
-#                                  + ','.join(sorted(fieldnames))
-#                                  + '\nexpected: ' +
-#                                  ','.join(sorted(fieldnames_expected))
-#                                  + '\nmismatch:' + ','.join(sorted(fields_odd)))
+        if len(fieldnames) == len(fieldnames_expected):
+            if fieldnames != fieldnames_expected:
+                fields_odd = self.find_mismatch(
+                    fieldnames, fieldnames_expected)
+                raise ValueError('Unexpected fieldnames:\nactual  : '
+                                 + ','.join(sorted(fieldnames))
+                                 + '\nexpected: ' +
+                                 ','.join(sorted(fieldnames_expected))
+                                 + '\nn columns in csv file:{}'.format(len(fieldnames))
+                                 + '\nn fields expected:{}'.format(len(fieldnames_expected))
+                                 + '\nmismatch:' + ','.join(sorted(fields_odd)))
         return (table, fieldnames)
 
     def find_mismatch(self, set0, set1):
