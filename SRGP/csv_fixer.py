@@ -152,7 +152,7 @@ class FileHandler(object):
             return self.csv_read_fh(csv, fieldnames_expected, skip_lines)
 
 
-class CsvWardUpdate(object):
+class CsvFixer(object):
 
     '''The top level class.
     Read csv data file into a table
@@ -171,7 +171,7 @@ class CsvWardUpdate(object):
 
         # Fix the data in table
         (csv_basename, _) = splitext(basename(csv_register))
-        vh = TableWardUpdate(table=table, csv_basename=csv_basename, **ch.params)
+        vh = TableFixer(table=table, csv_basename=csv_basename, **ch.params)
         table_fixed = None
         if 'nationbuilder' in csv_basename:
             table_fixed = vh.fix_table_street_address()
@@ -190,7 +190,7 @@ class CsvWardUpdate(object):
 #         filehandler.csv_print(table_new, fieldnames_new)
 
 
-class TableWardUpdate(object):
+class TableFixer(object):
 
     '''
     Fix the data in the table, top level method is: fix_table
@@ -556,13 +556,11 @@ class TableWardUpdate(object):
             row['PD/ENO'] = row['PD/ENO'].replace('/', '')
 
     def set_ward(self, row):
+        if 'PD_Letters' in row:
+            row['PD'] = row['PD_Letters']
         if 'PD' in row:
             pd = row['PD']
-            ward = TableWardUpdate.pd2ward(pd)
-            row['ward_name'] = ward
-        if 'PD_Letters' in row:
-            pd = row['PD_Letters']
-            ward = TableWardUpdate.pd2ward(pd)
+            ward = TableFixer.pd2ward(pd)
             row['ward_name'] = ward
 
     def tags_create(self, row, tagfields, csv_basename):
@@ -575,6 +573,9 @@ class TableWardUpdate(object):
             '': '',
         }
         tags = []
+        # Add PD= tags
+        if row['PD']:
+            tags.append('PD={}'.format(row['PD']))
         # Handle civi Vounteers actions
         if csv_basename.startswith('SRGP_Volunteers'):
             if 'Actions' in row:
@@ -586,12 +587,9 @@ class TableWardUpdate(object):
             if value:
                 tagfield.replace(' ', '')
                 tagfield = tagdict.get(tagfield, tagfield)
-                if tagfield:
-                    tag = '{}={}'.format(tagfield, value)
-                else:
-                    tag = value
+                tag = '{}={}'.format(tagfield, value) if tagfield else value
                 tags.append(tag)
-#         tags.append(csv_basename)
+        tags.append(csv_basename)
         taglist_str = ','.join(tags)[:255]  # truncate tags list to 255 chars
         return {'tag_list': taglist_str, }
 
@@ -670,5 +668,5 @@ if __name__ == '__main__':
         xls_pw = os.getenv('XLS_PASSWORD')
 
         print('config_name: ', config['config_name'])
-        csvfixer = CsvWardUpdate(csv_filename, config, reader)
+        csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)

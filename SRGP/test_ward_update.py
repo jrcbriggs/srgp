@@ -12,7 +12,7 @@ Crookes    Crookesmoor Road    even    2-428    Broomhill
 import numbers
 import unittest
 
-from ward_update import street_spec2ward_street_spec, TableWardUpdate, rangeexpand, \
+from ward_update import get_ward_lookup, TableWardUpdate, rangeexpand, \
     rangeexpand_odd_even, pd2ward
 
 
@@ -20,21 +20,18 @@ class Test(unittest.TestCase):
 
 
     def setUp(self):
-        self.tf = TableWardUpdate()
-        self.street_names = [
+        self.twu = TableWardUpdate()
+        self.street_spec = [
                            {'ward_old':  'Crookes', 'street_name':  'Aldred Road' , 'odd_even': '' , 'numbers': '' , 'ward_new':  'Crookes & Crosspool', 'notes':  'added (Spring Hill - Roslin Road)', },
-                           {'ward_old':  'Crookes', 'street_name':  'Crookesmoor Road' , 'odd_even': 'odd' , 'numbers': '' , 'ward_new':  'Broomhill', 'notes':  '', },
-                           {'ward_old':  'Crookes', 'street_name':  'Crookesmoor Road' , 'odd_even': 'even' , 'numbers': '490-496' , 'ward_new':  'Broomhill', 'notes':  '', },
-                           {'ward_old':  'Crookes', 'street_name':  'Crookesmoor Road' , 'odd_even': 'even' , 'numbers': '356-460' , 'ward_new':  'Crookes & Crosspool', 'notes':  '', },
-                           {'ward_old':  'Crookes', 'street_name':  'Crookesmoor Road' , 'odd_even': 'even' , 'numbers': '422-428' , 'ward_new':  'Broomhill', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': '' , 'numbers': '1,2,3,5,7' , 'ward_new':  'Broomhill Prime', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': 'odd' , 'numbers': '1-9' , 'ward_new':  'Broomhill Nine', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': 'even' , 'numbers': '1-9' , 'ward_new':  'Broomhill Even', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': '' , 'numbers': '' , 'ward_new':  'Broomhill Ten', 'notes':  '', },
                            ]
-        self.street_spec = {
-                            ('Crookes', 'Aldred Road'):  [{'notes':  'added (Spring Hill - Roslin Road)', 'street_name':  'Aldred Road', 'ward_new':  'Crookes & Crosspool', 'numbers':  set(), 'ward_old':  'Crookes', 'odd_even':  ''}],
-                            ('Crookes', 'Crookesmoor Road'):  [{'notes':  '', 'street_name':  'Crookesmoor Road', 'ward_new':  'Broomhill', 'numbers':  set(), 'ward_old':  'Crookes', 'odd_even':  'odd'},
-                                                              {'notes':  '', 'street_name':  'Crookesmoor Road', 'ward_new':  'Broomhill', 'numbers':  set(range(490, 497,2)), 'ward_old':  'Crookes', 'odd_even':  ''},
-                                                              {'notes':  '', 'street_name':  'Crookesmoor Road', 'ward_new':  'Crookes & Crosspool', 'numbers':  set(range(356, 461,2)), 'ward_old':  'Crookes', 'odd_even':  ''},
-                                                              {'notes':  '', 'street_name':  'Crookesmoor Road', 'ward_new':  'Broomhill', 'numbers':  set(range(422, 429,2)), 'ward_old':  'Crookes', 'odd_even':  ''}]}
-
+        self.ward_lookup = {'Crookes': {
+                             'Aldred Road': {'': 'Crookes & Crosspool'},
+                             'Boswell Road': {'': 'Broomhill Ten', 1: 'Broomhill Prime', 2: 'Broomhill Prime', 3: 'Broomhill Prime', 4: 'Broomhill Even',
+                                              5: 'Broomhill Prime', 6: 'Broomhill Even', 7: 'Broomhill Prime', 8: 'Broomhill Even', 9: 'Broomhill Nine', }}}
 
     def tearDown(self):
         pass
@@ -70,11 +67,11 @@ class Test(unittest.TestCase):
             actual = rangeexpand_odd_even(row['odd_even'], row['numbers'])
             self.assertTupleEqual(actual, row['expected'])
 
-    def test_street_spec2ward_street_spec(self):
-        street_spec = street_spec2ward_street_spec(self.street_names)
-        print(self.street_spec)
-        print(street_spec)
-        self.assertDictEqual(street_spec, self.street_spec)
+    def test_get_ward_lookup(self):
+        ward_lookup = get_ward_lookup(self.street_spec)
+        print(ward_lookup)
+        print(self.ward_lookup)
+        self.assertDictEqual(ward_lookup, self.ward_lookup)
 
     def testTableWardUpdate_is_in_ward(self):
         ''' odd_even and numbers are pre-processed so either odd_even or numbers are set , never both
@@ -92,8 +89,27 @@ class Test(unittest.TestCase):
                #
                ]
         for row in rows:
-            self.assertEqual(self.tf.is_in_ward_new(row['street_number'], row['odd_even'], row['numbers']), row['expected'],
+            self.assertEqual(self.twu.is_in_ward_new(row['street_number'], row['odd_even'], row['numbers']), row['expected'],
                              (row['street_number'], row['odd_even'], row['numbers']))
+
+    def testTableWardUpdate_clean_street_number_and_name(self):
+        rows = [
+              {'street_number': '12', 'street_name': 'Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': '12a', 'street_name': 'Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': '12A', 'street_name': 'Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': '12-14', 'street_name': 'Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': '12/14', 'street_name': 'Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': '', 'street_name': 'Ash Road', 'expected': (0, 'Ash Road')},
+              {'street_number': 'Ant House', 'street_name': 'Ash Road', 'expected': (0, 'Ash Road')},
+              {'street_number': 'Flat 7', 'street_name': '12 Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': 'Flat 7', 'street_name': '12a Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': 'Flat 7', 'street_name': '12A Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': 'Flat 7', 'street_name': '12-14 Ash Road', 'expected': (12, 'Ash Road')},
+              {'street_number': 'Flat 7', 'street_name': '12/14 Ash Road', 'expected': (12, 'Ash Road')},
+              ]
+        for row in rows:
+            actual = self.twu.clean_street_number_and_name(row['street_number'], row['street_name'])
+            self.assertTupleEqual(actual, row['expected'])
 
 
 if __name__ == "__main__":

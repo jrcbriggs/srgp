@@ -73,7 +73,7 @@ class Test(unittest.TestCase):
             {'col0': 'a', 'col1': 'b', },
         ]
         self.csv_basename = 'SRGP_MembersAll_2015-02-13'
-        self.tf = TableWardUpdate(table=self.table, csv_basename=self.csv_basename, **self.config)
+        self.twu = TableWardUpdate(table=self.table, csv_basename=self.csv_basename, **self.config)
     # ConfigHandler
 
     def test_confighandler(self):
@@ -160,7 +160,7 @@ class Test(unittest.TestCase):
             fields_extra = OD([(isness, isness), ])
             row0 = self.row0.copy()
             row0.update({'Status': 'New', isness: False})
-            self.tf.extra_fields(row0, fields_extra)
+            self.twu.extra_fields(row0, fields_extra)
             self.assertTrue(row0[isness], '{} {}'.format(isness, row0[isness]))
 
     def test_clean_value(self):
@@ -173,19 +173,19 @@ class Test(unittest.TestCase):
             'asdf,jkl': 'asdf;jkl',
         }
         for fixture, expected in fixtures.items():
-            actual = self.tf.clean_value(fixture)
+            actual = self.twu.clean_value(fixture)
             self.assertEqual(actual, expected, '' + actual + '!=' + expected)
 
     def test_clean_row(self):
         row = {'a': '0', 'b': ' 1', 'c': '2 ', 'd ': ' 3 ', 'e': '4 4', 'f': '5'}
         expected = {'a': '0', 'b': '1', 'c': '2', 'd ': '3', 'e': '4 4', 'f': '5'}
-        self.tf.clean_row(row)
+        self.twu.clean_row(row)
         self.assertDictEqual(row, expected)
 
     def test_doa2dob(self):
         doa = '31/12/2014'
         expected = '31/12/1996'
-        actual = self.tf.doa2dob(doa)
+        actual = self.twu.doa2dob(doa)
         self.assertEqual(actual, expected)
 
     def test_fix_addresses(self):
@@ -193,7 +193,7 @@ class Test(unittest.TestCase):
                'A3': 'S10 1ST', 'A4': '', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': '220 SVR', 'A2': '', 'A3': '',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
+        self.twu.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_addresses1(self):
@@ -201,7 +201,7 @@ class Test(unittest.TestCase):
                'A4': 'S10 1ST', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': 'Attic', 'A2': '220 SVR', 'A3': '',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
+        self.twu.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_addresses2(self):
@@ -209,7 +209,7 @@ class Test(unittest.TestCase):
                'A4': 'Sheffield', 'A5': 'S10 1ST', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': 'Flat 1', 'A2': 'Crookes Hall', 'A3': '220 SVR',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
+        self.twu.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_address_street_1(self):
@@ -219,7 +219,7 @@ class Test(unittest.TestCase):
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
         exp = {'junk': 1, 'A1': '220 SV Road','A2': 'Crookes', 'A3': '',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_address_street(row, self.address_fields)
+        self.twu.fix_address_street(row, self.address_fields)
         print('row',row)
         self.assertDictEqual(row, exp)
 
@@ -230,7 +230,7 @@ class Test(unittest.TestCase):
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
         exp = {'junk': 1, 'A1': '220 SV Road','A2': 'Flat 1', 'A3': 'Crookes',
                'A4': '', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_address_street(row, self.address_fields)
+        self.twu.fix_address_street(row, self.address_fields)
         print('row',row)
         self.assertDictEqual(row, exp)
         
@@ -241,7 +241,7 @@ class Test(unittest.TestCase):
                'A4': 'Crookes', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
         exp = {'junk': 1, 'A1': '220 SV Road','A2': 'Flat 1', 'A3': 'Crookes Hall',
                'A4': 'Crookes', 'A5': 'Sheffield', 'A6': 'S10 1ST', 'A7': 'GB', }
-        self.tf.fix_address_street(row, self.address_fields)
+        self.twu.fix_address_street(row, self.address_fields)
         print('row',row)
         self.assertDictEqual(row, exp)
 
@@ -250,41 +250,41 @@ class Test(unittest.TestCase):
                'A3': '', 'A4': '', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': 'Other Electors', 'A2': '',
                'A3': '', 'A4': '', 'A5': '', 'A6': '', 'A7': 'GB', }
-        self.tf.fix_addresses_city_postcode_countrycode(row, self.address_fields)
+        self.twu.fix_addresses_city_postcode_countrycode(row, self.address_fields)
         self.assertDictEqual(row, exp)
 
     def test_fix_append_fields(self):
         fields_new = {'fn0': 0, 'fn1': 1}
         expected = self.row0.copy()
         expected.update({'fn0': 0, 'fn1': 1})
-        self.tf.extra_fields(self.row0, fields_new)
+        self.twu.extra_fields(self.row0, fields_new)
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_append_fields_named(self):
         for fieldname in ('is_voter', 'is_deceased', 'party_member'):
             expected = self.row0.copy()
             expected.update({fieldname: False})
-            self.tf.extra_fields(self.row0, {fieldname: fieldname})
+            self.twu.extra_fields(self.row0, {fieldname: fieldname})
             self.assertEqual(self.row0, expected)
 
     def test_fix_append_fields_party(self):
         expected = self.row0.copy()
         expected.update({'party': 'G'})
-        self.tf.extra_fields(self.row0, {'party': 'party'})
+        self.twu.extra_fields(self.row0, {'party': 'party'})
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_append_fields_support_level_member(self):
         self.row0.update({'Status': 'New'})
         expected = self.row0.copy()
         expected.update({'support_level': 1})
-        self.tf.extra_fields(self.row0, {'support_level': 'support_level'})
+        self.twu.extra_fields(self.row0, {'support_level': 'support_level'})
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_append_fields_support_level_not_member(self):
         self.row0.update({'Status': 'Deceased'})
         expected = self.row0.copy()
         expected.update({'support_level': 1})
-        self.tf.extra_fields(self.row0, {'support_level': 'support_level'})
+        self.twu.extra_fields(self.row0, {'support_level': 'support_level'})
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_city(self):
@@ -292,39 +292,39 @@ class Test(unittest.TestCase):
                'A3': 'S10 1ST', 'A4': '', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': '220 SVR', 'A2': '', 'A3': 'S10 1ST',
                'A4': '', 'A5': 'Sheffield', 'A6': '', 'A7': '', }
-        self.tf.fix_city(row, self.address_fields, 'A5')
+        self.twu.fix_city(row, self.address_fields, 'A5')
         self.assertDictEqual(row, exp)
 
     def test_fix_contact_name(self):
         row = {'Contact Name': 'Briggs Julian'}
         expected = {'Contact Name': 'Julian Briggs'}
-        self.tf.fix_contact_name(row)
+        self.twu.fix_contact_name(row)
         self.assertDictEqual(row, expected)
 
     def test_fix_date(self):
         expected = '12/31/2014'
-        actual = self.tf.fix_date(self.doa)
+        actual = self.twu.fix_date(self.doa)
         self.assertEqual(actual, expected)
         #
-        actual = self.tf.fix_date('   ')
+        actual = self.twu.fix_date('   ')
         self.assertEqual(actual, '')
 
     def test_fix_dates(self):
         row = {'a': '0', 'b': '1', 'c': self.doa}  # Date of Attainment
         expected = {'a': '0', 'b': '1', 'c': '12/31/2014'}
-        self.tf.fix_dates(row)
+        self.twu.fix_dates(row)
         self.assertDictEqual(row, expected)
 
     def test_fix_deceased(self):
         self.row0.update({'Status': 'Deceased'})
-        self.tf.fix_deceased(self.row0)
+        self.twu.fix_deceased(self.row0)
         expected = self.row0.copy()
         expected.update({'is_deceased': True})
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_deceased_no(self):
         self.row0.update({'Status': 'Current'})
-        self.tf.fix_deceased(self.row0)
+        self.twu.fix_deceased(self.row0)
         expected = self.row0.copy()
         expected.update({'is_deceased': False})
         self.assertDictEqual(self.row0, expected)
@@ -332,19 +332,19 @@ class Test(unittest.TestCase):
     def test_fix_doa(self):
         row = {'a': '0', 'b': '1', 'c': self.doa}
         expected = {'a': '0', 'b': '1', 'c': '31/12/1996'}
-        self.tf.fix_doa(row, self.doa_fields)
+        self.twu.fix_doa(row, self.doa_fields)
         self.assertDictEqual(row, expected)
 
     def test_fix_local_party(self):
         self.row0.update({'Local party': None})
-        self.tf.fix_local_party(self.row0)
+        self.twu.fix_local_party(self.row0)
         expected = self.row0.copy()
         expected.update({'Local party': 'G'})
         self.assertDictEqual(self.row0, expected)
 
     def test_fix_local_party_no(self):
         self.row0.update({'Local partyXXX': 123})
-        self.tf.fix_local_party(self.row0)
+        self.twu.fix_local_party(self.row0)
         expected = self.row0.copy()
         expected.update({'Local partyXXX': 123})
         self.assertDictEqual(self.row0, expected)
@@ -354,7 +354,7 @@ class Test(unittest.TestCase):
                'A3': 'S10 1ST', 'A4': '', 'A5': '', 'A6': '', 'A7': '', }
         exp = {'junk': 1, 'A1': '220 SVR', 'A2': 'Sheffield',
                'A3': '', 'A4': '', 'A5': '', 'A6': 'S10 1ST', 'A7': '', }
-        self.tf.fix_postcode(row, self.address_fields, 'A6')
+        self.twu.fix_postcode(row, self.address_fields, 'A6')
         self.assertDictEqual(row, exp)
 
     def test_fix_table(self):
@@ -382,61 +382,61 @@ class Test(unittest.TestCase):
     def test_flip_fields(self):
         row = {'k0': 'v0', 'Do not mail': 1, 'Do not Phone': 1}
         fieldnames = ('Do not mail', 'Do not Phone')
-        self.tf.flip_fields(row, fieldnames)
+        self.twu.flip_fields(row, fieldnames)
         expected = {'k0': 'v0', 'Do not mail': 0, 'Do not Phone': 0}
         self.assertDictEqual(row, expected)
         #
         row = {'k0': 'v0', 'Do not mail': 0, 'Do not Phone': 0}
         fieldnames = ('Do not mail', 'Do not Phone')
-        self.tf.flip_fields(row, fieldnames)
+        self.twu.flip_fields(row, fieldnames)
         expected = {'k0': 'v0', 'Do not mail': 1, 'Do not Phone': 1}
         self.assertDictEqual(row, expected)
         #
         row = {'k0': 'v0', 'Do not mail': 1, 'Do not Phone': 0}
         fieldnames = ('Do not mail', 'Do not Phone')
-        self.tf.flip_fields(row, fieldnames)
+        self.twu.flip_fields(row, fieldnames)
         expected = {'k0': 'v0', 'Do not mail': 0, 'Do not Phone': 1}
         self.assertDictEqual(row, expected)
 
     def test_get_status(self):
         for k, v in {'Cancelled': 'canceled', 'Current': 'active', 'Deceased': 'expired', 'Expired': 'expired', 'New': 'active'}.items():
             self.row0.update({'Status': k})
-            self.tf.fix_status(self.row0)
+            self.twu.fix_status(self.row0)
             actual = self.row0['Status']
             expected = v
             self.assertEqual(actual, expected, 'k {} v {}'.format(k, v))
 
     def test_iscity(self):
-        self.assertTrue(self.tf.iscity('Sheffield'), 'expected match:' + 'Sheffield')
-        self.assertTrue(self.tf.iscity('sheffield'), 'expected match:' + 'Sheffield')
-        self.assertFalse(self.tf.iscity('XSheffield'), 'unexpected match:' + 'ShefXield')
-        self.assertFalse(self.tf.iscity('ShefXield'), 'unexpected match:' + 'ShefXield')
-        self.assertFalse(self.tf.iscity('SheffieldX'), 'unexpected match:' + 'SheffieldX')
+        self.assertTrue(self.twu.iscity('Sheffield'), 'expected match:' + 'Sheffield')
+        self.assertTrue(self.twu.iscity('sheffield'), 'expected match:' + 'Sheffield')
+        self.assertFalse(self.twu.iscity('XSheffield'), 'unexpected match:' + 'ShefXield')
+        self.assertFalse(self.twu.iscity('ShefXield'), 'unexpected match:' + 'ShefXield')
+        self.assertFalse(self.twu.iscity('SheffieldX'), 'unexpected match:' + 'SheffieldX')
 
     def test_iscounty(self):
-        self.assertTrue(self.tf.iscounty('South Yorks'), 'expected match:' + 'South Yorks')
+        self.assertTrue(self.twu.iscounty('South Yorks'), 'expected match:' + 'South Yorks')
 
     def test_isdeceased_true(self):
         self.row0.update({'Status': 'Deceased'})
-        actual = self.tf.isdeceased(self.row0)
+        actual = self.twu.isdeceased(self.row0)
         self.assertTrue(actual)
 
     def test_isdeceased_false(self):
         for status in ('Cancelled', 'Current', 'Expired', 'New'):
             self.row0.update({'Status': status})
-            actual = self.tf.isdeceased(self.row0)
+            actual = self.twu.isdeceased(self.row0)
             self.assertFalse(actual)
 
     def test_isdeceased_no_field(self):
-        actual = self.tf.isdeceased(self.row0)
+        actual = self.twu.isdeceased(self.row0)
         self.assertFalse(actual)
-        self.assertFalse(self.tf.iscounty('XSouth Yorks'), 'unexpected match:' + 'XSouth Yorks')
+        self.assertFalse(self.twu.iscounty('XSouth Yorks'), 'unexpected match:' + 'XSouth Yorks')
 
     def test_ishouse(self):
         for house in ('Barn', 'Building', 'College',):
-            self.assertTrue(self.tf.ishouse('123' + house), 'expected match:' + house)
+            self.assertTrue(self.twu.ishouse('123' + house), 'expected match:' + house)
         for house in('Sheffield', 'South Yorks', 'Approach', 'S10 1ST',):
-            self.assertFalse(self.tf.ishouse(house), 'unexpected match:' + house)
+            self.assertFalse(self.twu.ishouse(house), 'unexpected match:' + house)
 
     def test_ismember_true(self):
         '''is_member is called after fix_status so call fix_status in test
@@ -444,80 +444,80 @@ class Test(unittest.TestCase):
         '''
         for status in ('Current', 'New'):
             self.row0.update({'Status': status})
-            self.tf.fix_status(self.row0)
-            actual = self.tf.is_party_member(self.row0)
+            self.twu.fix_status(self.row0)
+            actual = self.twu.is_party_member(self.row0)
             self.assertTrue(actual, 'status {}'.format(status))
 
     def test_ismember_false(self):
         for status in ('Cancelled', 'Deceased', 'Expired'):
             self.row0.update({'Status': status})
-            actual = self.tf.is_party_member(self.row0)
+            actual = self.twu.is_party_member(self.row0)
             self.assertFalse(actual)
 
     def test_ismember_no_field(self):
-        actual = self.tf.is_party_member(self.row0)
+        actual = self.twu.is_party_member(self.row0)
         self.assertFalse(actual)
 
     def test_ispostcode(self):
         for postcode in('S10 1ST', 'S1 1ST', 'S1 2ST',):
-            self.assertTrue(self.tf.ispostcode(postcode), 'expected match:' + postcode)
+            self.assertTrue(self.twu.ispostcode(postcode), 'expected match:' + postcode)
         for postcode in('SX10 1ST', 'S1 12ST', 'S1 1STX', 'S1 X1ST',):
-            self.assertFalse(self.tf.ispostcode(postcode), 'unexpected match:' + postcode)
+            self.assertFalse(self.twu.ispostcode(postcode), 'unexpected match:' + postcode)
 
     def test_isstreet(self):
         for street in 'Approach Drive Place'.split():
-            self.assertTrue(self.tf.isstreet('123' + street), 'expected match:' + street)
-#         self.assertTrue(self.tf.isstreet('Kelham Island'), 'expected match:' + street)
-        self.assertTrue(self.tf.isstreet('220 Stannington View Road'), 'expected match:' + street)
+            self.assertTrue(self.twu.isstreet('123' + street), 'expected match:' + street)
+#         self.assertTrue(self.twu.isstreet('Kelham Island'), 'expected match:' + street)
+        self.assertTrue(self.twu.isstreet('220 Stannington View Road'), 'expected match:' + street)
         for street in 'Sheffield S10 Yorks'.split():
-            self.assertFalse(self.tf.isstreet(street), 'unexpected match:' + street)
+            self.assertFalse(self.twu.isstreet(street), 'unexpected match:' + street)
 
     def test_isvoter_register_true(self):
         for status in ('E'):
             self.row0.update({'Status': status})
-            actual = self.tf.isvoter(self.row0)
+            actual = self.twu.isvoter(self.row0)
             self.assertTrue(actual)
 
     def test_isvoter_register_false(self):
         for status in (''):
             self.row0.update({'Status': status})
-            actual = self.tf.isvoter(self.row0)
+            actual = self.twu.isvoter(self.row0)
             self.assertFalse(actual)
 
     def test_isvoter_register_no_field(self):
-        actual = self.tf.isvoter(self.row0)
+        actual = self.twu.isvoter(self.row0)
         self.assertFalse(actual)
 
     def test_isvoter_canvassing_true(self):
         self.row0.update({'Electoral roll number': 'GA123'})
-        actual = self.tf.isvoter(self.row0)
+        actual = self.twu.isvoter(self.row0)
         self.assertTrue(actual)
 
     def test_isvoter_canvassing_false(self):
-        actual = self.tf.isvoter(self.row0)
+        actual = self.twu.isvoter(self.row0)
         self.assertFalse(actual)
 
     def test_is_matching_row(self):
         skip_dict = {'a': '0'}
-        actual = self.tf.is_matching_row(self.row0, skip_dict)
+        actual = self.twu.is_matching_row(self.row0, skip_dict)
         self.assertListEqual(actual, [self.row0])
 
     def test_is_matching_row_no_match(self):
         skip_dict = {'a': 'XXX'}
-        actual = self.tf.is_matching_row(self.row0, skip_dict)
+        actual = self.twu.is_matching_row(self.row0, skip_dict)
         self.assertListEqual(actual, [])
 
     def test_merge_pd_eno_register(self):
         row = {'PD': 'GA', 'ENO': 123}
         expected = 'GA123'
-        self.tf.merge_pd_eno(row)
+        self.twu.merge_pd_eno(row)
         actual = row['ENO']
         self.assertEqual(expected, actual)
 
     def test_merge_pd_eno_canvassing(self):
         row = {'Polling district': 'GA', 'Electoral roll number': 123}
         expected = 'GA123'
-        self.tf.merge_pd_eno(row)
+        self.twu.merge_pd_eno(row)
         actual = row['Electoral roll number']
         self.assertEqual(expected, actual)
 
@@ -543,14 +543,14 @@ class Test(unittest.TestCase):
         for (k, v) in d.items():
             row = {}
             row['PD'] = k
-            self.tf.set_ward(row)
+            self.twu.set_ward(row)
             self.assertEqual(row['ward_name'], v)
 
     def test_tags_create(self):
         row = self.row0
         csv_basename = 'SRGP_MembersAll_2015-01-13'
         expected = {'tag_list': 'd=3,e=4'}
-        actual = self.tf.tags_create(row, self.tagfields, csv_basename)
+        actual = self.twu.tags_create(row, self.tagfields, csv_basename)
         self.assertEqual(expected, actual)
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

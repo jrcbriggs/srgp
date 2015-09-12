@@ -7,16 +7,10 @@ Created on 5 Sep 2015
 # Read in register and streets
 
 '''
-from _csv import writer
-from copy import deepcopy
-from csv import DictReader, DictWriter
 import csv
-from importlib import import_module
-from itertools import chain
-from os import path
+import itertools
+from os.path import expanduser
 import re
-from sys import argv
-from sys import stdout
 
 
 def pd2ward(pd):
@@ -39,7 +33,7 @@ def rangeexpand(numbers):
     if numbers:
         spans = (el.partition('-')[::2] for el in numbers.split(','))
         ranges = (range(int(s), int(e) + 1 if e else int(s) + 1) for s, e in spans)
-        return set(chain.from_iterable(ranges))
+        return set(itertools.chain.from_iterable(ranges))
     else:
         return set()
 
@@ -60,13 +54,18 @@ def rangeexpand_odd_even(odd_even, numbers):
         return (odd_even, set())
 
 
-def street_spec2ward_street_spec(street_spec):
-    ward_street_spec = {}
+def get_ward_lookup(street_spec):
+    ward_lookup = {}
     for row in street_spec:
-        (row['odd_even'],row['numbers']) = rangeexpand_odd_even(row['odd_even'],row['numbers'])
-        ward_street_spec.setdefault((row['ward_old'], row['street_name']), []).append(row)
-    return ward_street_spec
-
+        ward_lookup_by_number = ward_lookup.setdefault(row['ward_old'], {}).setdefault(row['street_name'], {})
+        (odd_even, street_numbers) = rangeexpand_odd_even(row['odd_even'], row['numbers'])
+        if street_numbers:
+            for street_number in street_numbers:
+#                 ward_lookup_by_number[street_number] = row['ward_new']
+                ward_lookup_by_number.setdefault(street_number, row['ward_new'])
+        else:
+            ward_lookup_by_number[odd_even] = row['ward_new']
+    return ward_lookup
 
 class CsvWardUpdate(object):
 
@@ -76,7 +75,7 @@ class CsvWardUpdate(object):
     Create ward_street_spec: {(ward, street_name): [ street_number_spec, street_number_spec,...], ...}
     Update the wards
     Write  to a new csv file.
-    
+
     SKIP first line of csv line:  Date Published: 01/05/2015
     '''
 
@@ -85,15 +84,15 @@ class CsvWardUpdate(object):
         skip_lines = 1
         filehandler = FileHandler()
 
-        # Read csv data file into a register
+        # Read register csv file into table (array of dict) register
         (register, unused) = filehandler.csv_read(csv_register, fieldnames, skip_lines)
 
-        # Read csv street spec into a dict
-        fieldnames2=('ward_old', 'street_name', 'odd_even', 'numbers', 'ward_new', 'notes')
+        # Read street spec csv file into table (array of dict) street_spec
+        fieldnames2 = ('ward_old', 'street_name', 'odd_even', 'numbers', 'ward_new', 'notes')
         (street_spec, unused) = filehandler.csv_read(csv_street_spec, fieldnames2)
-        ward_street_spec = street_spec2ward_street_spec(street_spec)
+        ward_street_spec = get_ward_lookup(street_spec)
 
-        # Update register
+        # Append new wards to register table
         twu = TableWardUpdate()
         number_fieldname = 'Address 2'
         street_fieldname = 'Address 4'
@@ -102,8 +101,7 @@ class CsvWardUpdate(object):
         # Write the updated register to a new csv file
         self.csv_register_updated = csv_register.replace('.csv', 'WardUpdated.csv')
         fieldnames_new = fieldnames + ('ward_new',)
-        filehandler.csv_write(
-            register_updated, self.csv_register_updated, fieldnames_new)
+        filehandler.csv_write(register_updated, self.csv_register_updated, fieldnames_new)
 
 
 class FileHandler(object):
@@ -122,7 +120,7 @@ class FileHandler(object):
         Populate self.fieldnames with fields from 1st row in order'''
         for unused in range(skip_lines):
             next(fh)
-        dr = DictReader(fh)
+        dr = csv.DictReader(fh)
         table = [row for row in dr]
         fieldnames = tuple(dr.fieldnames)
         if len(fieldnames) == len(fieldnames_expected):
@@ -138,51 +136,54 @@ class FileHandler(object):
                                  + '\nmismatch:' + ','.join(sorted(fields_odd)))
         return (table, fieldnames)
 
+    def find_mismatch(self, set0, set1):
+        '''return difference of 2 iterables (lists, sets, tuples)
+        as sorted list'''
+        return sorted(list(set(set0).difference(set(set1))))
+
     def csv_write(self, table, pathname, fieldnames2):
         with open(pathname, 'w') as fh:
             self. csv_write_fh(table, fh, fieldnames2)
 
     def csv_write_fh(self, table, fh, fieldnames2):
-        dw = DictWriter(fh, fieldnames2)
+        dw = csv.DictWriter(fh, fieldnames2)
         dw.writeheader()
         dw.writerows(table)
 
 
 class TableWardUpdate(object):
 
-
     def clean_street_number_and_name(self, street_number, street_name):
         '''In the register (2015-04-20):
         street number is usually in column: Address 2
         street name is usually in column: Address 4
-        Sometimes the number (Address 2) looks like: 12A, 12-14, 12/3, 
+        Sometimes the number (Address 2) looks like: 12A, 12-14, 12/3,
         For ward allocation we can strip all these down to 12.
         Sometimes Address 2 holds a flat number (or similar) and the street number is prepended to the street address (Address 4):
-        3 Arran Road. In this case we extract the number for Address 4. 
+        3 Arran Road. In this case we extract the number for Address 4.
         '''
-        #strip leading and trailing spaces
-        street_number=street_number.strip()
-        street_name=street_name.strip()
-        #
-        #If Address 4 has a leading number split Address 4 into: street number and street name 
-        m = re.match('(\d+[-/a-zA-Z]*)\s+(.+)', street_name)
+        # strip leading and trailing spaces
+        street_number = street_number.strip()
+        street_name = street_name.strip()
+
+        # If Address 4 has a leading number split Address 4 into: street number and street name
+        m = re.match('(\d+)(\S*)\s+(.+)', street_name)
         if m:
-            street_number, street_name = m.groups()
-        
-        #Remove all but digits from street number
-        street_number = re.sub('[^\d]', '', street_number) #123A -> 123 but also 12-14 -> 1214 :(
-        
-        #If Address 2 held a house name (no digits) then street number may now be ''. Change it to 0. TODO: This might set wrong ward on Boundary or Cross Streets.
-        if street_number == '':
-            street_number = '0'
-        street_number = int(street_number)
-        return (street_name, street_number)
+            (street_number, unused, street_name) = m.groups()
+
+        # Remove all but leading digits from street number
+        street_number = re.sub('^(\d+).*', '\\1', street_number)  # 123A -> 123
+        street_number = re.sub('[^\d]', '', street_number)  # Ant House -> ''
+
+        # If Address 2 held a house name (no digits) then street number may now be ''. Change it to 0. TODO: This might set wrong ward on Boundary or Cross Streets.
+        street_number = int(street_number or '0')
+        return (street_number, street_name)
 
     def is_in_ward_new(self, street_number, odd_even, numbers):
         ''' odd_even and numbers are pre-processed so either odd_even or numbers are set , never both
         '''
-        if street_number==0:
-            return False #Street number field likely held a house name. We cannot handle this. 
+        if street_number == 0:
+            return False  # Street number field likely held a house name. We cannot handle this.
         if odd_even == '':
                 return street_number in numbers if numbers else True
         elif odd_even == 'odd':
@@ -192,27 +193,21 @@ class TableWardUpdate(object):
         else:
             raise Exception('Unexpected value for odd_even {}'.format (odd_even))
 
-    def ward_update(self, register, ward_street_spec, number_fieldname, street_fieldname):
+    def ward_update(self, register, ward_lookup, number_fieldname, street_fieldname):
         ''' register: [{'PD':...,...},...]
-        ward_street_spec: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        ward_lookup: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
         odd_even: '', 'odd', 'even'
         street_fieldname: eg 'Address 4'
         '''
         for row in register:
             ward_old = pd2ward(row['PD'])
-            (street_name, street_number) = self.clean_street_number_and_name(row[number_fieldname], row[street_fieldname])
-            specs = ward_street_spec.get((ward_old, street_name), []) # street number spec for a single (ward, street)
-            if specs:
-                for spec in specs:
-                    if self.is_in_ward_new(street_number, spec['odd_even'], spec['numbers']):
-                        row['ward_new'] = spec['ward_new']
-                        break #exit on first match
-                else: #this a a for else. It executes if the for loop completes but not if break exits the for loop 
-                    row['ward_new'] = ward_old
-            else:
-                row['ward_new'] = ward_old
-                print('Street Name not matched:', street_name) #(ward, street) not found in dict ward_street_spec
-        return register 
+            (street_number, street_name) = self.clean_street_number_and_name(row[number_fieldname], row[street_fieldname])
+            odd_even = 'odd' if street_number % 2 else 'even'
+            ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
+            row['ward_new'] = ward_lookup_by_number.get(street_number, ward_lookup_by_number.get(odd_even, ward_lookup_by_number.get('', ward_old)))
+            if row['ward_new'] == ward_old:
+                print('Street Name not matched:', street_name)
+        return register
 
 
 class StreetName(object):
@@ -248,7 +243,7 @@ class StreetName(object):
         street_names_table = zip(*street_names_array2d)
         # Write
         with open(csv_street_names, 'w', newline='') as csvfile:
-            csv_writer = writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in street_names_table:
                 csv_writer.writerow(row)
 
@@ -272,10 +267,10 @@ class Main(object):
 
 if __name__ == '__main__':
     m = Main()
-    csv_register = path.expanduser('~/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv')
+#     csv_register = expanduser('~/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv')
 #     m.create_street_names_by_ward(csv_register)
 
-#     csv_register = path.expanduser('~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv')
-    csv_register = path.expanduser('~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv')
-    csv_street_spec = path.expanduser('~/SRGP/register/crookes/CrookesStreetSpec.csv')
+    csv_register = expanduser('~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv')
+#     csv_register = expanduser('~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv')
+    csv_street_spec = expanduser('~/SRGP/register/crookes/CrookesStreetSpec.csv')
     m.ward_update(csv_register, csv_street_spec)
