@@ -96,7 +96,7 @@ class CsvWardUpdate(object):
         twu = TableWardUpdate()
         number_fieldname = 'Address 2'
         street_fieldname = 'Address 4'
-        register_updated = twu.ward_update(register, ward_street_spec, number_fieldname, street_fieldname)
+        register_updated = twu.csv_read(register, ward_street_spec, number_fieldname, street_fieldname)
 
         # Write the updated register to a new csv file
         self.csv_register_updated = csv_register.replace('.csv', 'WardUpdated.csv')
@@ -193,7 +193,7 @@ class TableWardUpdate(object):
         else:
             raise Exception('Unexpected value for odd_even {}'.format (odd_even))
 
-    def ward_update(self, register, ward_lookup, number_fieldname, street_fieldname):
+    def csv_read(self, register, ward_lookup, number_fieldname, street_fieldname):
         ''' register: [{'PD':...,...},...]
         ward_lookup: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
         odd_even: '', 'odd', 'even'
@@ -258,7 +258,7 @@ class Main(object):
         csv_street_names = csv_register.replace('.csv', '_St.csv')
         sn.write(csv_street_names)
 
-    def ward_update(self, csv_register, csv_street_spec):
+    def csv_read(self, csv_register, csv_street_spec):
         '''Update ward names in register
         '''
         csv_street_names = '/home/julian/SRGP/register/crookes/street_names.csv'
@@ -273,4 +273,4 @@ if __name__ == '__main__':
     csv_register = expanduser('~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv')
 #     csv_register = expanduser('~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv')
     csv_street_spec = expanduser('~/SRGP/register/crookes/CrookesStreetSpec.csv')
-    m.ward_update(csv_register, csv_street_spec)
+    m.csv_read(csv_register, csv_street_spec)

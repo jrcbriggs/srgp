@@ -12,7 +12,7 @@ Crookes    Crookesmoor Road    even    2-428    Broomhill
 import numbers
 import unittest
 
-from ward_update import get_ward_lookup, TableWardUpdate, rangeexpand, \
+from csv_read import get_ward_lookup, TableWardUpdate, rangeexpand, \
     rangeexpand_odd_even, pd2ward
 
 
