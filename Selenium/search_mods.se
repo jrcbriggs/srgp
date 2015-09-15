@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="https://my.greenparty.org.uk/" />
+<title>search_mods</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">search_mods</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=CiviCRM</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//ul[@id='civicrm-menu']/li[3]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=li.active &gt; div.menu-item &gt; a</td>
+	<td></td>
+</tr>
+<tr>
+	<td>sleep(2)</td>
+	<td></td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=changeLog</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=CIVICRM_QFID_1_log_date</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=log_date_relative</td>
+	<td>label=Last 7 days</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=_qf_Advanced_refresh</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=CIVICRM_QFID_ts_all_10</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=task</td>
+	<td>label=Export Contacts</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=Go</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=_qf_Select_next-bottom</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
