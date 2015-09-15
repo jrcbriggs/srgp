@@ -15,7 +15,7 @@ from file_handler import FileHandler
 
 class RegisterUpdater(object):
 
-    def clean_street_number_and_name(self, street_number, street_name):
+    def get_street_number_and_name(self, street_number, street_name):
         '''In the register (2015-04-20):
         street number is usually in column: Address 2
         street name is usually in column: Address 4
@@ -41,6 +41,18 @@ class RegisterUpdater(object):
         street_number = int(street_number or '0')
         return (street_number, street_name)
 
+    def get_ward_lookup(self, street_spec):
+        ward_lookup = {}
+        for row in street_spec:
+            ward_lookup_by_number = ward_lookup.setdefault(row['ward_old'], {}).setdefault(row['street_name'], {})
+            (odd_even, street_numbers) = self.rangeexpand_odd_even(row['odd_even'], row['numbers'])
+            if street_numbers:
+                for street_number in street_numbers:
+                    ward_lookup_by_number.setdefault(street_number, row['ward_new'])
+            else:
+                ward_lookup_by_number[odd_even] = row['ward_new']
+        return ward_lookup
+
     def is_in_ward_new(self, street_number, odd_even, numbers):
         ''' odd_even and numbers are pre-processed so either odd_even or numbers are set , never both
         '''
@@ -55,24 +67,8 @@ class RegisterUpdater(object):
         else:
             raise Exception('Unexpected value for odd_even {}'.format (odd_even))
 
-    def register_update(self, register, ward_lookup, number_fieldname, street_fieldname):
-        ''' register: [{'PD':...,...},...]
-        ward_lookup: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
-        odd_even: '', 'odd', 'even'
-        street_fieldname: eg 'Address 4'
-        '''
-        for row in register:
-            ward_old = self.pd2ward(row['PD'])
-            (street_number, street_name) = self.clean_street_number_and_name(row[number_fieldname], row[street_fieldname])
-            odd_even = 'odd' if street_number % 2 else 'even'
-            ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
-            row['ward_new'] = ward_lookup_by_number.get(street_number, ward_lookup_by_number.get(odd_even, ward_lookup_by_number.get('', ward_old)))
-            if row['ward_new'] == ward_old:
-                print('Street Name not matched:', street_name)
-        return register
-
     def pd2ward(self, pd):
-        {'G': 'Central',
+        return {'G': 'Central',
             # ~ 'H': 'Crookes & Crosspool',
             'H': 'Crookes',
             'L': 'Ecclesall',
@@ -107,11 +103,27 @@ class RegisterUpdater(object):
         else:
             return (odd_even, set())
 
-
+    def register_update(self, register, ward_lookup, number_fieldname, street_fieldname):
+        ''' register: [{'PD':...,...},...]
+        ward_lookup: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
+        odd_even: '', 'odd', 'even'
+        street_fieldname: eg 'Address 4'
+        '''
+        for row in register:
+            ward_old = self.pd2ward(row['PD'])
+            (street_number, street_name) = self.get_street_number_and_name(row[number_fieldname], row[street_fieldname])
+            odd_even = 'odd' if street_number % 2 else 'even'
+            ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
+            row['ward_new'] = ward_lookup_by_number.get(street_number, ward_lookup_by_number.get(odd_even, ward_lookup_by_number.get('', ward_old)))
+            if row['ward_new'] == ward_old.upper() :
+                print('Street Name not matched:', street_name)
+        return register
+ 
 class Main(object):
 
     def __init__(self):
         self.filehandler = FileHandler()
+        self.register_updater = RegisterUpdater()
 
     '''The top level class.
     Read register csv file into a table (list of dict)
@@ -126,12 +138,12 @@ class Main(object):
         (register, street_spec) = self.csv_read(csv_register, csv_street_spec)
 
         # Create lookup
-        ward_lookup = self.get_ward_lookup(street_spec)
+        ward_lookup = self.register_updater.get_ward_lookup(street_spec)
 
         # Append new wards to register table
         number_fieldname = 'Address 2'
         street_fieldname = 'Address 4'
-        register_updated = RegisterUpdater().register_update(register, ward_lookup, number_fieldname, street_fieldname)
+        register_updated = self.register_updater.register_update(register, ward_lookup, number_fieldname, street_fieldname)
 
         # Write the updated register to a new csv file
         self.csv_write(register_updated, csv_register.replace('.csv', 'WardUpdated.csv'), fieldnames_register + ('ward_new',))
@@ -152,17 +164,6 @@ class Main(object):
     def csv_write(self, register, csv_register, fieldnames_register):
         self.filehandler.csv_write(register, csv_register, fieldnames_register)
 
-    def get_ward_lookup(self, street_spec):
-        ward_lookup = {}
-        for row in street_spec:
-            ward_lookup_by_number = ward_lookup.setdefault(row['ward_old'], {}).setdefault(row['street_name'], {})
-            (odd_even, street_numbers) = self.rangeexpand_odd_even(row['odd_even'], row['numbers'])
-            if street_numbers:
-                for street_number in street_numbers:
-                    ward_lookup_by_number.setdefault(street_number, row['ward_new'])
-            else:
-                ward_lookup_by_number[odd_even] = row['ward_new']
-        return ward_lookup
 
 
 if __name__ == '__main__':
