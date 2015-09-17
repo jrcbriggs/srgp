@@ -65,7 +65,7 @@ class RegisterUpdater(object):
         elif odd_even == 'even':
                 return (street_number % 2 == 0)
         else:
-            raise Exception('Unexpected value for odd_even {}'.format (odd_even))
+            raise ValueError('Unexpected value for odd_even {}'.format (odd_even))
 
     def pd2ward(self, pd):
         return {'G': 'Central',
@@ -147,7 +147,7 @@ class Main(object):
         register_updated = self.register_updater.register_update(register, ward_lookup, number_fieldname, street_fieldname)
 
         # Write the updated register to a new csv file
-        self.csv_write(register_updated, csv_register.replace('.csv', 'WardUpdated.csv'), fieldnames_register + ('ward_new',))
+        self.filehandler.csv_write(register_updated, csv_register.replace('.csv', 'WardUpdated.csv'), fieldnames_register + ('ward_new',))
 
     def csv_read(self, csv_register, fieldnames_register, csv_street_spec, fieldnames_street_spec):
         '''Update ward names in register
@@ -161,10 +161,6 @@ class Main(object):
         (street_spec, unused) = self.filehandler.csv_read(csv_street_spec, fieldnames_street_spec)
 
         return (register, street_spec)
-
-    def csv_write(self, register, csv_register, fieldnames_register):
-        self.filehandler.csv_write(register, csv_register, fieldnames_register)
-
 
 
 if __name__ == '__main__':

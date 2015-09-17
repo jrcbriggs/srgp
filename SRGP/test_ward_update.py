@@ -42,6 +42,7 @@ class Test(unittest.TestCase):
                        {'PD': 'HA', 'add1': '9', 'add2': '', 'add3': 'Ash Ave', },
                        {'PD': 'HA', 'add1': '10', 'add2': '', 'add3': 'Ash Ave', },
                        {'PD': 'HA', 'add1': '1', 'add2': '', 'add3': 'Beech Blvd', },
+                       {'PD': 'HA', 'add1': '1', 'add2': '', 'add3': 'Cedar Close', },
                        ]
         self.register_updated = [
                        {'PD': 'HA', 'add1': '2', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Prime', },
@@ -54,6 +55,7 @@ class Test(unittest.TestCase):
                        {'PD': 'HA', 'add1': '9', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Nine', },
                        {'PD': 'HA', 'add1': '10', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Ten', },
                        {'PD': 'HA', 'add1': '1', 'add2': '', 'add3': 'Beech Blvd', 'ward_new': 'Crookes & Crosspool', },
+                       {'PD': 'HA', 'add1': '1', 'add2': '', 'add3': 'Cedar Close', 'ward_new': 'Crookes_OLD', },
                        ]
 
     def test_RegisterUpdater_get_ward_lookup(self):
@@ -99,7 +101,14 @@ class Test(unittest.TestCase):
         for row in rows:
             self.assertEqual(self.register_updater.is_in_ward_new(row['street_number'], row['odd_even'], row['numbers']), row['expected'],
                              (row['street_number'], row['odd_even'], row['numbers']))
-
+        #
+    def test_RegisterUpdater_is_in_ward_0(self):
+        '''Street Number: zero'''
+        self.assertEqual(self.register_updater.is_in_ward_new(0, 'odd_even', []), False)
+        
+    def test_RegisterUpdater_is_in_ward_bad_odd_even(self):
+        self.assertRaises(ValueError,self.register_updater.is_in_ward_new, 3, 'odd_evenXXX', [])
+        
     def test_RegisterUpdater_pd2ward(self):
         d = {'G': 'Central',
              'H': 'Crookes',
