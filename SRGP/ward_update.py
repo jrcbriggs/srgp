@@ -114,11 +114,12 @@ class RegisterUpdater(object):
             (street_number, street_name) = self.get_street_number_and_name(row[number_fieldname], row[street_fieldname])
             odd_even = 'odd' if street_number % 2 else 'even'
             ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
+            ward_old += '_OLD'
             row['ward_new'] = ward_lookup_by_number.get(street_number, ward_lookup_by_number.get(odd_even, ward_lookup_by_number.get('', ward_old)))
-            if row['ward_new'] == ward_old.upper() :
+            if row['ward_new'] == ward_old:
                 print('Street Name not matched:', street_name)
         return register
- 
+
 class Main(object):
 
     def __init__(self):

@@ -8,41 +8,53 @@ Crookes    Crookesmoor Road    even    432-496    Broomhill
 Crookes    Crookesmoor Road    even    356-430    Crookes & Crosspool
 Crookes    Crookesmoor Road    even    2-428    Broomhill
 '''
-
-
-import numbers
 import unittest
 from ward_update import Main, RegisterUpdater
 
 
 class Test(unittest.TestCase):
 
-
     def setUp(self):
         self.main = Main()
         self.register_updater = RegisterUpdater()
         self.street_spec = [
-                           {'ward_old':  'Crookes', 'street_name':  'Aldred Road' , 'odd_even': '' , 'numbers': '' , 'ward_new':  'Crookes & Crosspool', 'notes':  'added (Spring Hill - Roslin Road)', },
-                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': '' , 'numbers': '1,2,3,5,7' , 'ward_new':  'Broomhill Prime', 'notes':  '', },
-                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': 'odd' , 'numbers': '1-9' , 'ward_new':  'Broomhill Nine', 'notes':  '', },
-                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': 'even' , 'numbers': '1-9' , 'ward_new':  'Broomhill Even', 'notes':  '', },
-                           {'ward_old':  'Crookes', 'street_name':  'Boswell Road' , 'odd_even': '' , 'numbers': '' , 'ward_new':  'Broomhill Ten', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Ash Ave' , 'odd_even': '' , 'numbers': '1,2,3,5,7' , 'ward_new':  'Broomhill Prime', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Ash Ave' , 'odd_even': 'odd' , 'numbers': '1-9' , 'ward_new':  'Broomhill Nine', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Ash Ave' , 'odd_even': 'even' , 'numbers': '1-9' , 'ward_new':  'Broomhill Even', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Ash Ave' , 'odd_even': '' , 'numbers': '' , 'ward_new':  'Broomhill Ten', 'notes':  '', },
+                           {'ward_old':  'Crookes', 'street_name':  'Beech Blvd' , 'odd_even': '' , 'numbers': '' , 'ward_new':  'Crookes & Crosspool', 'notes':  'added (Spring Hill - Roslin Road)', },
                            ]
         self.ward_lookup = {'Crookes': {
-                             'Aldred Road': {'': 'Crookes & Crosspool'},
-                             'Boswell Road': {'': 'Broomhill Ten', 1: 'Broomhill Prime', 2: 'Broomhill Prime', 3: 'Broomhill Prime', 4: 'Broomhill Even',
-                                              5: 'Broomhill Prime', 6: 'Broomhill Even', 7: 'Broomhill Prime', 8: 'Broomhill Even', 9: 'Broomhill Nine', }}}
-        self.number_fieldname='add1'
-        self.street_fieldname='add3'
-        self.register=[
-                       {'PD': 'HA', 'add1': '2', 'add2': '','add3':'Ash Ave'},
+                             'Ash Ave': {'': 'Broomhill Ten', 1: 'Broomhill Prime', 2: 'Broomhill Prime', 3: 'Broomhill Prime', 4: 'Broomhill Even',
+                                              5: 'Broomhill Prime', 6: 'Broomhill Even', 7: 'Broomhill Prime', 8: 'Broomhill Even', 9: 'Broomhill Nine', },
+                             'Beech Blvd': {'': 'Crookes & Crosspool'},
+                                        }}
+        self.number_fieldname = 'add1'
+        self.street_fieldname = 'add3'
+        self.register = [
+                       {'PD': 'HA', 'add1': '2', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': '3', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': '4a', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': '5', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': '', 'add2': '', 'add3': '6a Ash Ave', },
+                       {'PD': 'HA', 'add1': '7', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': 'Flat 3', 'add2': '', 'add3': '8a Ash Ave', },
+                       {'PD': 'HA', 'add1': '9', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': '10', 'add2': '', 'add3': 'Ash Ave', },
+                       {'PD': 'HA', 'add1': '1', 'add2': '', 'add3': 'Beech Blvd', },
                        ]
-        self.register_updated=[
-                       {'PD': 'HA', 'add1': '2', 'add2': '','add3':'Ash Ave', 'ward_new':'Crookes'},
+        self.register_updated = [
+                       {'PD': 'HA', 'add1': '2', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Prime', },
+                       {'PD': 'HA', 'add1': '3', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Prime', },
+                       {'PD': 'HA', 'add1': '4a', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Even', },
+                       {'PD': 'HA', 'add1': '5', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Prime', },
+                       {'PD': 'HA', 'add1': '', 'add2': '', 'add3': '6a Ash Ave', 'ward_new': 'Broomhill Even', },
+                       {'PD': 'HA', 'add1': '7', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Prime', },
+                       {'PD': 'HA', 'add1': 'Flat 3', 'add2': '', 'add3': '8a Ash Ave', 'ward_new': 'Broomhill Even', },
+                       {'PD': 'HA', 'add1': '9', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Nine', },
+                       {'PD': 'HA', 'add1': '10', 'add2': '', 'add3': 'Ash Ave', 'ward_new': 'Broomhill Ten', },
+                       {'PD': 'HA', 'add1': '1', 'add2': '', 'add3': 'Beech Blvd', 'ward_new': 'Crookes & Crosspool', },
                        ]
-    def tearDown(self):
-        pass
-
 
     def test_RegisterUpdater_get_ward_lookup(self):
         ward_lookup = self.register_updater.get_ward_lookup(self.street_spec)
@@ -90,12 +102,11 @@ class Test(unittest.TestCase):
 
     def test_RegisterUpdater_pd2ward(self):
         d = {'G': 'Central',
-            # ~ 'H': 'Crookes & Crosspool',
-            'H': 'Crookes',
-            'L': 'Ecclesall',
-            'R': 'Manor Castle',
-            'T': 'Nether Edge',
-            'Z': 'Walkley',
+             'H': 'Crookes',
+             'L': 'Ecclesall',
+             'R': 'Manor Castle',
+             'T': 'Nether Edge',
+             'Z': 'Walkley',
         }
         for (k, v) in d.items():
             self.assertEqual(self.register_updater.pd2ward(k), v)
@@ -120,7 +131,8 @@ class Test(unittest.TestCase):
             self.assertTupleEqual(actual, row['expected'])
 
     def test_RegisterUpdater_register_update(self):
-        register_updated = self.register_updater.register_update(self.register, self.ward_lookup, self.number_fieldname, self.street_fieldname)
+        register_updated = self.register_updater.register_update(self.register, self.ward_lookup,
+                                                                 self.number_fieldname, self.street_fieldname)
         self.assertListEqual(register_updated, self.register_updated)
 
 if __name__ == "__main__":
