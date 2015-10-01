@@ -24,7 +24,7 @@ from configurations import config_members, config_register, \
     config_volunteers, canvassing, config_young_greens, config_search_add, config_search_mod, \
     config_nationbuilder, config_nationbuilderNB, regexes, \
     config_register_update, config_register_postal, config_textable, \
-    config_support1_2
+    config_support1_2, config_marked
 
 
 class ConfigHandler(object):
@@ -160,8 +160,18 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-
+    defaults={
+              'address_fields':{},
+              'date_fields':(),
+              'date_format':'', 
+              'doa_fields':(),
+              'fields_extra':{}, 
+              'fields_flip':(),
+              }
     def __init__(self, csv_register, config, filereader):
+        for (k,v) in self.defaults.items():
+            config.setdefault(k,v)
+            
         ch = ConfigHandler(**config)
 
         # Read csv data file into a table
@@ -450,13 +460,17 @@ class TableFixer(object):
             if field in row:
                 row[field] = 'G'
 
+#     def fix_marked(self, row):
+#         if row.get('Marked') =='x':
+#             row['Marked'] = 'marked15,voted15'
+
     def fix_postcode(self, row, address_fields, field_postcode):
         for fieldname in address_fields.values():
             v = row[fieldname]
             if self.ispostcode(v):
                 row[fieldname] = ''
                 row[field_postcode] = v
-
+    
     def fix_state(self, row):
         if 'registered_state' in row:
             row['registered_state'] = 'Sheffield'
@@ -491,6 +505,7 @@ class TableFixer(object):
             self.extra_fields(row, self.fields_extra)
             # Must call after extra_fields so extra_fields can identify
             # is_deceased
+#             self.fix_marked(row)
             self.fix_state(row)
             self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
@@ -582,6 +597,10 @@ class TableFixer(object):
                 tags = [
                     'Volunteer_' + action for action in row['Actions'].split(';')]
                 row['Actions'] = ''
+        #Handle marked
+        if row.get('Marked') == 'x':
+            tags.append('marked15,voted15')
+            row['Marked']=''
         for tagfield in tagfields:
             value = str(row[tagfield]).strip()
             if value:
@@ -615,6 +634,8 @@ if __name__ == '__main__':
         # Find config varname to match csv filename
         if search('registerUpdate', csv_filename, IGNORECASE):
             config = config_register_update
+        elif search('Marked', csv_filename, IGNORECASE):
+            config = config_marked
         elif search('RegisterPV', csv_filename, IGNORECASE):
             config = config_register_postal
         elif search('CentralConsituencyPostal', csv_filename, IGNORECASE):

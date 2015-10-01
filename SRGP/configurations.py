@@ -616,3 +616,11 @@ config_support1_2 = {
     'fields_flip': (),  # Reverse Sense
     'skip_lines': 0,
 }
+config_marked={
+    'config_name': 'config_marked',
+        'fieldmap': OD([
+        ('ENO', 'state_file_id'),
+        ('Marked', 'tag_list',),
+        ]),
+    'skip_lines': 0,
+        }
