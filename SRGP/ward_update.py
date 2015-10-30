@@ -9,6 +9,7 @@ Created on 5 Sep 2015
 '''
 import itertools
 import re
+import sys
 
 from file_handler import FileHandler
 
@@ -166,13 +167,17 @@ class Main(object):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print('Usage: ward_update.py <register.csv> <street_spec.csv>')
+        exit()
+
+    (csv_register, csv_street_spec) = sys.argv[1:]
     fieldnames_register = ('PD', 'ENO', 'Status', 'Title', 'First Names', 'Initials', 'Surname', 'Suffix', 'Date of Attainment', 'Franchise Flag', 'Address 1', 'Address 2', 'Address 3', 'Address 4', 'Address 5', 'Address 6', 'Address 7', 'Address 8', 'Address 9', 'Postcode')
     fieldnames_street_spec = ('ward_old', 'street_name', 'odd_even', 'numbers', 'ward_new', 'notes')
 #     csv_register = '~/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv'
-
-    csv_register = '~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv'
+#     csv_register = '~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv'
 #     csv_register = '~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv'
-    csv_street_spec = '~/SRGP/register/crookes/CrookesStreetSpec.csv'
+#     csv_street_spec = '~/SRGP/register/crookes/CrookesStreetSpec.csv'
     m = Main(fieldnames_register, fieldnames_street_spec)
     m.register_update(csv_register, csv_street_spec)
 
