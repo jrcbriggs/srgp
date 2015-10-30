@@ -351,7 +351,7 @@ config_register = {
         #         ('Postcode', 'registered_zip'),
         #         ('Address 9', 'registered_country_code'),
     ]),
-    'skip_lines': 1,
+    'skip_lines': 0,
     'fields_extra': OD([
         ('is_voter', 'is_voter'),
         ('ward_name', 'ward_name'),
@@ -616,11 +616,11 @@ config_support1_2 = {
     'fields_flip': (),  # Reverse Sense
     'skip_lines': 0,
 }
-config_marked={
+config_marked = {
     'config_name': 'config_marked',
         'fieldmap': OD([
         ('ENO', 'state_file_id'),
         ('Marked', 'tag_list',),
         ]),
-    'skip_lines': 0,
+    'skip_lines': 1,
         }

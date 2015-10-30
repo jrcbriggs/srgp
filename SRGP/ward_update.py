@@ -122,9 +122,11 @@ class RegisterUpdater(object):
 
 class Main(object):
 
-    def __init__(self):
+    def __init__(self, fieldnames_register, fieldnames_street_spec):
         self.filehandler = FileHandler()
         self.register_updater = RegisterUpdater()
+        self.fieldnames_register = fieldnames_register
+        self.fieldnames_street_spec = fieldnames_street_spec
 
     '''The top level class.
     Read register csv file into a table (list of dict)
@@ -135,7 +137,7 @@ class Main(object):
 
     SKIP first line of csv line:  Date Published: 01/05/2015
     '''
-    def register_update(self, csv_register, fieldnames_register, csv_street_spec, fieldnames_street_spec):
+    def register_update(self, csv_register, csv_street_spec):
         (register, street_spec) = self.csv_read(csv_register, csv_street_spec)
 
         # Create lookup
@@ -149,16 +151,16 @@ class Main(object):
         # Write the updated register to a new csv file
         self.filehandler.csv_write(register_updated, csv_register.replace('.csv', 'WardUpdated.csv'), fieldnames_register + ('ward_new',))
 
-    def csv_read(self, csv_register, fieldnames_register, csv_street_spec, fieldnames_street_spec):
+    def csv_read(self, csv_register, csv_street_spec):
         '''Update ward names in register
         '''
         skip_lines = 1
 
         # Read register csv file into table (array of dict) register
-        (register, unused) = self.filehandler.csv_read(csv_register, fieldnames_register, skip_lines)
+        (register, unused) = self.filehandler.csv_read(csv_register, self.fieldnames_register, skip_lines)
 
         # Read street spec csv file into table (array of dict) street_spec
-        (street_spec, unused) = self.filehandler.csv_read(csv_street_spec, fieldnames_street_spec)
+        (street_spec, unused) = self.filehandler.csv_read(csv_street_spec, self.fieldnames_street_spec)
 
         return (register, street_spec)
 
@@ -171,4 +173,6 @@ if __name__ == '__main__':
     csv_register = '~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv'
 #     csv_register = '~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv'
     csv_street_spec = '~/SRGP/register/crookes/CrookesStreetSpec.csv'
-    m = Main(csv_register, csv_street_spec)
+    m = Main(fieldnames_register, fieldnames_street_spec)
+    m.register_update(csv_register, csv_street_spec)
+

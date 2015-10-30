@@ -160,18 +160,18 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-    defaults={
+    defaults = {
               'address_fields':{},
               'date_fields':(),
-              'date_format':'', 
+              'date_format':'',
               'doa_fields':(),
-              'fields_extra':{}, 
+              'fields_extra':{},
               'fields_flip':(),
               }
     def __init__(self, csv_register, config, filereader):
-        for (k,v) in self.defaults.items():
-            config.setdefault(k,v)
-            
+        for (k, v) in self.defaults.items():
+            config.setdefault(k, v)
+
         ch = ConfigHandler(**config)
 
         # Read csv data file into a table
@@ -470,7 +470,7 @@ class TableFixer(object):
             if self.ispostcode(v):
                 row[fieldname] = ''
                 row[field_postcode] = v
-    
+
     def fix_state(self, row):
         if 'registered_state' in row:
             row['registered_state'] = 'Sheffield'
@@ -571,6 +571,9 @@ class TableFixer(object):
             row['PD/ENO'] = row['PD/ENO'].replace('/', '')
 
     def set_ward(self, row):
+        if self.csv_basename.endswith('WardUpdated'):
+            row['ward_name'] = row['ward_new']
+            return
         if 'PD_Letters' in row:
             row['PD'] = row['PD_Letters']
         if 'PD' in row:
@@ -597,10 +600,10 @@ class TableFixer(object):
                 tags = [
                     'Volunteer_' + action for action in row['Actions'].split(';')]
                 row['Actions'] = ''
-        #Handle marked
+        # Handle marked
         if row.get('Marked') == 'x':
             tags.append('marked15,voted15')
-            row['Marked']=''
+            row['Marked'] = ''
         for tagfield in tagfields:
             value = str(row[tagfield]).strip()
             if value:
