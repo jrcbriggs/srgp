@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
     def test_clean_row(self):
         row = {'a': '0', 'b': ' 1', 'c': '2 ', 'd ': ' 3 ', 'e': '4 4', 'f': '5'}
         expected = {'a': '0', 'b': '1', 'c': '2', 'd ': '3', 'e': '4 4', 'f': '5'}
-        self.ru.clean_row(row)
+        self.ru.clean_values(row)
         self.assertDictEqual(row, expected)
 
     def test_doa2dob(self):

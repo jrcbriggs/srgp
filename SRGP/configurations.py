@@ -302,7 +302,7 @@ config_search_mod['config_name'] = 'config_search_mod'
 config for Sheffield City Council electoral roll (register of electors) 2013
 eg ga.xls
 PD, ENO, Status, Title, First, Names, Initials, Surname, Suffix,
-Date of Attainment, Franchise Flag, Address 1, Address 2, Address 3,
+Date Of Attainment, Franchise Flag, Address 1, Address 2, Address 3,
 Address 4, Address 5, Address 6, Address 7
 '''
 config_register = {
@@ -319,24 +319,20 @@ config_register = {
         #         ('country_code', 'Address 9',),
         #         ('zip', 'Postcode',),
     ]),
-    'date_fields': ('Date of Attainment',),
-    #     'date_fields': ('Date Of Attainment',),
+    'date_fields': ('Date Of Attainment',),
     'date_format': '%d/%m/%Y',  # _electoral_roll
-    'doa_fields': ('Date of Attainment',),
-    #     'doa_fields': ('Date Of Attainment',),
+    'doa_fields': ('Date Of Attainment',),
     'fieldmap': OD([
         ('PD', 'tag_list'),  # city_sub_district
         #         ('ENO', 'external_id'),
         ('ENO', 'state_file_id'),
         ('Status', 'tag_list'),
         ('Title', 'prefix'),
-        ('First Names', 'first_name'),
-        #         ('First Name', 'first_name'),
+        ('First Name', 'first_name'),
         ('Initials', 'middle_name'),
         ('Surname', 'last_name'),
         ('Suffix', 'suffix'),
-        ('Date of Attainment', 'dob'),
-        #         ('Date Of Attainment', 'dob'),
+        ('Date Of Attainment', 'dob'),
         ('Franchise Flag', 'tag_list'),
         ('Address 1', 'registered_address1'),
         ('Address 2', 'registered_address2'),
@@ -364,11 +360,9 @@ config_register_update = deepcopy(config_register)
 config_register_update['config_name'] = 'config_register_update'
 config_register_update['date_fields'] = ('Date Of Attainment',)
 config_register_update['doa_fields'] = ('Date Of Attainment',)
-# for (k0, k1) in [('Date of Attainment', 'Date Of Attainment',), ('First
-# Names', 'First Name',), ]:
-d = {'Date of Attainment': 'Date Of Attainment', 'First Names': 'First Name', }
-config_register_update['fieldmap'] = OD(
-    (d[k] if k in d else k, v) for (k, v,) in config_register['fieldmap'].items())
+# d = {'Date Of Attainment': 'Date Of Attainment', 'First Name': 'First Name', }
+# config_register_update['fieldmap'] = OD(
+#     (d[k] if k in d else k, v) for (k, v,) in config_register['fieldmap'].items())
 
 
 canvassing = {

@@ -46,6 +46,7 @@ class RegisterUpdater(object):
         ward_lookup = {}
         for row in street_spec:
             ward_lookup_by_number = ward_lookup.setdefault(row['ward_old'], {}).setdefault(row['street_name'], {})
+            row['numbers'] = re.sub('[^-0-9,]', '', row['numbers'])
             (odd_even, street_numbers) = self.rangeexpand_odd_even(row['odd_even'], row['numbers'])
             if street_numbers:
                 for street_number in street_numbers:
@@ -61,15 +62,17 @@ class RegisterUpdater(object):
             return False  # Street number field likely held a house name. We cannot handle this.
         if odd_even == '':
                 return street_number in numbers if numbers else True
-        elif odd_even == 'odd':
+        elif odd_even == 'odds':
                 return (street_number % 2 == 1)
-        elif odd_even == 'even':
+        elif odd_even == 'evens':
                 return (street_number % 2 == 0)
         else:
             raise ValueError('Unexpected value for odd_even {}'.format (odd_even))
 
     def pd2ward(self, pd):
-        return {'G': 'Central',
+        return {
+            'E': 'Broomhill',
+            'G': 'Central',
             # ~ 'H': 'Crookes & Crosspool',
             'H': 'Crookes',
             'L': 'Ecclesall',
@@ -97,9 +100,9 @@ class RegisterUpdater(object):
         if r:
             if odd_even == '':
                 return ('', r)
-            elif odd_even == 'odd':
+            elif odd_even == 'odds':
                 return ('', {e for e in r if e % 2 == 1})
-            elif odd_even == 'even':
+            elif odd_even == 'evens':
                 return ('', {e for e in r if e % 2 == 0})
         else:
             return (odd_even, set())
@@ -107,13 +110,13 @@ class RegisterUpdater(object):
     def register_update(self, register, ward_lookup, number_fieldname, street_fieldname):
         ''' register: [{'PD':...,...},...]
         ward_lookup: {(<ward_old>, <street_address>), [{'odd_even':..., 'numbers': (3,4,5,...)'
-        odd_even: '', 'odd', 'even'
+        odd_even: '', 'odds', 'evens'
         street_fieldname: eg 'Address 4'
         '''
         for row in register:
             ward_old = self.pd2ward(row['PD'])
             (street_number, street_name) = self.get_street_number_and_name(row[number_fieldname], row[street_fieldname])
-            odd_even = 'odd' if street_number % 2 else 'even'
+            odd_even = 'odds' if street_number % 2 else 'evens'
             ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
             ward_old += '_OLD'
             row['ward_new'] = ward_lookup_by_number.get(street_number, ward_lookup_by_number.get(odd_even, ward_lookup_by_number.get('', ward_old)))

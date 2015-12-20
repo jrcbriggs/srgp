@@ -302,7 +302,7 @@ class TableFixer(object):
     def clean_value(self, value):
         return value.replace(',', ';').strip()
 
-    def clean_row(self, row):
+    def clean_values(self, row):
         '''Clean all the values (but not the keys) in a row'''
         for k, v in row.items():
             row[k] = self.clean_value(v)
@@ -447,6 +447,18 @@ class TableFixer(object):
         for doa_field in doa_fields:
             row[doa_field] = self.doa2dob(row[doa_field])
 
+    def fix_keys(self, row):
+        '''Standardise keys (they vary between registers)'''
+        key_map = {
+                    'Date of Attainment': 'Date Of Attainment',
+                    'First Names': 'First Name',
+                        }
+        for (k0, k1) in key_map.items():
+            if k0 in row:
+                v = row.get(k0)
+                del row[k0]
+                row[k1] = v
+
     def fix_local_party(self, row):
         '''
         Members: set civi field: Local party=G
@@ -488,7 +500,8 @@ class TableFixer(object):
         '''in-place update row'''
         skip_list = []
         for row in self.table:
-            self.clean_row(row)
+            self.fix_keys(row)
+            self.clean_values(row)
             self.fix_contact_name(row)
             self.fix_dates(row)
             self.fix_doa(row, self.doa_fields)
@@ -592,7 +605,7 @@ class TableFixer(object):
         }
         tags = []
         # Add PD= tags
-        if row['PD']:
+        if row.get('PD'):
             tags.append('PD={}'.format(row['PD']))
         # Handle civi Vounteers actions
         if csv_basename.startswith('SRGP_Volunteers'):
@@ -636,6 +649,8 @@ if __name__ == '__main__':
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
         if search('registerUpdate', csv_filename, IGNORECASE):
+            config = config_register_update
+        if search('WardUpdated', csv_filename, IGNORECASE):
             config = config_register_update
         elif search('Marked', csv_filename, IGNORECASE):
             config = config_marked
