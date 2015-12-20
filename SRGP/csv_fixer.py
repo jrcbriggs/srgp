@@ -453,11 +453,11 @@ class TableFixer(object):
                     'Date of Attainment': 'Date Of Attainment',
                     'First Names': 'First Name',
                         }
-        for (k0, k1) in key_map.items():
-            if k0 in row:
-                v = row.get(k0)
-                del row[k0]
-                row[k1] = v
+        for (sfid, sfid_old) in key_map.items():
+            if sfid in row:
+                v = row.get(sfid)
+                del row[sfid]
+                row[sfid_old] = v
 
     def fix_local_party(self, row):
         '''

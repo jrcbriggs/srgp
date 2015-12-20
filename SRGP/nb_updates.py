@@ -83,9 +83,9 @@ class NbUpdates(object):
     def new(self):
         '''Return list of new rows.
         Ie rows in CSV1 but not in CSV0'''
-        k0 = set(self.d0.keys())
-        k1 = set(self.d1.keys())
-        k_new = sorted(k1 - k0)
+        sfid = set(self.d0.keys())
+        sfid_old = set(self.d1.keys())
+        k_new = sorted(sfid_old - sfid)
         return [self.d1[k] for k in k_new]
 
     def find_mods(self):

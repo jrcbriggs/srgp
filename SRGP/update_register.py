@@ -40,17 +40,17 @@ class CsvHandler(object):
 
 class UpdateRegister(object):
 
-    def __init__(self, t0, t1, k0, k1, status):
-        d0 = self.table2dict(t0, k0, k1)
-        d1 = self.table2dict(t1, k0, k1)
+    def __init__(self, t0, t1, sfid, sfid_old, status):
+        d0 = self.table2dict(t0, sfid, sfid_old)
+        d1 = self.table2dict(t1, sfid, sfid_old)
         d2 = self.update(d0, d1, status)
         self.ld2 = self.dict2table(d2)
 
-    def table2dict(self, l0, k0, k1):
+    def table2dict(self, l0, sfid, sfid_old):
         '''Create a dict of rows from a table of rows.
-        {(row[k0], row[k1]):row, ...}
+        {(row[sfid], row[sfid_old]):row, ...}
         '''
-        return {(row[k0], int(row[k1])): row for row in l0}
+        return {(row[sfid], int(row[sfid_old])): row for row in l0}
 
     def update(self, d0, d1, status):
         '''Update dict d0 with dict d1.
@@ -71,9 +71,9 @@ class Main(object):
 
     def __init__(self, fn0, fn1):
         ch = CsvHandler(fn0, fn1)
-        k0 = 'PD'
-        k1 = 'ENO'
-        ud = UpdateRegister(ch.t0, ch.t1, k0, k1, status='Status')
+        sfid = 'PD'
+        sfid_old = 'ENO'
+        ud = UpdateRegister(ch.t0, ch.t1, sfid, sfid_old, status='Status')
         ch.csv_write(ud.ld2, fn0.replace('.csv', 'UPDATED.csv'))
 
 if __name__ == '__main__':
