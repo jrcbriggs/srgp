@@ -45,12 +45,11 @@ class IdMapCreator:
     sfid_new = 'state_file_id_new'
     nbid = 'nationbuilder_id'
 
-    def __init__(self, csv_handler, base, nb_export, registers_linked, sfids_nbid):
+    def __init__(self, csv_handler, base, nb_export, registers_linked):
         self.csv_handler = csv_handler
         self.nb_export = os.path.join(base, nb_export)
         self.registers_linked = os.path.join(base, registers_linked)
         self.registers_linked_fixed = registers_linked.replace('.csv', 'fixed.csv')
-        self.sfids_nbid = os.path.join(base, sfids_nbid)
         self.fout = os.path.join(base, 'statefile_id2nationabuilder_id.csv')
 
     def select_columns(self, fin, col_names):
@@ -78,7 +77,7 @@ class IdMapCreator:
             with open(fout, 'w') as fhout:
                 writer(fhout).writerows(rows)
 
-    def create_nb_sf_old_new(self, registers_linked, sfid_old, sfid_new, nbid, sf_old2nb):
+    def create_sfids_nbid(self, registers_linked, sfid_old, sfid_new, nbid, sf_old2nb):
         '''Create a table ([{...,}, ...], eg
         sf_old, sf_new, nb_id
         '''
@@ -98,12 +97,14 @@ class IdMapCreator:
         self.fix_header(self.registers_linked, self.registers_linked_fixed)
 
         # Create a lookup table [nb_id, sf_old, sf_new]
-        nb_sf_old_new = self.create_nb_sf_old_new(self.registers_linked_fixed, self.sfid_old,
+        self.sfids_nbid = self.create_sfids_nbid(self.registers_linked_fixed, self.sfid_old,
                                                   self.sfid_new, self.nbid, sf_old2nb)
 
+    def write_sfids_nbid(self, filename):
         # Write table: sf_old, sf_new, nb_id
-        self.csv_handler.csv_write(self.sfids_nbid, [self.sfid_old, self.sfid_new, self.nbid],
-                                   nb_sf_old_new)
+        pathname = os.path.join(base, filename)
+        self.csv_handler.csv_write(pathname, [self.sfid_old, self.sfid_new, self.nbid], self.sfids_nbid)
+
 
 class RegisterAppendNbId:
 
@@ -116,7 +117,7 @@ class RegisterAppendNbId:
         self.csv_handler = csv_handler
         self.register = os.path.join(base, register)
         self.register_updated = self.register.replace('.csv', '_updated.csv')
-        self.sfids_nbid = os.path.join(base, sfids_nbid)
+        self.sfids_nbid = sfids_nbid
 
     def select_columns(self, fin, col_names):
         '''From a csv file, create a list of dict [{...}, ...]
@@ -131,8 +132,7 @@ class RegisterAppendNbId:
         (fieldnames, rows) = self.csv_handler.csv_read(self.register)
 
         # Create sf_new to nb_id lookup
-        (unused, lookup) = self.csv_handler.csv_read(self.sfids_nbid)
-        sf_new2nb = {row.get(self.sfid_new): row.get(self.nbid) for row in lookup}
+        sf_new2nb = {row.get(self.sfid_new): row.get(self.nbid) for row in self.sfids_nbid}
 
         # Append nb_id to register
         for row in rows:
@@ -147,14 +147,18 @@ class RegisterAppendNbId:
 if __name__ == '__main__':
     csv_handler = CsvHandler()
     base = '/home/julian/SRGP/register/2015_16/record_linking'
+    sfids_nbid = 'sfids_nbid.csv'
 
     # Create Lookups
     nb_export = 'nationbuilderExportCentralWard.csv'
     registers_linked = 'CentralWardRegistersLinked2015-12-01.csv'
-    sfids_nbid = 'sfids_nbid.csv'
-    IdMapCreator(csv_handler, base, nb_export, registers_linked, sfids_nbid).id_map_create()
+    imc = IdMapCreator(csv_handler, base, nb_export, registers_linked)
+    imc.id_map_create()
+    imc.write_sfids_nbid('sfids_nbid.csv')
+    sfids_nbid = imc.sfids_nbid
 
     # Append NB id to new register
     register = 'PUB_AREA_W_CENTRA_01-12-2015NB.csv'
     RegisterAppendNbId(csv_handler, base, register, sfids_nbid).register_append_nbid()
+
 
