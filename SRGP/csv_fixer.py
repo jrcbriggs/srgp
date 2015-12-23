@@ -300,11 +300,11 @@ class TableFixer(object):
             row[fn] = not row[fn]
 
     def clean_value(self, value):
-        return value.replace(',', ';').strip()
+        return value.replace(',', ' ').strip()
 
     def clean_values(self, row):
         '''Clean all the values (but not the keys) in a row'''
-        for k, v in row.items():
+        for (k, v) in row.items():
             row[k] = self.clean_value(v)
 
     def doa2dob(self, doa):
