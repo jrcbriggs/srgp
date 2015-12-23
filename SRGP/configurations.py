@@ -58,10 +58,11 @@ regexes = {
                       'Walk|Way|West Bar|Wharf|'
                       'Backfields|Birkendale|Castlegate|Cracknell|'
                       'Cross Smithfield|Kelham Island|'
-                      'Summerfield|Upperthorpe|Wicker|'
+                      'Summerfield|Upperthorpe|Wicker|Woodcliffe|'
                       'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|The Lawns|The Nook|'
                       'Other Electors)',
                       IGNORECASE),
+    'street_number': compile(r'(Above|Back|Back Of|Bk|First Floor|Flat Above|Flat Over|Ground Floor|Over|Rear|Rear Of)?[\s\d/-]+\w?$'),
 }
 config_members = {
     'config_name': 'config_members',
