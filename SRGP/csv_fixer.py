@@ -224,9 +224,9 @@ class TableFixer(object):
         return {
             'E': 'Broomhill',
             'G': 'Central',
-            # ~ 'H': 'Crookes & Crosspool',
             'H': 'Crookes',
             'L': 'Ecclesall',
+            'O': 'Gleadless Valley',
             'R': 'Manor Castle',
             'T': 'Nether Edge',
             'Z': 'Walkley',
@@ -353,11 +353,22 @@ class TableFixer(object):
         3. Pop it (ie remove from list)
         4. Prepend it to the list
         5. Copy array elements back into address fields in row.
+
+        afns: Address Field Names
         '''
         afns = list(address_fields.values())[
             :-3]  # omit rightmost 3 fields (city, zip, country)
+
+
         if afns:
             alist = [row[afn] for afn in afns]
+            # Merge street number and street name if in adjacent fields
+            for i in range (len(afns) - 1):
+                if regexes['street_number'].match(alist[i]):
+                    street_number = alist[i]
+                    alist[i + 1] = ' '.join([street_number, alist[i + 1]]).strip()
+                    alist[i] = ''
+            # Move street Address (with number) to adress1 (shifting others right)
             for i in range(len(alist) - 1, -1, -1):
                 if self.isstreet(alist[i]) and not self.islocality(alist[i]):
                     v = alist.pop(i)
@@ -509,8 +520,8 @@ class TableFixer(object):
 #             if self.csv_basename.startswith('CentralConstituencyRegister'):
 #                 self.fix_address_street0(row, self.address_fields)
 #             else:
-#             self.fix_address_street(row, self.address_fields)
-            self.fix_address_street0(row, self.address_fields)
+            self.fix_address_street(row, self.address_fields)
+#             self.fix_address_street0(row, self.address_fields)
             self.fix_address_street1(row, self.address_fields)
             self.fix_address_street_postal(row, self.address_fields)
             self.fix_local_party(row)
@@ -522,6 +533,7 @@ class TableFixer(object):
             self.fix_state(row)
             self.fix_status(row)
             self.flip_fields(row, self.fields_flip)
+            self.pad_eno(row)
             self.merge_pd_eno(row)
             self.set_ward(row)
             tags = self.tags_create(row, self.tagfields, self.csv_basename)
@@ -582,6 +594,11 @@ class TableFixer(object):
                 'Polling district'] + str(row['Electoral roll number'])
         if 'PD/ENO' in row:
             row['PD/ENO'] = row['PD/ENO'].replace('/', '')
+
+    def pad_eno(self, row):
+        eno = row.get('ENO')
+        if eno:
+            row['ENO'] = "%04d" % (int(eno),)
 
     def set_ward(self, row):
         if self.csv_basename.endswith('WardUpdated'):
