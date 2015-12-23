@@ -11,12 +11,15 @@ Reads:
 '''
 
 from csv import DictReader, DictWriter, reader, writer
+from os.path import expanduser
 import os.path
 
 
 class CsvHandler:
 
     def csv_read(self, fin):
+        '''Read CSV file
+        '''
         with open(fin, 'r') as fhin:
             dr = DictReader(fhin)
             rows = list(dr)
@@ -31,15 +34,16 @@ class CsvHandler:
             dw.writeheader()
             dw.writerows(rows)
 
+    def select_columns(self, fin, col_names):
+        '''From a csv file, create a list of dict [{...}, ...]
+        using the given column names
+        '''
+        (unused, rows) = self.csv_read(fin)
+        return [{k: row[k] for k in col_names} for row in rows]
+    
 
-class IdMapCreator:
+class SfidsNbidCreator:
 
-    csv_handler = None
-    registers_linked = None
-    registers_linked_fixed = None
-    registers_linked_fixed = None
-    sf_old2new_nb = None
-    fout = None
     sfid = 'state_file_id'
     sfid_old = 'state_file_id_old'
     sfid_new = 'state_file_id_new'
@@ -50,14 +54,7 @@ class IdMapCreator:
         self.nb_export = os.path.join(base, nb_export)
         self.registers_linked = os.path.join(base, registers_linked)
         self.registers_linked_fixed = registers_linked.replace('.csv', 'fixed.csv')
-        self.fout = os.path.join(base, 'statefile_id2nationabuilder_id.csv')
 
-    def select_columns(self, fin, col_names):
-        '''From a csv file, create a list of dict [{...}, ...]
-        using the given column names
-        '''
-        with open(fin, 'r') as fhin:
-            return [{k: row[k] for k in col_names} for row in DictReader(fhin)]
 
     def fix_header(self, fin, fout):
         '''Disambiguate 2 identical header labels, eg state_file_id
@@ -74,38 +71,40 @@ class IdMapCreator:
                         header[i] += '_old'
                     else:
                         header[i] += '_new'
-            with open(fout, 'w') as fhout:
-                writer(fhout).writerows(rows)
+        with open(fout, 'w') as fhout:
+            writer(fhout).writerows(rows)
 
-    def create_sfids_nbid(self, registers_linked, sfid_old, sfid_new, nbid, sf_old2nb):
+    def sfids_nbid_create_table(self, registers_linked, sf_old2nb):
         '''Create a table ([{...,}, ...], eg
         sf_old, sf_new, nb_id
         '''
-        nb_sf_old_new = self.select_columns(registers_linked, (sfid_old, sfid_new))
+        nb_sf_old_new = self.csv_handler.select_columns(registers_linked, (self.sfid_old, self.sfid_new))
         for row in nb_sf_old_new:
-            sf_old = row[sfid_old]
-            nb_id = sf_old2nb.get(sf_old)
-            row[nbid] = nb_id
+            sfid_old=row[self.sfid_old]
+            sfid_old_unpadded=sfid_old[:2]+str(int(sfid_old[2:]))
+            row[self.nbid] = sf_old2nb.get(sfid_old_unpadded)
         return nb_sf_old_new
 
-    def id_map_create(self):
+    def sfids_nbid_create(self):
         # Create_a dict {sf_old: nb_id}
         sf_old2nb = {r[self.sfid]: r[self.nbid] for r in
-                     self.select_columns(self.nb_export, (self.sfid, self.nbid,))}
+                     self.csv_handler.select_columns(self.nb_export, (self.sfid, self.nbid,))}
 
         # Disambiguate duplicate state_file_id columns in registerLinked file
         self.fix_header(self.registers_linked, self.registers_linked_fixed)
 
         # Create a lookup table [nb_id, sf_old, sf_new]
-        self.sfids_nbid = self.create_sfids_nbid(self.registers_linked_fixed, self.sfid_old,
-                                                  self.sfid_new, self.nbid, sf_old2nb)
+        self.sfids_nbid = self.sfids_nbid_create_table(self.registers_linked_fixed, sf_old2nb)
 
-    def write_sfids_nbid(self, filename):
+    def sfids_nbid_write(self, filename):
         # Write table: sf_old, sf_new, nb_id
         pathname = os.path.join(base, filename)
+        print('writing:', pathname)
         self.csv_handler.csv_write(pathname, [self.sfid_old, self.sfid_new, self.nbid], self.sfids_nbid)
 
-
+    def zero_pad(self, ):
+        pass
+        
 class RegisterAppendNbId:
 
     sfid = 'state_file_id'
@@ -118,14 +117,6 @@ class RegisterAppendNbId:
         self.register = os.path.join(base, register)
         self.register_updated = self.register.replace('.csv', '_updated.csv')
         self.sfids_nbid = sfids_nbid
-
-    def select_columns(self, fin, col_names):
-        '''From a csv file, create a list of dict [{...}, ...]
-        using the given column names
-        '''
-        (unused, rows) = csv_read(fin)
-        return [{k: row[k] for k in col_names} for row in rows]
-
 
     def register_append_nbid(self):
         # Read register
@@ -141,24 +132,23 @@ class RegisterAppendNbId:
 
         # Write out
         fieldnames.append(self.nbid)
+        print('writing:', self.register_updated)
         self.csv_handler.csv_write(self.register_updated, fieldnames, rows)
 
 
 if __name__ == '__main__':
-    csv_handler = CsvHandler()
-    base = '/home/julian/SRGP/register/2015_16/record_linking'
+    base = expanduser('~/SRGP/register/2015_16/CentralConstituency')
+    nb_export = 'nationbuilder-people-export-334-CentralConstituency-2015-12-18.csv'
+    register_new = 'CentralConstituencyWardRegisters2015-12-01NB.csv'
+    registers_linked = 'CentralConstituencyWardRegistersLinked2015-12-01.csv'
     sfids_nbid = 'sfids_nbid.csv'
+    
+    csv_handler = CsvHandler()
 
     # Create Lookups
-    nb_export = 'nationbuilderExportCentralWard.csv'
-    registers_linked = 'CentralWardRegistersLinked2015-12-01.csv'
-    imc = IdMapCreator(csv_handler, base, nb_export, registers_linked)
-    imc.id_map_create()
-    imc.write_sfids_nbid('sfids_nbid.csv')
-    sfids_nbid = imc.sfids_nbid
+    imc = SfidsNbidCreator(csv_handler, base, nb_export, registers_linked)
+    imc.sfids_nbid_create()
+    imc.sfids_nbid_write('sfids_nbid.csv')
 
     # Append NB id to new register
-    register = 'PUB_AREA_W_CENTRA_01-12-2015NB.csv'
-    RegisterAppendNbId(csv_handler, base, register, sfids_nbid).register_append_nbid()
-
-
+    RegisterAppendNbId(csv_handler, base, register_new, imc.sfids_nbid).register_append_nbid()
