@@ -40,7 +40,7 @@ class CsvHandler:
         '''
         (unused, rows) = self.csv_read(fin)
         return [{k: row[k] for k in col_names} for row in rows]
-    
+
 
 class SfidsNbidCreator:
 
@@ -80,8 +80,8 @@ class SfidsNbidCreator:
         '''
         nb_sf_old_new = self.csv_handler.select_columns(registers_linked, (self.sfid_old, self.sfid_new))
         for row in nb_sf_old_new:
-            sfid_old=row[self.sfid_old]
-            sfid_old_unpadded=sfid_old[:2]+str(int(sfid_old[2:]))
+            sfid_old = row[self.sfid_old]
+            sfid_old_unpadded = sfid_old[:2] + str(int(sfid_old[2:]))
             row[self.nbid] = sf_old2nb.get(sfid_old_unpadded)
         return nb_sf_old_new
 
@@ -102,15 +102,16 @@ class SfidsNbidCreator:
         print('writing:', pathname)
         self.csv_handler.csv_write(pathname, [self.sfid_old, self.sfid_new, self.nbid], self.sfids_nbid)
 
-    def zero_pad(self, ):
+    def zero_pad(self,):
         pass
-        
+
 class RegisterAppendNbId:
 
     sfid = 'state_file_id'
     sfid_old = 'state_file_id_old'
     sfid_new = 'state_file_id_new'
     nbid = 'nationbuilder_id'
+    extern_id = 'extern_id'
 
     def __init__(self, csv_handler, base, register, sfids_nbid):
         self.csv_handler = csv_handler
@@ -129,26 +130,27 @@ class RegisterAppendNbId:
         for row in rows:
             sf_new = row.get(self.sfid)
             row[self.nbid] = sf_new2nb.get(sf_new)
-
+            row[self.extern_id] = row.get(self.sfid_old)
         # Write out
         fieldnames.append(self.nbid)
+        fieldnames.append(self.extern_id)
         print('writing:', self.register_updated)
         self.csv_handler.csv_write(self.register_updated, fieldnames, rows)
 
 
 if __name__ == '__main__':
     base = expanduser('~/SRGP/register/2015_16/CentralConstituency')
-    nb_export = 'nationbuilder-people-export-334-CentralConstituency-2015-12-18.csv'
-    register_new = 'CentralConstituencyWardRegisters2015-12-01NB.csv'
+    nb_export = 'nationbuilder-people-export-351-2016-01-06.csv'
+    register_new = 'TtwAndDevWardRegisters2015-12-01NB.csv'
     registers_linked = 'CentralConstituencyWardRegistersLinked2015-12-01.csv'
     sfids_nbid = 'sfids_nbid.csv'
-    
+
     csv_handler = CsvHandler()
 
     # Create Lookups
     imc = SfidsNbidCreator(csv_handler, base, nb_export, registers_linked)
     imc.sfids_nbid_create()
-    imc.sfids_nbid_write('sfids_nbid.csv')
+    imc.sfids_nbid_write(sfids_nbid)
 
     # Append NB id to new register
     RegisterAppendNbId(csv_handler, base, register_new, imc.sfids_nbid).register_append_nbid()

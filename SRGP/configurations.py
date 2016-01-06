@@ -617,5 +617,5 @@ config_marked = {
         ('ENO', 'state_file_id'),
         ('Marked', 'tag_list',),
         ]),
-    'skip_lines': 1,
+    'skip_lines': 0,
         }
