@@ -27,6 +27,8 @@ from re import IGNORECASE, compile
 nbslug = 'srgp.nationbuilder.com'
 nbtoken = os.getenv('nbtoken')
 
+email_tags = 'EmailAGM EmailFrequent EmailGreenDrinks EmailMonthly EmailPreferred EmailQuarterly EmailWard EmailWeekly'.split()
+
 regexes = {
     'city': compile('^(Rotherham|Sheffield|Stocksbridge)$', IGNORECASE),
     'county': compile('^South Yorks$', IGNORECASE),
@@ -84,7 +86,7 @@ config_members = {
         ('Email Greeting', None),
         ('First Name', 'first_name'),
         ('Last Name', 'last_name'),
-        ('Do not mail', 'email opt in'),  # Reverse Sense
+#         ('Do not mail', 'email opt in'),  # Reverse Sense #ignore civi setting. Use NB tags 23-jan-2016
         ('Addressee', None),
         ('Contact ID', 'civicrm_id'),
         ('Membership Type', 'membership_type'),

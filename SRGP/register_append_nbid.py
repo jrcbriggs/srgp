@@ -125,12 +125,13 @@ class RegisterAppendNbId:
 
         # Create sf_new to nb_id lookup
         sf_new2nb = {row.get(self.sfid_new): row.get(self.nbid) for row in self.sfids_nbid}
+        sf_new2sf_old = {row.get(self.sfid_new): row.get(self.sfid_old) for row in self.sfids_nbid}
 
         # Append nb_id to register
         for row in rows:
             sf_new = row.get(self.sfid)
             row[self.nbid] = sf_new2nb.get(sf_new)
-            row[self.extern_id] = row.get(self.sfid_old)
+            row[self.extern_id] = sf_new2sf_old.get(sf_new)
         # Write out
         fieldnames.append(self.nbid)
         fieldnames.append(self.extern_id)

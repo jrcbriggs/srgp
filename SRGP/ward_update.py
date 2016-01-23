@@ -8,6 +8,7 @@ Created on 5 Sep 2015
 
 '''
 import itertools
+from re import IGNORECASE, search
 import re
 import sys
 
@@ -15,6 +16,10 @@ from file_handler import FileHandler
 
 
 class RegisterUpdater(object):
+    regex = '^(Above|Back [Oo]f|Bk|First Floor|Flat Above \\(Back\\)|Flat At Rear Of|Flat Over|Ground Floor|Over|Rear( [Oo]f)?)\s+'
+
+    def street_field_clean(self, street_field):
+        return re.sub(self.regex, '', street_field.strip())
 
     def get_street_number_and_name(self, street_number, street_name):
         '''In the register (2015-04-20):
@@ -26,11 +31,11 @@ class RegisterUpdater(object):
         3 Arran Road. In this case we extract the number for Address 4.
         '''
         # strip leading and trailing spaces
-        street_number = street_number.strip()
-        street_name = street_name.strip()
+        street_number = self.street_field_clean(street_number)
+        street_name = self.street_field_clean(street_name)
 
         # If Address 4 has a leading number split Address 4 into: street number and street name
-        m = re.match('(\d+)(\S*)\s+(.+)', street_name)
+        m = re.match('(\d+),?(\S*)\s+(.+)', street_name)
         if m:
             (street_number, unused, street_name) = m.groups()
 
@@ -47,7 +52,11 @@ class RegisterUpdater(object):
         for row in street_spec:
             ward_lookup_by_number = ward_lookup.setdefault(row['ward_old'], {}).setdefault(row['street_name'], {})
             row['numbers'] = re.sub('[^-0-9,]', '', row['numbers'])
-            (odd_even, street_numbers) = self.rangeexpand_odd_even(row['odd_even'], row['numbers'])
+            try:
+                (odd_even, street_numbers) = self.rangeexpand_odd_even(row['odd_even'], row['numbers'])
+            except:
+                print (row)
+                raise
             if street_numbers:
                 for street_number in street_numbers:
                     ward_lookup_by_number.setdefault(street_number, row['ward_new'])
@@ -76,6 +85,7 @@ class RegisterUpdater(object):
             # ~ 'H': 'Crookes & Crosspool',
             'H': 'Crookes',
             'L': 'Ecclesall',
+            'O': 'Gleadless Valley',
             'R': 'Manor Castle',
             'T': 'Nether Edge',
             'Z': 'Walkley',
@@ -113,16 +123,20 @@ class RegisterUpdater(object):
         odd_even: '', 'odds', 'evens'
         street_fieldname: eg 'Address 4'
         '''
+        errors = {}
         for row in register:
-            ward_old = self.pd2ward(row['PD'])
+#             pd=row['PD']
+#             pd = row['state_file_id'][:2]
+#             ward_old = self.pd2ward(pd)
+            ward_old = row['precinct_name']
             (street_number, street_name) = self.get_street_number_and_name(row[number_fieldname], row[street_fieldname])
             odd_even = 'odds' if street_number % 2 else 'evens'
             ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
             ward_old += '_OLD'
             row['ward_new'] = ward_lookup_by_number.get(street_number, ward_lookup_by_number.get(odd_even, ward_lookup_by_number.get('', ward_old)))
             if row['ward_new'] == ward_old:
-                print('Street Name not matched:', street_name)
-        return register
+                errors[street_name] = 'Street Name not matched'
+        return (register, errors)
 
 class Main(object):
 
@@ -141,24 +155,24 @@ class Main(object):
 
     SKIP first line of csv line:  Date Published: 01/05/2015
     '''
-    def register_update(self, csv_register, csv_street_spec):
+    def register_update(self, csv_register, csv_street_spec, number_filename, street_fieldname):
         (register, street_spec) = self.csv_read(csv_register, csv_street_spec)
 
         # Create lookup
         ward_lookup = self.register_updater.get_ward_lookup(street_spec)
 
         # Append new wards to register table
-        number_fieldname = 'Address 2'
-        street_fieldname = 'Address 4'
-        register_updated = self.register_updater.register_update(register, ward_lookup, number_fieldname, street_fieldname)
+        (register_updated, errors) = self.register_updater.register_update(register, ward_lookup, number_fieldname, street_fieldname)
 
         # Write the updated register to a new csv file
-        self.filehandler.csv_write(register_updated, csv_register.replace('.csv', 'WardUpdated.csv'), fieldnames_register + ('ward_new',))
+        self.filehandler.csv_write(register_updated, csv_register.replace('.csv', 'WardUpdated.csv'), fieldnames + ('ward_new',))
 
+        for (k, v) in sorted(errors.items()):
+            print(k, v)
     def csv_read(self, csv_register, csv_street_spec):
         '''Update ward names in register
         '''
-        skip_lines = 1
+        skip_lines = 0
 
         # Read register csv file into table (array of dict) register
         (register, unused) = self.filehandler.csv_read(csv_register, self.fieldnames_register, skip_lines)
@@ -170,17 +184,33 @@ class Main(object):
 
 
 if __name__ == '__main__':
+    # sys.argv = ['ward_update.py', '~/SRGP/register/2015_16/record_linking/TtwAndDevWardRegisters2015-12-01NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
+    sys.argv = ['ward_update.py', '~/SRGP/civi/20160117/SRGP_MembersAll_20160117-2225NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
+
     if len(sys.argv) != 3:
         print('Usage: ward_update.py <register.csv> <street_spec.csv>')
         exit()
 
-    (csv_register, csv_street_spec) = sys.argv[1:]
-    fieldnames_register = ('PD', 'ENO', 'Status', 'Title', 'First Names', 'Initials', 'Surname', 'Suffix', 'Date of Attainment', 'Franchise Flag', 'Address 1', 'Address 2', 'Address 3', 'Address 4', 'Address 5', 'Address 6', 'Address 7', 'Address 8', 'Address 9', 'Postcode')
+    (csv_filename, csv_street_spec) = sys.argv[1:]
+
+    if search('Register', csv_filename, IGNORECASE):
+        fieldnames = tuple('state_file_id,prefix,first_name,middle_name,last_name,suffix,dob,registered_address1,registered_address2,registered_address3,registered_city,registered_zip,registered_country_code,is_voter,ward_name,registered_state,tag_list'.split(','))
+#         number_fieldname = 'Address 2'
+#         street_fieldname = 'Address 4'
+        number_fieldname = 'registered_address1'
+        street_fieldname = 'registered_address1'
+    elif search('SRGP_', csv_filename, IGNORECASE):
+        # civi
+        fieldnames = tuple('first_name,last_name,email opt in,civicrm_id,membership_type,expires_on,started_at,membership_status,address_address1,address_address2,address_address3,address_city,address_zip,address_country_code,email,phone_number,mobile_number,precinct_name,party,is_deceased,party_member,support_level,registered_state,tag_list'.split(','))
+#         number_fieldname = 'Address 2'
+#         street_fieldname = 'Address 4'
+        number_fieldname = 'address_address1'
+        street_fieldname = 'address_address1'
+    else:
+        error('Unknown File type')
+        exit
+
     fieldnames_street_spec = ('ward_old', 'street_name', 'odd_even', 'numbers', 'ward_new', 'notes')
-#     csv_register = '~/SRGP/register/all/CentralConstituency_crookes_ecclesall_Register2015-04-20.csv'
-#     csv_register = '~/SRGP/register/crookes/CrookesWardRegister2015-04-20.csv'
-#     csv_register = '~/SRGP/register/central/CentralConstituencyRegister2015-05-01.csv'
-#     csv_street_spec = '~/SRGP/register/crookes/CrookesStreetSpec.csv'
-    m = Main(fieldnames_register, fieldnames_street_spec)
-    m.register_update(csv_register, csv_street_spec)
+    m = Main(fieldnames, fieldnames_street_spec)
+    m.register_update(csv_filename, csv_street_spec, number_fieldname, street_fieldname)
 
