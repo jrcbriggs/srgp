@@ -630,7 +630,7 @@ class TableFixer(object):
             member_since = row.get('Member Since')
             if member_since:
                 member_since_date = dt.strptime(member_since, '%m/%d/%Y')  # date is in US format
-                if member_since_date > (dt.now() - timedelta(days=28)):
+                if member_since_date > (dt.now() - timedelta(days=14)):
                     tags += email_tags
 
         # Handle civi Vounteers actions
