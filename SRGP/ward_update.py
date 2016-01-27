@@ -185,7 +185,7 @@ class Main(object):
 
 if __name__ == '__main__':
     # sys.argv = ['ward_update.py', '~/SRGP/register/2015_16/record_linking/TtwAndDevWardRegisters2015-12-01NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
-    sys.argv = ['ward_update.py', '~/SRGP/civi/20160117/SRGP_MembersAll_20160117-2225NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
+#     sys.argv = ['ward_update.py', '~/SRGP/civi/20160117/SRGP_MembersAll_20160117-2225NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
 
     if len(sys.argv) != 3:
         print('Usage: ward_update.py <register.csv> <street_spec.csv>')
