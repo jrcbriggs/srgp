@@ -20,10 +20,10 @@ from sys import argv
 from sys import stdout
 import xlrd
 
-import configurations2
-
-
 # from configurations2 import config_robin_latimer
+import configurations2 as cf2
+
+
 class ConfigHandler(object):
 
     '''Parse the config dict to extract input params to table fixer and csv fixer:
@@ -169,16 +169,16 @@ class CsvFixer(object):
         for (k, v) in self.defaults.items():
             config.setdefault(k, v)
 
-        ch = ConfigHandler(**config)
-
+#         ch = ConfigHandler(**config)
+        fieldnames = config.keys()
         # Read csv data file into a table
-        skip_lines = config.get('skip_lines', 0)
+        skip_lines = 0  # config.get('skip_lines', 0)
         (table, unused) = filereader(
-            csv_register, ch.fieldnames, skip_lines)
+            csv_register, fieldnames, skip_lines)
 
         # Fix the data in table
         (csv_basename, _) = splitext(basename(csv_register))
-        vh = TableFixer(table=table, csv_basename=csv_basename, **ch.params)
+        vh = TableFixer(table0=table, config=config)
         table_fixed = None
         if 'nationbuilder' in csv_basename:
             table_fixed = vh.fix_table_street_address()
@@ -211,8 +211,11 @@ class TableFixer(object):
     def fix_row(self, row0):
         '''Creates new row from old row
         '''
-        return {fieldname1: self.fix_field(fieldname0, row0)
+        try:
+            return {fieldname1: self.fix_field(fieldname0, row0)
                 for (fieldname1, fieldname0) in self.config.items()}
+        except TypeError as e:
+            raise TypeError(e, row0)
 
     @classmethod
     def fix_field(self, fieldname0, row0):
@@ -273,8 +276,10 @@ class TableFixer(object):
         '''Split value into tags. Eg: value='ResPark, StrtAhed'
         return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
+        if fieldvalue == None:
+            return ''
         tag_list0 = fieldvalue.split(',')
-        tag_list = [tag_map.get(k) for k in tag_list0]
+        tag_list = [tag_map.get(k) or k for k in tag_list0]
         return ','.join(tag_list)
 
 
@@ -295,6 +300,7 @@ class TableMapper(object):
 
 if __name__ == '__main__':
     config = None
+    argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
         if search('registerUpdate', csv_filename, IGNORECASE):
@@ -335,14 +341,14 @@ if __name__ == '__main__':
             config = config_young_greens
         elif search('Search', csv_filename, IGNORECASE):
             config = config_search
+        elif search('BroomhillCanvassData', csv_filename):
+            config = cf2.config_robin_latimer
         elif search('canvass', csv_filename, IGNORECASE):
             config = canvassing
         elif search('nationbuilder.+NB', csv_filename):
             config = config_nationbuilderNB
         elif search('nationbuilder', csv_filename):
             config = config_nationbuilder
-        elif search('BroomhillCanvassData', csv_filename):
-            config = config_robin_latimer
         else:
             raise Exception(
                 'Cannot find config for csv {}'.format(csv_filename))

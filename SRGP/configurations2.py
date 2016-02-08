@@ -17,27 +17,29 @@ from csv_fixer2 import TableFixer as tf
 
 
 # from csv_fixer2.TableFixer import merge_pd_eno, fix_address1, fix_address2, background_merge, tags_add
-tag_map_robin_latimer = {'Case': 'casework15 ',
-                    'Poster': 'poster15',
-                    'stdt': 'student15',
-                    'Ben': 'Benefits',
-                    'Crime':'Crime',
-                    'Litter':'Litter',
-                    'Recyc':'Recycling',
-                    '20mph': '20mph',
-                    'Lib':'Library',
-                    'Plan':'Planning',
-                    'ResPark':'ResidentsParking',
-                    'StrtAhed':'StreetsAhead',
-                    'Traf': 'Traffic',
-                    'Post': 'Postal14',
-                    'Vote14': 'Vote14',
-                    'Vote12': 'Vote12',
-                    }
+tag_map_robin_latimer = {'':'',
+                         'Case': 'casework15 ',
+                        'Poster': 'poster15',
+                        'stdt': 'student15',
+                        'Ben': 'Benefits',
+                        'Crime':'Crime',
+                        'Litter':'Litter',
+                        'Recyc':'Recycling',
+                        '20mph': '20mph',
+                        'Lib':'Library',
+                        'Plan':'Planning',
+                        'ResPark':'ResidentsParking',
+                        'StrtAhed':'StreetsAhead',
+                        'Traf': 'Traffic',
+                        'Post': 'Postal14',
+                        'Vote14': 'Vote14',
+                        'Vote12': 'Vote12',
+                        }
 '''                        ('fieldname_new', 'fieldname_old'), # or
                            ('fieldname_new', (func, {kwargs})),
 '''
 config_robin_latimer = OD([
+                           ('config_name', 'config_robin_latimer'),
                             ('statefile_id', (tf.merge_pd_eno, {'pd':'polldist', 'eno':'elect no', },)),
                             ('dob', 'Date18'),
                             ('last_name', 'Surname'),
@@ -70,6 +72,6 @@ config_robin_latimer = OD([
                             ('phone_number', 'Phone'),
                             ('email', 'E-mail'),
 #                             ('', 'Date'),
-                            ('', 'OnReg'),
-                            ('', 'Lastvote'),
+#                             ('', 'OnReg'),
+#                             ('', 'Lastvote'),
                           ])
