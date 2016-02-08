@@ -128,7 +128,7 @@ class RegisterUpdater(object):
 #             pd=row['PD']
 #             pd = row['state_file_id'][:2]
 #             ward_old = self.pd2ward(pd)
-            ward_old = row['precinct_name']
+            ward_old = row.get('precinct_name') or row.get('ward_name')
             (street_number, street_name) = self.get_street_number_and_name(row[number_fieldname], row[street_fieldname])
             odd_even = 'odds' if street_number % 2 else 'evens'
             ward_lookup_by_number = ward_lookup.get(ward_old, {}).get(street_name, {})
@@ -187,9 +187,12 @@ if __name__ == '__main__':
     # sys.argv = ['ward_update.py', '~/SRGP/register/2015_16/record_linking/TtwAndDevWardRegisters2015-12-01NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
 #     sys.argv = ['ward_update.py', '~/SRGP/civi/20160117/SRGP_MembersAll_20160117-2225NB.csv', '~/SRGP/register/2014_15/ward_boundary_updates/streetspec/AllSorted.csv', ]
 
-    if len(sys.argv) != 3:
-        print('Usage: ward_update.py <register.csv> <street_spec.csv>')
+    if len(sys.argv) < 2:
+        print('Usage: ward_update.py <register.csv> [<street_spec.csv>]')
         exit()
+    elif len(sys.argv) == 2:
+        sys.argv.append('StreetSpecAllSorted.csv')
+
 
     (csv_filename, csv_street_spec) = sys.argv[1:]
 

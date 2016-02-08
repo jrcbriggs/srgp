@@ -315,8 +315,8 @@ config_register = {
         ('address2', 'Address 2',),
         ('address3', 'Address 3',),
         ('address4', 'Address 4',),
-        ('city', 'Address 6',),
-        ('zip', 'Postcode',),
+        ('city', 'Address 5',),
+        ('zip', 'Address 6',),
         ('country_code', 'Address 7',),
         #         ('city', 'Address 6',),
         #         ('country_code', 'Address 9',),
@@ -343,8 +343,8 @@ config_register = {
         # omitting this field did not make registered address visible
         # immediately
         #         ('Address 4', 'registered_address4'),
-        ('Address 6', 'registered_city'),
-        ('Postcode', 'registered_zip'),
+        ('Address 5', 'registered_city'),
+        ('Address 6', 'registered_zip'),
         ('Address 7', 'registered_country_code'),
         #         ('Address 6', 'registered_city'),
         #         ('Postcode', 'registered_zip'),
