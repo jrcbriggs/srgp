@@ -20,61 +20,7 @@ from sys import argv
 from sys import stdout
 import xlrd
 
-# from configurations2 import config_robin_latimer
 import configurations2 as cf2
-
-
-class ConfigHandler(object):
-
-    '''Parse the config dict to extract input params to table fixer and csv fixer:
-    fieldmap: ordered dict maps old to new fieldnames
-    fieldnames: for reading original csv
-    fieldnames_new: fieldnames for writing new csv
-    tagfields: fieldnames from original csv to add to tag_list
-    '''
-
-    def __init__(self,
-                 address_fields,
-                 date_fields,
-                 date_format,
-                 doa_fields,
-                 fieldmap,
-                 fields_extra,
-                 fields_flip,
-                 **kwargs
-                 ):
-        self.fieldnames = tuple(fieldmap.keys())  # for reading csv
-        self.fields_extra = fields_extra
-
-        # Derive things from fieldmap
-        self.tagfields = ()
-        # for writing csv (append new fields later)
-        self.fieldmap_new = OD()
-#         self.fieldmap_new.update(fields_extra)
-        for k, v in fieldmap.items():
-            if v == 'tag_list':
-                self.tagfields += (k,)  # Put original fieldname on taglist
-            elif(v is None):
-                pass
-            else:
-                self.fieldmap_new[k] = v
-
-        # Update properties
-        self.fieldmap_new.update(fields_extra)
-        self.fieldmap_new.update({'tag_list': 'tag_list', })
-        self.fieldnames_new = tuple(self.fieldmap_new.values())
-
-        # Populate params
-        self.params = {
-            'address_fields': address_fields,
-            'date_fields': date_fields,
-            'date_format': date_format,
-            'doa_fields': doa_fields,
-            'fieldnames': self.fieldnames,
-            'fields_extra': self.fields_extra,
-            'fields_flip': fields_flip,
-            'tagfields': self.tagfields,
-        }
 
 
 class FileHandler(object):
@@ -157,44 +103,20 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-    defaults = {
-              'address_fields':{},
-              'date_fields':(),
-              'date_format':'',
-              'doa_fields':(),
-              'fields_extra':{},
-              'fields_flip':(),
-              }
     def __init__(self, csv_register, config, filereader):
-        for (k, v) in self.defaults.items():
-            config.setdefault(k, v)
-
-#         ch = ConfigHandler(**config)
         fieldnames = config.keys()
+
         # Read csv data file into a table
-        skip_lines = 0  # config.get('skip_lines', 0)
-        (table, unused) = filereader(
-            csv_register, fieldnames, skip_lines)
+        (table, unused) = filereader(csv_register, fieldnames)
 
         # Fix the data in table
         (csv_basename, _) = splitext(basename(csv_register))
         vh = TableFixer(table0=table, config=config)
-        table_fixed = None
-        if 'nationbuilder' in csv_basename:
-            table_fixed = vh.fix_table_street_address()
-        else:
-            table_fixed = vh.fix_table()
-
-        # Create new table: with NB table column headings
-        d2d = TableMapper(table_fixed, ch.fieldmap_new)
-        table_new = d2d.data_new
+        table_fixed = vh.fix_table()
 
         # Write the table to a new csv file for import to NB.
-        self.csv_filename_new = csv_register.replace(
-            '.csv', 'NB.csv').replace('.xlsx', 'NB.csv')
-        filehandler.csv_write(
-            table_new, self.csv_filename_new, ch.fieldnames_new)
-#         filehandler.csv_print(table_new, fieldnames_new)
+        self.csv_filename_new = csv_register.replace('.csv', 'NB.csv')
+        filehandler.csv_write(table_fixed, self.csv_filename_new, fieldnames)
 
 
 class TableFixer(object):
@@ -206,7 +128,11 @@ class TableFixer(object):
     def fix_table(self):
         '''Returns new table given old table
         '''
-        return [self.fix_row(row0) for row0 in self.table0]
+        try:
+            return [self.fix_row(row0) for row0 in self.table0]
+        except (IndexError, TypeError) as e:
+            e.args += ('config:', self.config,)
+            raise
 
     def fix_row(self, row0):
         '''Creates new row from old row
@@ -214,37 +140,77 @@ class TableFixer(object):
         try:
             return {fieldname1: self.fix_field(fieldname0, row0)
                 for (fieldname1, fieldname0) in self.config.items()}
-        except TypeError as e:
-            raise TypeError(e, row0)
+        except (AttributeError, IndexError, TypeError) as e:
+            e.args += ('row0:', row0,)
+            raise
 
     @classmethod
     def fix_field(self, fieldname0, row0):
         '''Creates new field from old field(s)
         '''
-        if fieldname0 == None:
-            return None
-        elif isinstance(fieldname0, str):
-            return row0.get(fieldname0)
-        elif isinstance(fieldname0, tuple):
-             func = fieldname0[0]
-             kwargs = fieldname0[1]
-             if callable(func):
-                 return func(row0, **kwargs)
-        raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(fieldname0))
+        try:
+            if fieldname0 == None:
+                return None
+            elif isinstance(fieldname0, str):
+                return row0.get(fieldname0).strip()
+            elif isinstance(fieldname0, tuple):
+                 func = fieldname0[0]
+                 kwargs = fieldname0[1]
+                 if callable(func):
+                     return func(row0, **kwargs)
+            raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(fieldname0))
+        except (AttributeError, IndexError, TypeError) as e:
+            e.args += ('fieldname0:', fieldname0,)
+            raise
 
     @classmethod
-    def merge_pd_eno(cls, row0, pd=None, eno=None):
+    def background_merge(cls, row0, key_notes='', key_comments=''):
+        return ' '.join([row0.get(key_notes), row0.get(key_comments)])
+
+    @classmethod
+    def doa2dob(cls, row0, key_doa=None):
+        '''Convert date of attainment (ie reach 18years old) to DoB in US format: mm/dd/yyyy.
+            Use after converting to NB date format.
+            yoa: year of attainment, yob: year of birth'''
+        doa = row0.get(key_doa)
+        if doa:
+            (day, month, yoa) = doa.split('/')
+            yob = str(int(yoa) - 18)
+            return '/'.join([month, day, yob])
+        else:
+            return doa
+
+    @classmethod
+    def fix_address1(cls, row0, key_housename='', key_street_number='', key_street_name=''):
+        return ' '.join([row0.get(key_housename), row0.get(key_street_number),
+                         row0.get(key_street_name)]).strip()
+
+    @classmethod
+    def fix_address2(cls, row0, key_block_name=''):
+        return row0.get(key_block_name)
+
+    @classmethod
+    def fix_party(cls, row0, key_party=None, party_map=None):
+        return party_map.get(row0.get(key_party))
+
+    @classmethod
+    def fix_support_level(cls, row0, key_support_level=None, support_level_map=None):
+        return support_level_map.get(row0.get(key_support_level))
+
+    @classmethod
+    def merge_pd_eno(cls, row0, key_pd=None, key_eno=None):
         '''Merged PD & zero padded eno,
         takes: pd key_old and eno key_old.eg:
         {'pd':'polldist', 'eno':'elect no',} -> {'statefile_id':EA0012',}
         '''
-        pd = row0.get(pd)
-        eno = row0.get(eno)
-        eno_padded = cls.pad_eno(eno)
+        eno_padded = None
         try:
+            pd = row0.get(key_pd).lstrip('!')
+            eno = row0.get(key_eno)
+            eno_padded = cls.pad_eno(eno)
             return pd + eno_padded
-        except TypeError as e:
-            print('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded))
+        except (AttributeError, TypeError) as e:
+            e += ('key_pd:{} key_eno:{} eno_padded:{}'.format(key_pd, key_eno, eno_padded))
             raise
 
     @classmethod
@@ -252,51 +218,24 @@ class TableFixer(object):
         return '%04d' % (int(eno),)
 
     @classmethod
-    def fix_address1(cls, row, housename='', street_number='', street_name=''):
-        return ' '.join([row.get(housename), row.get(street_number),
-                         row.get(street_name)]).strip()
-
-    @classmethod
-    def fix_address2(cls, row, block_name=''):
-        return row.get(block_name)
-
-    @classmethod
-    def background_merge(cls, row, notes='', comments=''):
-        return ' '.join([row.get(notes), row.get(comments)])
-
-    @classmethod
-    def tags_add(cls, row, fieldnames=[], tag_map={}):
+    def tags_add(cls, row0, fieldnames=[], tag_map={}):
         '''For each field in fieldnames. Eg: 'Demographic','national', 'Local','Post', 'Vote14', 'Vote12'
         return tag_list as string, eg: 'ResidentsParking,StreetsAhead,Vote14'
         '''
-        return ','.join([cls.tags_split(row.get(fieldname), tag_map) for fieldname in fieldnames])
+        return ','.join(sorted([k for k in [cls.tags_split(row0.get(fieldname), tag_map) for fieldname in fieldnames] if k]))
 
     @classmethod
     def tags_split(cls, fieldvalue, tag_map):
-        '''Split value into tags. Eg: value='ResPark, StrtAhed'
+        '''Split fieldvalue into tags. Eg: value='ResPark, StrtAhed'
         return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
         if fieldvalue == None:
             return ''
         tag_list0 = fieldvalue.split(',')
-        tag_list = [tag_map.get(k) or k for k in tag_list0]
+        tag_list0 = [k.strip() for k in tag_list0 if k.strip()]
+        tag_list = [tag_map.get(k) or k for k in tag_list0 if k]
         return ','.join(tag_list)
 
-
-class TableMapper(object):
-
-    '''Map original table (row of dicts) to new table (row of dicts).
-    Read original table and field mapper. Write new table with new field names.
-    Values unchanged'''
-
-    def __init__(self, data, fieldmap):
-        self.data_new = self.mapdata(data, fieldmap)
-
-    def maprow(self, row, fieldmap):
-        return {key_new: row[key_old] for key_old, key_new in fieldmap.items()}
-
-    def mapdata(self, data, fieldmap):
-        return [self.maprow(row, fieldmap) for row in data]
 
 if __name__ == '__main__':
     config = None
@@ -364,5 +303,6 @@ if __name__ == '__main__':
         xls_pw = os.getenv('XLS_PASSWORD')
 
         print('config_name: ', config['config_name'])
+        del config['config_name']
         csvfixer = CsvFixer(csv_filename, config, reader)
         print(csvfixer.csv_filename_new)
