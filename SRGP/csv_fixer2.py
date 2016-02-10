@@ -156,8 +156,9 @@ class TableFixer(object):
             elif isinstance(arg0, tuple):
                  func = arg0[0]
                  args = arg0[1]
-                 kwargs = arg0[2]
+                 kwargs0 = arg0[2]
                  if callable(func):
+                     kwargs = {k:row0.get(v) for (k, v) in kwargs0.items()}
                      return func(row0, *args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, TypeError) as e:
@@ -199,19 +200,18 @@ class TableFixer(object):
         return support_level_map.get(row0.get(key_support_level))
 
     @classmethod
-    def merge_pd_eno(cls, row0, key_pd=None, key_eno=None):
+    def merge_pd_eno(cls, row0, pd=None, eno=None):
         '''Merged PD & zero padded eno,
         takes: pd key_old and eno key_old.eg:
         {'pd':'polldist', 'eno':'elect no',} -> {'statefile_id':EA0012',}
         '''
         eno_padded = None
         try:
-            pd = row0.get(key_pd).lstrip('!')
-            eno = row0.get(key_eno)
+            pd = pd.lstrip('!')
             eno_padded = cls.pad_eno(eno)
             return pd + eno_padded
         except (AttributeError, TypeError) as e:
-            e += ('key_pd:{} key_eno:{} eno_padded:{}'.format(key_pd, key_eno, eno_padded))
+            e += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded))
             raise
 
     @classmethod

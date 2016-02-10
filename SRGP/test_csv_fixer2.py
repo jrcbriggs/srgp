@@ -142,7 +142,7 @@ class Test(unittest.TestCase):
 
     def test_fix_field_func(self):
         fieldname1 = 'statefile_id'
-        arg0 = (TableFixer.merge_pd_eno, [], {'key_pd':'polldist', 'key_eno':'elect no'})
+        arg0 = (TableFixer.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no'})
         row0 = {'polldist':self.pd, 'elect no':self.eno}
         actual = TableFixer.fix_field(row0, arg0)
         expected = self.statefile_id
@@ -197,7 +197,7 @@ class Test(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_merge_pd_eno(self):
-        actual = TableFixer.merge_pd_eno(self.row0, key_pd='polldist', key_eno='elect no')
+        actual = TableFixer.merge_pd_eno(self.row0, pd=self.pd, eno=self.eno)
         expected = self.statefile_id
         self.assertEqual(actual, expected)
 
