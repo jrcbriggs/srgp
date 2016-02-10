@@ -85,27 +85,27 @@ class Test(unittest.TestCase):
                         }
         # 1st element in tuple is class method
         self.config = OD([
-                            ('statefile_id', (TableFixer.merge_pd_eno, {'key_pd':'polldist', 'key_eno':'elect no', },)),
+                            ('statefile_id', (TableFixer.merge_pd_eno, [], {'key_pd':'polldist', 'key_eno':'elect no', },)),
                             ('last_name', 'Surname'),
                             ('first_name', 'First name'),
-                            ('registered_address1', (TableFixer.fix_address1, {
+                            ('registered_address1', (TableFixer.fix_address1, [], {
                                                           'key_housename':'Housename',
                                                           'key_street_number':'Number',
                                                           'key_street_name':'Road',
                                                           })),
-                            ('registered_address2', (TableFixer.fix_address2, {
+                            ('registered_address2', (TableFixer.fix_address2, [], {
                                                           'key_block_name':'Block',
                                                           })),
                             ('registered_address3', None),
                             ('registered_city', 'Addend'),
                             ('registered_zip', 'Postcode'),
-                            ('background', (TableFixer.background_merge, {'key_notes':'Notes',
+                            ('background', (TableFixer.background_merge, [], {'key_notes':'Notes',
                                                               'key_comments':'Comments'})),
                             ('phone_number', 'Phone'),
                             ('email', 'E-mail'),
-                            ('party', (TableFixer.fix_party, {'key_party':'Party', 'party_map':self.party_map, })),
-                            ('support_level', (TableFixer.fix_support_level, {'key_support_level':'Party', 'support_level_map':self.support_level_map, })),
-                            ('tag_list', (TableFixer.tags_add, {'fieldnames': ('Demographic',
+                            ('party', (TableFixer.fix_party, [], {'key_party':'Party', 'party_map':self.party_map, })),
+                            ('support_level', (TableFixer.fix_support_level, [], {'key_support_level':'Party', 'support_level_map':self.support_level_map, })),
+                            ('tag_list', (TableFixer.tags_add, [], {'fieldnames': ('Demographic',
                                                                                   'national',
                                                                                   'Local',
                                                                                   'Post',
@@ -142,7 +142,7 @@ class Test(unittest.TestCase):
 
     def test_fix_field_func(self):
         fieldname1 = 'statefile_id'
-        arg0 = (TableFixer.merge_pd_eno, {'key_pd':'polldist', 'key_eno':'elect no'})
+        arg0 = (TableFixer.merge_pd_eno, [], {'key_pd':'polldist', 'key_eno':'elect no'})
         row0 = {'polldist':self.pd, 'elect no':self.eno}
         actual = TableFixer.fix_field(row0, arg0)
         expected = self.statefile_id

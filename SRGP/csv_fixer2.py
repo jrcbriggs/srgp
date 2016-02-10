@@ -155,7 +155,8 @@ class TableFixer(object):
                 return row0.get(arg0).strip()
             elif isinstance(arg0, tuple):
                  func = arg0[0]
-                 kwargs = arg0[1]
+                 args = arg0[1]
+                 kwargs = arg0[2]
                  if callable(func):
                      return func(row0, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))

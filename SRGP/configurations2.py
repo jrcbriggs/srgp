@@ -64,16 +64,16 @@ config_robin_latimer = OD([
                             # ('fieldname_new', 'fieldname_old'), # or
                             # ('fieldname_new', (func, {kwargs})),
                             ('config_name', 'config_robin_latimer'),
-                            ('statefile_id', (tf.merge_pd_eno, {'key_pd':'polldist', 'key_eno':'elect no', },)),
-                            ('dob', (tf.doa2dob, {'key_doa': 'Date18'})),
+                            ('statefile_id', (tf.merge_pd_eno, [], {'key_pd':'polldist', 'key_eno':'elect no', },)),
+                            ('dob', (tf.doa2dob, [], {'key_doa': 'Date18'})),
                             ('last_name', 'Surname'),
                             ('first_name', 'First name'),
-                            ('registered_address1', (tf.fix_address1, {
+                            ('registered_address1', (tf.fix_address1, [], {
                                                           'key_housename':'Housename',
                                                           'key_street_number':'Number',
                                                           'key_street_name':'Road',
                                                           })),
-                            ('registered_address2', (tf.fix_address2, {
+                            ('registered_address2', (tf.fix_address2, [], {
                                                           'key_block_name':'Block',
                                                           })),
                             ('registered_address3', None),
@@ -81,11 +81,11 @@ config_robin_latimer = OD([
                             ('registered_zip', 'Postcode'),
                             ('email', 'E-mail'),
                             ('phone_number', 'Phone'),
-                            ('background', (tf.background_merge, {'key_notes':'Notes',
+                            ('background', (tf.background_merge, [], {'key_notes':'Notes',
                                                               'key_comments':'Comments'})),
-                            ('party', (tf.fix_party, {'key_party': 'Party', 'party_map':party_map, })),
-                            ('support_level', (tf.fix_support_level, {'key_support_level': 'Party', 'support_level_map':support_level_map, })),
-                            ('tag_list', (tf.tags_add, {'fieldnames': ('Demographic',
+                            ('party', (tf.fix_party, [], {'key_party': 'Party', 'party_map':party_map, })),
+                            ('support_level', (tf.fix_support_level, [], {'key_support_level': 'Party', 'support_level_map':support_level_map, })),
+                            ('tag_list', (tf.tags_add, [], {'fieldnames': ('Demographic',
                                                                                   'national',
                                                                                   'Local',
                                                                                   'Post',
