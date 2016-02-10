@@ -154,27 +154,24 @@ class TableFixer(object):
             elif isinstance(arg0, str):
                 return row0.get(arg0).strip()
             elif isinstance(arg0, tuple):
-                 func = arg0[0]
-                 args = arg0[1]
-                 kwargs0 = arg0[2]
+                 (func, args, kwargs0) = arg0
                  if callable(func):
-                     kwargs = {k:row0.get(v) for (k, v) in kwargs0.items()}
-                     return func(row0, *args, **kwargs)
+                     kwargs = {k: row0.get(v) for (k, v) in kwargs0.items()}
+                     return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, TypeError) as e:
             e.args += ('arg0:', arg0,)
             raise
 
     @classmethod
-    def background_merge(cls, row0, key_notes='', key_comments=''):
-        return ' '.join([row0.get(key_notes), row0.get(key_comments)])
+    def background_merge(cls, notes='', comments=''):
+        return ' '.join([notes, comments])
 
     @classmethod
-    def doa2dob(cls, row0, key_doa=None):
+    def doa2dob(cls, doa=None):
         '''Convert date of attainment (ie reach 18years old) to DoB in US format: mm/dd/yyyy.
             Use after converting to NB date format.
             yoa: year of attainment, yob: year of birth'''
-        doa = row0.get(key_doa)
         if doa:
             (day, month, yoa) = doa.split('/')
             yob = str(int(yoa) - 18)
@@ -183,26 +180,25 @@ class TableFixer(object):
             return doa
 
     @classmethod
-    def fix_address1(cls, row0, key_housename='', key_street_number='', key_street_name=''):
-        return ' '.join([row0.get(key_housename), row0.get(key_street_number),
-                         row0.get(key_street_name)]).strip()
+    def fix_address1(cls, housename='', street_number='', street_name=''):
+        return ' '.join([housename, street_number, street_name]).strip()
 
     @classmethod
-    def fix_address2(cls, row0, key_block_name=''):
-        return row0.get(key_block_name)
+    def fix_address2(cls, block_name=''):
+        return block_name
 
     @classmethod
-    def fix_party(cls, row0, party_map, key_party=None):
-        return party_map.get(row0.get(key_party))
+    def fix_party(cls, party_map, party=None):
+        return party_map.get(party)
 
     @classmethod
-    def fix_support_level(cls, row0, support_level_map, key_support_level=None):
-        return support_level_map.get(row0.get(key_support_level))
+    def fix_support_level(cls, support_level_map, support_level=None):
+        return support_level_map.get(support_level)
 
     @classmethod
-    def merge_pd_eno(cls, row0, pd=None, eno=None):
+    def merge_pd_eno(cls, pd=None, eno=None):
         '''Merged PD & zero padded eno,
-        takes: pd key_old and eno key_old.eg:
+        takes: pd old and eno old.eg:
         {'pd':'polldist', 'eno':'elect no',} -> {'statefile_id':EA0012',}
         '''
         eno_padded = None
@@ -219,20 +215,28 @@ class TableFixer(object):
         return '%04d' % (int(eno),)
 
     @classmethod
-    def tags_add(cls, row0, tag_map, fieldnames=[]):
-        '''For each field in fieldnames. Eg: 'Demographic','national', 'Local','Post', 'Vote14', 'Vote12'
+    def tag_fields(cls, tag_map, **kwargs):
+        '''For each k1->k0 item in kwargs. Eg: {'k0':'Demographic','k1':'national', 'k2':'Local','k3':'Post', 'k4':'Vote14', 'k5':'Vote12'}
         return tag_list as string, eg: 'ResidentsParking,StreetsAhead,Vote14'
         '''
-        return ','.join(sorted([k for k in [cls.tags_split(row0.get(fieldname), tag_map) for fieldname in fieldnames] if k]))
+        return [cls.tags_split(tag_map, k0) for (k1, k0) in kwargs]
 
     @classmethod
-    def tags_split(cls, fieldvalue, tag_map):
-        '''Split fieldvalue into tags. Eg: value='ResPark, StrtAhed'
+    def tags_add(cls, tag_map, k0):
+        '''For each k1->k0 item in kwargs. Eg: {'k0':'Demographic','k1':'national', 'k2':'Local','k3':'Post', 'k4':'Vote14', 'k5':'Vote12'}
+        return tag_list as string, eg: 'ResidentsParking,StreetsAhead,Vote14'
+        '''
+        return ','.join(sorted([k for k in [cls.tags_split(tag_map, v) 
+                                            for (k1, k0) in kwargs.items()] if k0]))
+
+    @classmethod
+    def tags_split(cls, tag_map, k0):
+        '''For a single field:
+        Get Split fieldvalue into tags. Eg: value='ResPark, StrtAhed'
         return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
-        if fieldvalue == None:
-            return ''
-        tag_list0 = fieldvalue.split(',')
+        tag_str0 = tag_map.get(k0)   #Demographis -> 'stdt,ResPark'
+        tag_list0 = tags0.split(',') #'stdt,ResPark' -> ['stdt','ResPark']
         tag_list0 = [k.strip() for k in tag_list0 if k.strip()]
         tag_list = [tag_map.get(k) or k for k in tag_list0 if k]
         return ','.join(tag_list)

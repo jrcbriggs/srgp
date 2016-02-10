@@ -85,33 +85,32 @@ class Test(unittest.TestCase):
                         }
         # 1st element in tuple is class method
         self.config = OD([
-                            ('statefile_id', (TableFixer.merge_pd_eno, [], {'key_pd':'polldist', 'key_eno':'elect no', },)),
+                            ('statefile_id', (TableFixer.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
                             ('last_name', 'Surname'),
                             ('first_name', 'First name'),
                             ('registered_address1', (TableFixer.fix_address1, [], {
-                                                          'key_housename':'Housename',
-                                                          'key_street_number':'Number',
-                                                          'key_street_name':'Road',
+                                                          'housename':'Housename',
+                                                          'street_number':'Number',
+                                                          'street_name':'Road',
                                                           })),
                             ('registered_address2', (TableFixer.fix_address2, [], {
-                                                          'key_block_name':'Block',
+                                                          'block_name':'Block',
                                                           })),
                             ('registered_address3', None),
                             ('registered_city', 'Addend'),
                             ('registered_zip', 'Postcode'),
-                            ('background', (TableFixer.background_merge, [], {'key_notes':'Notes',
-                                                              'key_comments':'Comments'})),
+                            ('background', (TableFixer.background_merge, [], {'notes':'Notes',
+                                                              'comments':'Comments'})),
                             ('phone_number', 'Phone'),
                             ('email', 'E-mail'),
-                            ('party', (TableFixer.fix_party, [self.party_map], {'key_party':'Party', })),
-                            ('support_level', (TableFixer.fix_support_level, [self.support_level_map], {'key_support_level':'Party', })),
-                            ('tag_list', (TableFixer.tags_add, [self.tag_map1], {'fieldnames': ('Demographic',
-                                                                                              'national',
-                                                                                              'Local',
-                                                                                              'Post',
-                                                                                              'Vote14',
-                                                                                              'Vote12',
-                                                                                  ),
+                            ('party', (TableFixer.fix_party, [self.party_map], {'party':'Party', })),
+                            ('support_level', (TableFixer.fix_support_level, [self.support_level_map], {'support_level':'Party', })),
+                            ('tag_list', (TableFixer.tags_add, [self.tag_map1], {'k0': 'Demographic',
+                                                                                 'k1': 'national',
+                                                                                 'k2': 'Local',
+                                                                                 'k3': 'Post',
+                                                                                 'k4': 'Vote14',
+                                                                                 'k5': 'Vote12',
                                                                                  })),
                           ])
         self.table0 = [self.row0]
@@ -119,9 +118,10 @@ class Test(unittest.TestCase):
         self.tf = TableFixer(config=self.config, table0=self.table0)  # , table0=[self.row0])
 
     def test_background_merge(self):
-        actual = TableFixer.background_merge(self.row0, key_notes='Notes', key_comments='Comments')
+        actual = TableFixer.background_merge(notes='n1', comments='c1')
         expected = 'n1 c1'
         self.assertEqual(actual, expected)
+
     def test_fix_table(self):
         actual = self.tf.fix_table()
         expected = self.table1
@@ -142,8 +142,8 @@ class Test(unittest.TestCase):
 
     def test_fix_field_func(self):
         fieldname1 = 'statefile_id'
-        arg0 = (TableFixer.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no'})
         row0 = {'polldist':self.pd, 'elect no':self.eno}
+        arg0 = (TableFixer.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no'})
         actual = TableFixer.fix_field(row0, arg0)
         expected = self.statefile_id
         self.assertEqual(actual, expected)
@@ -157,78 +157,56 @@ class Test(unittest.TestCase):
         self.assertRaises(TypeError, TableFixer.fix_field, arg0, row0)
 
     def test_fix_address1(self):
-        actual = TableFixer.fix_address1(self.row0, key_housename='Housename',
-                                             key_street_number='Number', key_street_name='Road')
+        actual = TableFixer.fix_address1(housename='', street_number=self.street_number, street_name=self.street_name)
         expected = self.street_number + ' ' + self.street_name
         self.assertEqual(actual, expected)
 
     def test_fix_address1_house_name(self):
-        self.row0['Housename'] = self.housename
-        self.row0['Number'] = ''
-        actual = TableFixer.fix_address1(self.row0, key_housename='Housename',
-                                             key_street_number='Number', key_street_name='Road')
+        actual = TableFixer.fix_address1(housename=self.housename, street_number='', street_name=self.street_name)
         expected = self.housename + '  ' + self.street_name
         self.assertEqual(actual, expected)
 
     def test_fix_address2(self):
-        actual = TableFixer.fix_address2(self.row0, key_block_name='Block')
+        actual = TableFixer.fix_address2(block_name=self.block_name)
         expected = self.block_name
         self.assertEqual(actual, expected)
 
-    def test_background_merge(self):
-        actual = TableFixer.background_merge(self.row0, key_notes='Notes', key_comments='Comments')
-        expected = 'n1 c1'
-        self.assertEqual(actual, expected)
-
     def test_doa2dob(self):
-        row = {'doa': '31/12/2018', }
-        actual = TableFixer.doa2dob(row, key_doa='doa')
+        actual = TableFixer.doa2dob(doa='31/12/2018')
         expected = '12/31/2000'
         self.assertEqual(actual, expected)
 
     def test_fix_party(self):
-        actual = TableFixer.fix_party(self.row0, self.party_map, 'Party')
+        actual = TableFixer.fix_party(self.party_map, 'LD')
         expected = 'D'
         self.assertEqual(actual, expected)
 
     def test_fix_support_level(self):
-        actual = TableFixer.fix_support_level(self.row0, self.support_level_map, 'Party')
+        actual = TableFixer.fix_support_level(self.support_level_map, 'LD')
         expected = 5
         self.assertEqual(actual, expected)
 
     def test_merge_pd_eno(self):
-        actual = TableFixer.merge_pd_eno(self.row0, pd=self.pd, eno=self.eno)
+        actual = TableFixer.merge_pd_eno(pd=self.pd, eno=self.eno)
         expected = self.statefile_id
         self.assertEqual(actual, expected)
 
     def test_merge_pd_eno_bad_eno(self):
         self.row0['elect no'] = None
-        self.assertRaises(TypeError, TableFixer.merge_pd_eno, self.row0, key_pd='polldist', key_eno='elect no')
-
-    def test_merge_pd_eno_bad_eno_key(self):
-        self.assertRaises(TypeError, TableFixer.merge_pd_eno, self.row0, key_pd='polldistXXX', key_eno='elect no')
+        self.assertRaises(TypeError, TableFixer.merge_pd_eno, pd=self.pd, eno=None)
 
     def test_merge_pd_eno_bad_pd(self):
         self.row0['polldist'] = None
-        self.assertRaises(TypeError, TableFixer.merge_pd_eno, self.row0, key_pd='polldist', key_eno='elect no')
-
-    def test_merge_pd_eno_bad_pd_key(self):
-        self.row0['polldist'] = None
-        self.assertRaises(TypeError, TableFixer.merge_pd_eno, self.row0, key_pd='polldist', key_eno='elect noXXX')
+        self.assertRaises(TypeError, TableFixer.merge_pd_eno, pd=None, eno=self.eno)
 
     def test_tags_add(self):
-        row0 = {'fieldname1': 'A,B',
-                'fieldname2': 'C',
-                'fieldname3': '',
-                'fieldname4': None,
-                 }
-        actual = TableFixer.tags_add(row0, tag_map=self.tag_map, fieldnames=self.fieldnames)
+        actual = TableFixer.tags_add(self.tag_map, fieldnames=['A,B','C','',None,])
         expected = 'a,b,c'
         self.assertEqual(actual, expected)
 
     def test_tags_split(self):
         fieldvalue = 'A,B'
-        actual = TableFixer.tags_split(fieldvalue, self.tag_map)
+        actual = TableFixer.tags_split(self.tag_map, fieldvalue)
         expected = 'a,b'
         self.assertEqual(actual, expected, actual)
 
