@@ -134,17 +134,17 @@ class Test(unittest.TestCase):
 
     def test_fix_field_str(self):
         fieldname1 = 'first_name'
-        fieldname0 = 'First name'
+        arg0 = 'First name'
         row0 = {'First name': self.first_name}
-        actual = TableFixer.fix_field(fieldname0, row0)
+        actual = TableFixer.fix_field(row0, arg0)
         expected = self.first_name
         self.assertEqual(actual, expected)
 
     def test_fix_field_func(self):
         fieldname1 = 'statefile_id'
-        fieldname0 = (TableFixer.merge_pd_eno, {'key_pd':'polldist', 'key_eno':'elect no'})
+        arg0 = (TableFixer.merge_pd_eno, {'key_pd':'polldist', 'key_eno':'elect no'})
         row0 = {'polldist':self.pd, 'elect no':self.eno}
-        actual = TableFixer.fix_field(fieldname0, row0)
+        actual = TableFixer.fix_field(row0, arg0)
         expected = self.statefile_id
         self.assertEqual(actual, expected)
 
@@ -152,9 +152,9 @@ class Test(unittest.TestCase):
         '''First element  of tuple should be str or a callable
         '''
         fieldname1 = 'statefile_id'
-        fieldname0 = (123, {'pd':'pd', 'eno':'eno'})
+        arg0 = (123, {'pd':'pd', 'eno':'eno'})
         row0 = {'pd': self.pd, 'eno':self.eno, }
-        self.assertRaises(TypeError, TableFixer.fix_field, fieldname0, row0)
+        self.assertRaises(TypeError, TableFixer.fix_field, arg0, row0)
 
     def test_fix_address1(self):
         actual = TableFixer.fix_address1(self.row0, key_housename='Housename',

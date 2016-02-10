@@ -138,29 +138,29 @@ class TableFixer(object):
         '''Creates new row from old row
         '''
         try:
-            return {fieldname1: self.fix_field(fieldname0, row0)
-                for (fieldname1, fieldname0) in self.config.items()}
+            return {fieldname1: self.fix_field(row0, arg0)
+                for (fieldname1, arg0) in self.config.items()}
         except (AttributeError, IndexError, TypeError) as e:
             e.args += ('row0:', row0,)
             raise
 
     @classmethod
-    def fix_field(self, fieldname0, row0):
+    def fix_field(self, row0, arg0):
         '''Creates new field from old field(s)
         '''
         try:
-            if fieldname0 == None:
+            if arg0 == None:
                 return None
-            elif isinstance(fieldname0, str):
-                return row0.get(fieldname0).strip()
-            elif isinstance(fieldname0, tuple):
-                 func = fieldname0[0]
-                 kwargs = fieldname0[1]
+            elif isinstance(arg0, str):
+                return row0.get(arg0).strip()
+            elif isinstance(arg0, tuple):
+                 func = arg0[0]
+                 kwargs = arg0[1]
                  if callable(func):
                      return func(row0, **kwargs)
-            raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(fieldname0))
+            raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, TypeError) as e:
-            e.args += ('fieldname0:', fieldname0,)
+            e.args += ('arg0:', arg0,)
             raise
 
     @classmethod
