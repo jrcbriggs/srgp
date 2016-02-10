@@ -103,16 +103,16 @@ class Test(unittest.TestCase):
                                                               'key_comments':'Comments'})),
                             ('phone_number', 'Phone'),
                             ('email', 'E-mail'),
-                            ('party', (TableFixer.fix_party, [], {'key_party':'Party', 'party_map':self.party_map, })),
-                            ('support_level', (TableFixer.fix_support_level, [], {'key_support_level':'Party', 'support_level_map':self.support_level_map, })),
-                            ('tag_list', (TableFixer.tags_add, [], {'fieldnames': ('Demographic',
-                                                                                  'national',
-                                                                                  'Local',
-                                                                                  'Post',
-                                                                                  'Vote14',
-                                                                                  'Vote12',
+                            ('party', (TableFixer.fix_party, [self.party_map], {'key_party':'Party', })),
+                            ('support_level', (TableFixer.fix_support_level, [self.support_level_map], {'key_support_level':'Party', })),
+                            ('tag_list', (TableFixer.tags_add, [self.tag_map1], {'fieldnames': ('Demographic',
+                                                                                              'national',
+                                                                                              'Local',
+                                                                                              'Post',
+                                                                                              'Vote14',
+                                                                                              'Vote12',
                                                                                   ),
-                                                                    'tag_map': self.tag_map1, })),
+                                                                                 })),
                           ])
         self.table0 = [self.row0]
         self.table1 = [self.row1]
@@ -187,12 +187,12 @@ class Test(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_fix_party(self):
-        actual = TableFixer.fix_party(self.row0, 'Party', self.party_map)
+        actual = TableFixer.fix_party(self.row0, self.party_map, 'Party')
         expected = 'D'
         self.assertEqual(actual, expected)
 
     def test_fix_support_level(self):
-        actual = TableFixer.fix_support_level(self.row0, 'Party', self.support_level_map)
+        actual = TableFixer.fix_support_level(self.row0, self.support_level_map, 'Party')
         expected = 5
         self.assertEqual(actual, expected)
 
@@ -222,7 +222,7 @@ class Test(unittest.TestCase):
                 'fieldname3': '',
                 'fieldname4': None,
                  }
-        actual = TableFixer.tags_add(row0, fieldnames=self.fieldnames, tag_map=self.tag_map)
+        actual = TableFixer.tags_add(row0, tag_map=self.tag_map, fieldnames=self.fieldnames)
         expected = 'a,b,c'
         self.assertEqual(actual, expected)
 

@@ -158,7 +158,7 @@ class TableFixer(object):
                  args = arg0[1]
                  kwargs = arg0[2]
                  if callable(func):
-                     return func(row0, **kwargs)
+                     return func(row0, *args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, TypeError) as e:
             e.args += ('arg0:', arg0,)
@@ -191,11 +191,11 @@ class TableFixer(object):
         return row0.get(key_block_name)
 
     @classmethod
-    def fix_party(cls, row0, key_party=None, party_map=None):
+    def fix_party(cls, row0, party_map, key_party=None):
         return party_map.get(row0.get(key_party))
 
     @classmethod
-    def fix_support_level(cls, row0, key_support_level=None, support_level_map=None):
+    def fix_support_level(cls, row0, support_level_map, key_support_level=None):
         return support_level_map.get(row0.get(key_support_level))
 
     @classmethod
@@ -219,7 +219,7 @@ class TableFixer(object):
         return '%04d' % (int(eno),)
 
     @classmethod
-    def tags_add(cls, row0, fieldnames=[], tag_map={}):
+    def tags_add(cls, row0, tag_map, fieldnames=[]):
         '''For each field in fieldnames. Eg: 'Demographic','national', 'Local','Post', 'Vote14', 'Vote12'
         return tag_list as string, eg: 'ResidentsParking,StreetsAhead,Vote14'
         '''
