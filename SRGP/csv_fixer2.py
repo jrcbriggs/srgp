@@ -9,7 +9,6 @@ from csv import DictReader, DictWriter
 from datetime import datetime as dt
 from datetime import timedelta
 import datetime
-from importlib import import_module
 from io import StringIO
 import mmap
 import os
@@ -19,8 +18,6 @@ from re import search
 from sys import argv
 from sys import stdout
 import xlrd
-
-import configurations2 as cf2
 
 
 class FileHandler(object):
@@ -103,7 +100,7 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-    def __init__(self, csv_register, config, filereader):
+    def __init__(self, csv_register, config, filereader, filewriter):
         fieldnames = config.keys()
 
         # Read csv data file into a table
@@ -116,7 +113,7 @@ class CsvFixer(object):
 
         # Write the table to a new csv file for import to NB.
         self.csv_filename_new = csv_register.replace('.csv', 'NB.csv')
-        filehandler.csv_write(table_fixed, self.csv_filename_new, fieldnames)
+        filewriter(table_fixed, self.csv_filename_new, fieldnames)
 
 
 class TableFixer(object):
@@ -156,7 +153,7 @@ class TableFixer(object):
             elif isinstance(arg0, tuple):
                  (func, args, kwargs0) = arg0
                  if callable(func):
-                     kwargs = {k: row0.get(v) for (k, v) in kwargs0.items()}
+                     kwargs = {k: row0.get(v, '') for (k, v) in kwargs0.items()}
                      return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, TypeError) as e:
@@ -215,99 +212,55 @@ class TableFixer(object):
         return '%04d' % (int(eno),)
 
     @classmethod
-    def tag_fields(cls, tag_map, **kwargs):
-        '''For each k1->k0 item in kwargs. Eg: {'k0':'Demographic','k1':'national', 'k2':'Local','k3':'Post', 'k4':'Vote14', 'k5':'Vote12'}
-        return tag_list as string, eg: 'ResidentsParking,StreetsAhead,Vote14'
+    def tags_add(cls, tag_map, **kwargs):
+        '''For tag_str0 (value in kwargs), eg: 'ResidentsParking,StreetsAhead','Ben, Bins', '','', 'Vote14', 'Vote12'}
+            Split into tag0 elements in tag_list0:
+              Strip (leading and trailing) white space from tag0
+              Convert tag0 tag1 elements in tag_list1
+              Merge into tag_list1 removing empty tags ('')
+              Sort
+              Convert to string tag_str1
+            Return tags_str1
         '''
-        return [cls.tags_split(tag_map, k0) for (k1, k0) in kwargs]
+        print(kwargs)
+        tag_lists = [cls.tags_split(tag_map, tag_str0) for tag_str0 in kwargs.values()]
+        print('tag_lists', tag_lists)
+#         return ','.join(sorted([tag for tag_list in tag_lists for tag in tag_list if tag != '']))
+        tag_str1 = ','.join(sorted([tag for tag_list in tag_lists for tag in tag_list if tag != '']))
+        print('tag_str1', tag_str1)
+        return tag_str1
 
     @classmethod
-    def tags_add(cls, tag_map, k0):
-        '''For each k1->k0 item in kwargs. Eg: {'k0':'Demographic','k1':'national', 'k2':'Local','k3':'Post', 'k4':'Vote14', 'k5':'Vote12'}
-        return tag_list as string, eg: 'ResidentsParking,StreetsAhead,Vote14'
+    def tags_split(cls, tag_map, tag_str0):
+        '''For a single tag_str0:
+              Strip (leading and trailing) white space from tag0
+              Convert tag0 tag1 elements in tag_list1
+           Return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
-        return ','.join(sorted([k for k in [cls.tags_split(tag_map, v) 
-                                            for (k1, k0) in kwargs.items()] if k0]))
-
-    @classmethod
-    def tags_split(cls, tag_map, k0):
-        '''For a single field:
-        Get Split fieldvalue into tags. Eg: value='ResPark, StrtAhed'
-        return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
-        '''
-        tag_str0 = tag_map.get(k0)   #Demographis -> 'stdt,ResPark'
-        tag_list0 = tags0.split(',') #'stdt,ResPark' -> ['stdt','ResPark']
-        tag_list0 = [k.strip() for k in tag_list0 if k.strip()]
-        tag_list = [tag_map.get(k) or k for k in tag_list0 if k]
-        return ','.join(tag_list)
-
+        tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
+        print('tag_list0', tag_list0)
+#         return [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
+        tag_list1 = [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
+        print('tag_list1', tag_list1)
+        return tag_list1
 
 if __name__ == '__main__':
+    from configurations2 import config_rl
     config = None
-    argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
+    argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H_head.csv')
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
-        if search('registerUpdate', csv_filename, IGNORECASE):
-            config = config_register_update
-        if search('WardUpdated', csv_filename, IGNORECASE):
-            config = config_register_update
-        elif search('Marked', csv_filename, IGNORECASE):
-            config = config_marked
-        elif search('RegisterPV', csv_filename, IGNORECASE):
-            config = config_register_postal
-        elif search('CentralConsituencyPostal', csv_filename, IGNORECASE):
-            config = config_register_postal
-        elif search('CentralWardPostal', csv_filename, IGNORECASE):
-            config = config_register_postal
-        elif search('Crookes_Ecclesall_Postal', csv_filename, IGNORECASE):
-            config = config_register_postal
-        elif search('register', csv_filename, IGNORECASE):
-            config = config_register
-        elif search('SearchAdd', csv_filename, IGNORECASE):
-            config = config_search_add
-        elif search('SearchMod', csv_filename, IGNORECASE):
-            config = config_search_mod
-        elif search('textable', csv_filename, IGNORECASE):
-            config = config_textable
-        elif search('support1_2', csv_filename, IGNORECASE):
-            config = config_support1_2
-#         elif search('MembersNew', csv_filename,):
-#             config = config_members_new
-        elif search('Members', csv_filename, IGNORECASE):
-            config = config_members
-        elif search('Officers', csv_filename, IGNORECASE):
-            config = config_officers
-        elif search('Supporters', csv_filename, IGNORECASE):
-            config = config_supporters
-        elif search('Volunteers', csv_filename, IGNORECASE):
-            config = config_volunteers
-        elif search('YoungGreens', csv_filename, IGNORECASE):
-            config = config_young_greens
-        elif search('Search', csv_filename, IGNORECASE):
-            config = config_search
-        elif search('BroomhillCanvassData', csv_filename):
-            config = cf2.config_robin_latimer
-        elif search('canvass', csv_filename, IGNORECASE):
-            config = canvassing
-        elif search('nationbuilder.+NB', csv_filename):
-            config = config_nationbuilderNB
-        elif search('nationbuilder', csv_filename):
-            config = config_nationbuilder
+        if search('BroomhillCanvassData', csv_filename):
+            config = config_rl
         else:
             raise Exception(
                 'Cannot find config for csv {}'.format(csv_filename))
 
-        filehandler = FileHandler()
-        reader = None
-        if csv_filename.endswith('.csv'):
-            reader = filehandler.csv_read
-        elif csv_filename.endswith('.xls'):
-            reader = filehandler.xlsx_read
-        elif csv_filename.endswith('.xlsx'):
-            reader = filehandler.xlsx_read
-        xls_pw = os.getenv('XLS_PASSWORD')
+        fh = FileHandler()
+        reader = fh.csv_read
+        writer = fh.csv_write
 
         print('config_name: ', config['config_name'])
         del config['config_name']
-        csvfixer = CsvFixer(csv_filename, config, reader)
+        csvfixer = CsvFixer(csv_filename, config, reader, writer)
         print(csvfixer.csv_filename_new)

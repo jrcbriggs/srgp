@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 '''
 Created on 7 Feb 2016
 
@@ -6,9 +7,7 @@ Created on 7 Feb 2016
 from collections import OrderedDict as OD
 import unittest
 
-import configurations2
 from csv_fixer2 import TableFixer
-
 
 class Test(unittest.TestCase):
 
@@ -39,7 +38,7 @@ class Test(unittest.TestCase):
                     'Addend': '',
                     'Postcode': '',
                     'Party':'LD',
-                    'Demographic':'stdt',
+                    'Demographic':'stdt,Post',
                     'national':'',
                     'Local':'',
                     'Post':'',
@@ -61,7 +60,7 @@ class Test(unittest.TestCase):
                     'email': '',
                     'party': 'D',
                     'support_level': 5,
-                    'tag_list': 'student15',
+                    'tag_list': 'Postal14,student15',
                     }
         self.tag_map = {'':'', 'A':'a', 'B':'b', 'C':'c', 'D':'d', }
         self.tag_map1 = {
@@ -200,15 +199,16 @@ class Test(unittest.TestCase):
         self.assertRaises(TypeError, TableFixer.merge_pd_eno, pd=None, eno=self.eno)
 
     def test_tags_add(self):
-        actual = TableFixer.tags_add(self.tag_map, fieldnames=['A,B','C','',None,])
+        actual = TableFixer.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
         expected = 'a,b,c'
         self.assertEqual(actual, expected)
 
     def test_tags_split(self):
         fieldvalue = 'A,B'
         actual = TableFixer.tags_split(self.tag_map, fieldvalue)
-        expected = 'a,b'
+        expected = ['a', 'b']
         self.assertEqual(actual, expected, actual)
+
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
