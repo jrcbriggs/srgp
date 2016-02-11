@@ -153,7 +153,8 @@ class TableFixer(object):
             elif isinstance(arg0, tuple):
                  (func, args, kwargs0) = arg0
                  if callable(func):
-                     kwargs = {k: row0.get(v, '') for (k, v) in kwargs0.items()}
+#                      kwargs = {k: row0.get(v, '') for (k, v) in kwargs0.items()}
+                     kwargs = {k: row0[v] for (k, v) in kwargs0.items()}
                      return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, TypeError) as e:
@@ -186,11 +187,11 @@ class TableFixer(object):
 
     @classmethod
     def fix_party(cls, party_map, party=None):
-        return party_map.get(party)
+        return party_map[party]
 
     @classmethod
     def fix_support_level(cls, support_level_map, support_level=None):
-        return support_level_map.get(support_level)
+        return support_level_map[support_level]
 
     @classmethod
     def merge_pd_eno(cls, pd=None, eno=None):
@@ -236,7 +237,8 @@ class TableFixer(object):
            Return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
         tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-        tag_list1 = [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
+#         tag_list1 = [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
+        tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
         return tag_list1
 
 if __name__ == '__main__':
