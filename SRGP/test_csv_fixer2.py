@@ -7,7 +7,7 @@ Created on 7 Feb 2016
 from collections import OrderedDict as OD
 import unittest
 
-from csv_fixer2 import TableFixer
+from csv_fixer2 import TableFixer as TF
 
 class Test(unittest.TestCase):
 
@@ -84,27 +84,27 @@ class Test(unittest.TestCase):
                         }
         # 1st element in tuple is class method
         self.config = OD([
-                            ('statefile_id', (TableFixer.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
+                            ('statefile_id', (TF.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
                             ('last_name', 'Surname'),
                             ('first_name', 'First name'),
-                            ('registered_address1', (TableFixer.fix_address1, [], {
+                            ('registered_address1', (TF.fix_address1, [], {
                                                           'housename':'Housename',
                                                           'street_number':'Number',
                                                           'street_name':'Road',
                                                           })),
-                            ('registered_address2', (TableFixer.fix_address2, [], {
+                            ('registered_address2', (TF.fix_address2, [], {
                                                           'block_name':'Block',
                                                           })),
                             ('registered_address3', None),
                             ('registered_city', 'Addend'),
                             ('registered_zip', 'Postcode'),
-                            ('background', (TableFixer.background_merge, [], {'notes':'Notes',
+                            ('background', (TF.background_merge, [], {'notes':'Notes',
                                                               'comments':'Comments'})),
                             ('phone_number', 'Phone'),
                             ('email', 'E-mail'),
-                            ('party', (TableFixer.fix_party, [self.party_map], {'party':'Party', })),
-                            ('support_level', (TableFixer.fix_support_level, [self.support_level_map], {'support_level':'Party', })),
-                            ('tag_list', (TableFixer.tags_add, [self.tag_map1], {'k0': 'Demographic',
+                            ('party', (TF.fix_party, [self.party_map], {'party':'Party', })),
+                            ('support_level', (TF.fix_support_level, [self.support_level_map], {'support_level':'Party', })),
+                            ('tag_list', (TF.tags_add, [self.tag_map1], {'k0': 'Demographic',
                                                                                  'k1': 'national',
                                                                                  'k2': 'Local',
                                                                                  'k3': 'Post',
@@ -114,10 +114,10 @@ class Test(unittest.TestCase):
                           ])
         self.table0 = [self.row0]
         self.table1 = [self.row1]
-        self.tf = TableFixer(config=self.config, table0=self.table0)  # , table0=[self.row0])
+        self.tf = TF(config=self.config, table0=self.table0)  # , table0=[self.row0])
 
     def test_background_merge(self):
-        actual = TableFixer.background_merge(notes='n1', comments='c1')
+        actual = TF.background_merge(notes='n1', comments='c1')
         expected = 'n1 c1'
         self.assertEqual(actual, expected)
 
@@ -135,79 +135,91 @@ class Test(unittest.TestCase):
         fieldname1 = 'first_name'
         arg0 = 'First name'
         row0 = {'First name': self.first_name}
-        actual = TableFixer.fix_field(row0, arg0)
+        actual = self.tf.fix_field(row0, arg0)
         expected = self.first_name
         self.assertEqual(actual, expected)
 
     def test_fix_field_func(self):
         fieldname1 = 'statefile_id'
         row0 = {'polldist':self.pd, 'elect no':self.eno}
-        arg0 = (TableFixer.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no'})
-        actual = TableFixer.fix_field(row0, arg0)
+        arg0 = (TF.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no'})
+        actual = self.tf.fix_field(row0, arg0)
         expected = self.statefile_id
         self.assertEqual(actual, expected)
 
-    def test_fix_field_exception(self):
+    def test_fix_field_bad_key1(self):
         '''First element  of tuple should be str or a callable
         '''
         fieldname1 = 'statefile_id'
-        arg0 = (123, {'pd':'pd', 'eno':'eno'})
         row0 = {'pd': self.pd, 'eno':self.eno, }
-        self.assertRaises(TypeError, TableFixer.fix_field, arg0, row0)
+        arg0 = (123, [], {'pd':'pd', 'eno':'eno'})
+        self.assertRaises(TypeError, self.tf.fix_field, row0, arg0)
+
+    def test_fix_field_bad_key0(self):
+        '''First element  of tuple should be str or a callable
+        '''
+        fieldname1 = 'statefile_id'
+        row0 = {'pd': self.pd, 'eno':self.eno, }
+        arg0 = (123, [], {'pd':'pdXXX', 'eno':'eno'})
+        self.assertRaises(TypeError, self.tf.fix_field, row0, arg0)
 
     def test_fix_address1(self):
-        actual = TableFixer.fix_address1(housename='', street_number=self.street_number, street_name=self.street_name)
+        actual = TF.fix_address1(housename='', street_number=self.street_number, street_name=self.street_name)
         expected = self.street_number + ' ' + self.street_name
         self.assertEqual(actual, expected)
 
     def test_fix_address1_house_name(self):
-        actual = TableFixer.fix_address1(housename=self.housename, street_number='', street_name=self.street_name)
+        actual = TF.fix_address1(housename=self.housename, street_number='', street_name=self.street_name)
         expected = self.housename + '  ' + self.street_name
         self.assertEqual(actual, expected)
 
     def test_fix_address2(self):
-        actual = TableFixer.fix_address2(block_name=self.block_name)
+        actual = TF.fix_address2(block_name=self.block_name)
         expected = self.block_name
         self.assertEqual(actual, expected)
 
     def test_doa2dob(self):
-        actual = TableFixer.doa2dob(doa='31/12/2018')
+        actual = TF.doa2dob(doa='31/12/2018')
         expected = '12/31/2000'
         self.assertEqual(actual, expected)
 
     def test_fix_party(self):
-        actual = TableFixer.fix_party(self.party_map, 'LD')
+        actual = TF.fix_party(self.party_map, 'LD')
         expected = 'D'
         self.assertEqual(actual, expected)
 
     def test_fix_support_level(self):
-        actual = TableFixer.fix_support_level(self.support_level_map, 'LD')
+        actual = TF.fix_support_level(self.support_level_map, 'LD')
         expected = 5
         self.assertEqual(actual, expected)
 
     def test_merge_pd_eno(self):
-        actual = TableFixer.merge_pd_eno(pd=self.pd, eno=self.eno)
+        actual = TF.merge_pd_eno(pd=self.pd, eno=self.eno)
         expected = self.statefile_id
         self.assertEqual(actual, expected)
 
     def test_merge_pd_eno_bad_eno(self):
         self.row0['elect no'] = None
-        self.assertRaises(TypeError, TableFixer.merge_pd_eno, pd=self.pd, eno=None)
+        self.assertRaises(TypeError, TF.merge_pd_eno, pd=self.pd, eno=None)
 
     def test_merge_pd_eno_bad_pd(self):
         self.row0['polldist'] = None
-        self.assertRaises(TypeError, TableFixer.merge_pd_eno, pd=None, eno=self.eno)
+        self.assertRaises(TypeError, TF.merge_pd_eno, pd=None, eno=self.eno)
 
     def test_tags_add(self):
-        actual = TableFixer.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
+        actual = TF.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
         expected = 'a,b,c'
         self.assertEqual(actual, expected)
 
     def test_tags_split(self):
         fieldvalue = 'A,B'
-        actual = TableFixer.tags_split(self.tag_map, fieldvalue)
+        actual = TF.tags_split(self.tag_map, fieldvalue)
         expected = ['a', 'b']
         self.assertEqual(actual, expected, actual)
+
+    def test_tags_split_bad_key(self):
+        k0 = 'A,B,XXX'
+        self.assertRaises(KeyError, TF.tags_split,self.tag_map, k0)
 
 
 if __name__ == "__main__":

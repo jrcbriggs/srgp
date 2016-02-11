@@ -127,7 +127,7 @@ class TableFixer(object):
         '''
         try:
             return [self.fix_row(row0) for row0 in self.table0]
-        except (IndexError, TypeError) as e:
+        except (IndexError, KeyError, TypeError) as e:
             e.args += ('config:', self.config,)
             raise
 
@@ -137,11 +137,10 @@ class TableFixer(object):
         try:
             return {fieldname1: self.fix_field(row0, arg0)
                 for (fieldname1, arg0) in self.config.items()}
-        except (AttributeError, IndexError, TypeError) as e:
+        except (IndexError, KeyError, TypeError) as e:
             e.args += ('row0:', row0,)
             raise
 
-    @classmethod
     def fix_field(self, row0, arg0):
         '''Creates new field from old field(s)
         '''
@@ -153,12 +152,11 @@ class TableFixer(object):
             elif isinstance(arg0, tuple):
                  (func, args, kwargs0) = arg0
                  if callable(func):
-#                      kwargs = {k: row0.get(v, '') for (k, v) in kwargs0.items()}
                      kwargs = {k: row0[v] for (k, v) in kwargs0.items()}
                      return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
-        except (AttributeError, IndexError, TypeError) as e:
-            e.args += ('arg0:', arg0,)
+        except (IndexError, KeyError,TypeError) as e:
+            e.args += ('fix_field','row0:',row0,'arg0:', arg0,)
             raise
 
     @classmethod
@@ -223,10 +221,14 @@ class TableFixer(object):
               Convert to string tag_str1
             Return tags_str1
         '''
-        tag_lists0 = kwargs.values()
-        tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
-        tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
-        return tag_str1
+        try:
+            tag_lists0 = kwargs.values()
+            tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
+            tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
+            return tag_str1
+        except (KeyError) as e:
+            e.args += ('tags_add','tag_map:', tag_map, 'kwargs:',kwargs,)
+            raise
 
     @classmethod
     def tags_split(cls, tag_map, tag_str0):
@@ -236,14 +238,16 @@ class TableFixer(object):
               Convert tag0 to tag1 elements in tag_list1
            Return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
-        tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-#         tag_list1 = [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
-        tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
-        return tag_list1
-
+        try:
+            tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
+            tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
+            return tag_list1
+        except (KeyError) as e:
+            e.args += ('tags_split','tag_map:', tag_map, 'tag_str0:',tag_str0,)
+            raise
+        
 if __name__ == '__main__':
     from configurations2 import config_rl
-    config = None
     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
@@ -257,7 +261,7 @@ if __name__ == '__main__':
         reader = fh.csv_read
         writer = fh.csv_write
 
-        print('config_name: ', config['config_name'])
+        print('config_name: ', config.get('config_name'))
         del config['config_name']
         csvfixer = CsvFixer(csv_filename, config, reader, writer)
         print(csvfixer.csv_filename_new)
