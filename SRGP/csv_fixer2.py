@@ -213,7 +213,7 @@ class TableFixer(object):
 
     @classmethod
     def tags_add(cls, tag_map, **kwargs):
-        '''For tag_str0 (value in kwargs), eg: 'ResidentsParking,StreetsAhead','Ben, Bins', '','', 'Vote14', 'Vote12'}
+        '''For tag_str0 in tag_lists0 (values in kwargs), eg: 'ResidentsParking,StreetsAhead','Ben, Bins', '','', 'Vote14', 'Vote12'}
             Split into tag0 elements in tag_list0:
               Strip (leading and trailing) white space from tag0
               Convert tag0 tag1 elements in tag_list1
@@ -222,32 +222,27 @@ class TableFixer(object):
               Convert to string tag_str1
             Return tags_str1
         '''
-        print(kwargs)
-        tag_lists = [cls.tags_split(tag_map, tag_str0) for tag_str0 in kwargs.values()]
-        print('tag_lists', tag_lists)
-#         return ','.join(sorted([tag for tag_list in tag_lists for tag in tag_list if tag != '']))
-        tag_str1 = ','.join(sorted([tag for tag_list in tag_lists for tag in tag_list if tag != '']))
-        print('tag_str1', tag_str1)
+        tag_lists0 = kwargs.values()
+        tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
+        tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
         return tag_str1
 
     @classmethod
     def tags_split(cls, tag_map, tag_str0):
         '''For a single tag_str0:
+              Split into tag0 elements in tag_list0
               Strip (leading and trailing) white space from tag0
-              Convert tag0 tag1 elements in tag_list1
+              Convert tag0 to tag1 elements in tag_list1
            Return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
         tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-        print('tag_list0', tag_list0)
-#         return [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
         tag_list1 = [tag_map.get(tag0.strip(), '') for tag0 in tag_list0]  # ['Student','ResidentsParking']
-        print('tag_list1', tag_list1)
         return tag_list1
 
 if __name__ == '__main__':
     from configurations2 import config_rl
     config = None
-    argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H_head.csv')
+    argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
     for csv_filename in argv[1:]:  # skip scriptname in argv[0]
         # Find config varname to match csv filename
         if search('BroomhillCanvassData', csv_filename):
