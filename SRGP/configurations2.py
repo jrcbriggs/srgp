@@ -16,7 +16,7 @@ from csv_fixer2 import TableFixer
 
 # Robin Latimer (Broomhill canvassing ) Database
 party_map_rl = {'':None, 'AT': None, 'G': 'G', 'L': 'L', 'LD': 'D', 'NG': None, 'NI': None, 'NV': None, 'SG': 'G', 'SL': 'L', 'SLD': 'D', }
-support_level_map_rl = {'':None, 'AT':5, 'G':1, 'L':5, 'LD':5, 'NG':5, 'NI':3, 'NV':3, 'SG':2, 'SL':4, 'SLD':4, }
+support_level_map_rl = {'':None, 'AT':5, 'G':1, 'L':5, 'LD':5, 'NG':4, 'NI':5, 'NV':4, 'SG':2, 'SL':3, 'SLD':3, }
 tag_map_rl = {'':'',
                          'Case': 'casework15 ',
                         'Poster': 'poster15',
