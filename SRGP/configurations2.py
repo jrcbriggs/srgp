@@ -15,11 +15,12 @@ from re import IGNORECASE, compile
 from csv_fixer2 import TableFixer
 
 # Robin Latimer (Broomhill canvassing ) Database
-party_map_rl = {'AT': None, 'G': 'G', 'L': 'L', 'LD': 'D', 'NG': None, 'NI': None, 'NV': None, 'SG': 'G', 'SL': 'L', 'SLD': 'D', }
-support_level_map_rl = {'AT':5, 'G':1, 'L':5, 'LD':5, 'NG':5, 'NI':3, 'NV':3, 'SG':2, 'SL':4, 'SLD':4, }
+party_map_rl = {'':None, 'AT': None, 'G': 'G', 'L': 'L', 'LD': 'D', 'NG': None, 'NI': None, 'NV': None, 'SG': 'G', 'SL': 'L', 'SLD': 'D', }
+support_level_map_rl = {'':None, 'AT':5, 'G':1, 'L':5, 'LD':5, 'NG':5, 'NI':3, 'NV':3, 'SG':2, 'SL':4, 'SLD':4, }
 tag_map_rl = {'':'',
                          'Case': 'casework15 ',
                         'Poster': 'poster15',
+                        'Stdt': 'student15',
                         'stdt': 'student15',
                         'Ben': 'Benefits',
                         'Crime':'Crime',
@@ -28,6 +29,7 @@ tag_map_rl = {'':'',
                         '20mph': '20mph',
                         'Lib':'Library',
                         'Plan':'Planning',
+                        'Planning':'Planning',
                         'ResPark':'ResidentsParking',
                         'StrtAhed':'StreetsAhead',
                         'Traf': 'Traffic',
