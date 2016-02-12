@@ -25,33 +25,17 @@ class FileHandler(object):
     '''Handle reading and writing files, including the config file which is loaded as a Python module.
     '''
 
-    def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
+    def csv_read(self, pathname):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
         with open(pathname, 'r', encoding='utf-8', errors='ignore') as fh:
-            return self.csv_read_fh(fh, fieldnames_expected, skip_lines)
+            return self.csv_read_fh(fh)
 
-    def csv_read_fh(self, fh, fieldnames_expected, skip_lines=0):
+    def csv_read_fh(self, fh):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
         dr = DictReader(fh)
-        table = [row for row in dr]
-        fieldnames = tuple(dr.fieldnames)
-        if len(fieldnames) == len(fieldnames_expected):
-            if fieldnames != fieldnames_expected:
-                fields_odd = self.find_mismatch(
-                    fieldnames, fieldnames_expected)
-                raise ValueError('Unexpected fieldnames:\nactual  : '
-                                 + ','.join(sorted(fieldnames))
-                                 + '\nexpected: ' +
-                                 ','.join(sorted(fieldnames_expected))
-                                 + '\nmismatch:' + ','.join(sorted(fields_odd)))
-        return (table, fieldnames)
-
-    def find_mismatch(self, set0, set1):
-        '''return difference of 2 iterables (lists, sets, tuples)
-        as sorted list'''
-        return sorted(list(set(set0).difference(set(set1))))
+        return [row for row in dr]
 
     def csv_print(self, table, fieldnames2):
         self.csv_write_fh(table, stdout, fieldnames2)
@@ -73,33 +57,30 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-    def __init__(self, csv_register, config, filereader, filewriter):
-        fieldnames = config.keys()
+    def fix_csv(self, filename, config, filereader, filewriter):
 
         # Read csv data file into a table
-        (table, unused) = filereader(csv_register, fieldnames)
+        table0 = filereader(filename)
 
         # Fix the data in table
-        (csv_basename, _) = splitext(basename(csv_register))
-        vh = TableFixer(table0=table, config=config)
-        table_fixed = vh.fix_table()
+        table1 = TableFixer(config=config).fix_table(table0)
 
         # Write the table to a new csv file for import to NB.
-        self.csv_filename_new = csv_register.replace('.csv', 'NB.csv')
-        filewriter(table_fixed, self.csv_filename_new, fieldnames)
-
+        filename_new = filename.replace('.csv', 'NB.csv')
+        fieldnames = config.keys()
+        filewriter(table1, filename_new, fieldnames)
+        return filename_new
 
 class TableFixer(object):
 
-    def __init__(self, config=None, table0=None):
+    def __init__(self, config=None):
         self.config = config
-        self.table0 = table0
 
-    def fix_table(self):
+    def fix_table(self, table0):
         '''Returns new table given old table
         '''
         try:
-            return [self.fix_row(row0) for row0 in self.table0]
+            return [self.fix_row(row0) for row0 in table0]
         except (IndexError, KeyError, TypeError) as e:
             e.args += ('config:', self.config,)
             raise
@@ -219,22 +200,39 @@ class TableFixer(object):
             e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
             raise
 
+
+class Main():
+
+    def __init__(self, filereader=None, filewriter=None):
+        '''Create filereader and fielwriter unless given in kwargs
+        '''
+        fh = FileHandler()
+        self.filereader = filereader or fh.csv_read
+        self.filewriter = filereader or fh.csv_write
+
+    def main(self):
+        '''Fix one or more files for input to NB
+        Lookup config using part of filename in order
+        '''
+        config_lookup = [
+                         ('BroomhillCanvassData', config_rl),
+                         ]
+        for filename in argv[1:]:  # skip scriptname in argv[0]
+            # Find config varname to match csv filename
+            for (name , config) in config_lookup:
+                if search(name, filename):
+                    print('Using config: {}'.format(config.get('config_name')))
+                    del config['config_name']
+                    self.fix_csv(filename, config)
+                    break
+            else:
+                raise Exception('config not found for filename:{}'.format(filename))
+
+    def fix_csv(self, filename, config):
+        filename_new = CsvFixer().fix_csv(filename, config, filereader=self.filereader, filewriter=self.filewriter)
+        print(filename_new)
+
 if __name__ == '__main__':
     from configurations2 import config_rl
     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
-    for csv_filename in argv[1:]:  # skip scriptname in argv[0]
-        # Find config varname to match csv filename
-        if search('BroomhillCanvassData', csv_filename):
-            config = config_rl
-        else:
-            raise Exception(
-                'Cannot find config for csv {}'.format(csv_filename))
-
-        fh = FileHandler()
-        reader = fh.csv_read
-        writer = fh.csv_write
-
-        print('config_name: ', config.get('config_name'))
-        del config['config_name']
-        csvfixer = CsvFixer(csv_filename, config, reader, writer)
-        print(csvfixer.csv_filename_new)
+    Main().main()
