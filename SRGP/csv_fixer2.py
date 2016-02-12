@@ -200,36 +200,37 @@ class TableFixer(object):
 
 class Main():
 
-    def __init__(self, filereader=None, filewriter=None):
+    def __init__(self, config_lookup=None, filereader=None, filewriter=None):
         '''Create filereader and fielwriter unless given in kwargs
         '''
         self.fh = FileHandler()
         self.filereader = filereader or self.fh.csv_read
         self.filewriter = filereader or self.fh.csv_write
+        self.config_lookup = config_lookup or [
+                         ('BroomhillCanvassData', config_rl),
+                         ]
+        self.csv_fixer = CsvFixer()
 
-    def main(self):
+    def main(self, filenames):
         '''Fix one or more files for input to NB
         Lookup config using part of filename in order
         '''
-        config_lookup = [
-                         ('BroomhillCanvassData', config_rl),
-                         ]
-        for filename in argv[1:]:  # skip scriptname in argv[0]
+        for filename in filenames:  # skip scriptname in argv[0]
             # Find config varname to match csv filename
-            for (name , config) in config_lookup:
+            for (name , config) in self.config_lookup:
                 if search(name, filename):
                     print('Using config: {}'.format(config.get('config_name')))
                     del config['config_name']
                     self.fix_csv(filename, config)
                     break
             else:
-                raise Exception('config not found for filename:{}'.format(filename))
+                raise AttributeError('config not found for filename:{}'.format(filename))
 
     def fix_csv(self, filename, config):
-        filename_new = CsvFixer().fix_csv(filename, config, filereader=self.filereader, filewriter=self.filewriter)
+        filename_new = self.csv_fixer.fix_csv(filename, config, filereader=self.filereader, filewriter=self.filewriter)
         print(filename_new)
 
 if __name__ == '__main__':
     from configurations2 import config_rl
     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
-    Main().main()
+    Main().main(argv[1:])
