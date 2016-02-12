@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
                     'registered_address3': None,
                     'registered_city': '',
                     'registered_zip': '',
-                    'background': 'n1 c1',
+                    'background': 'c1',
                     'phone_number': '',
                     'email': '',
                     'party': 'D',
@@ -98,8 +98,7 @@ class Test(unittest.TestCase):
                             ('registered_address3', None),
                             ('registered_city', 'Addend'),
                             ('registered_zip', 'Postcode'),
-                            ('background', (TF.background_merge, [], {'notes':'Notes',
-                                                              'comments':'Comments'})),
+                            ('background', 'Comments'),
                             ('phone_number', 'Phone'),
                             ('email', 'E-mail'),
                             ('party', (TF.fix_party, [self.party_map], {'party':'Party', })),
@@ -126,10 +125,18 @@ class Test(unittest.TestCase):
         expected = self.table1
         self.assertListEqual(actual, expected)
 
+    def test_fix_table_bad(self):
+        self.row0['Party'] = None
+        self.assertRaises(KeyError, self.tf.fix_table)
+
     def test_fix_row(self):
         actual = self.tf.fix_row(self.row0)
         expected = self.row1
         self.assertDictEqual(actual, expected)
+
+    def test_fix_row_bad(self):
+        self.row0['Party'] = None
+        self.assertRaises(KeyError, self.tf.fix_row, self.row0)
 
     def test_fix_field_str(self):
         fieldname1 = 'first_name'
@@ -183,6 +190,11 @@ class Test(unittest.TestCase):
         expected = '12/31/2000'
         self.assertEqual(actual, expected)
 
+    def test_doa2dob_empty(self):
+        actual = TF.doa2dob(doa='')
+        expected = ''
+        self.assertEqual(actual, expected)
+
     def test_fix_party(self):
         actual = TF.fix_party(self.party_map, 'LD')
         expected = 'D'
@@ -199,17 +211,18 @@ class Test(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_merge_pd_eno_bad_eno(self):
-        self.row0['elect no'] = None
         self.assertRaises(TypeError, TF.merge_pd_eno, pd=self.pd, eno=None)
 
-    def test_merge_pd_eno_bad_pd(self):
-        self.row0['polldist'] = None
-        self.assertRaises(TypeError, TF.merge_pd_eno, pd=None, eno=self.eno)
+    def test_pad_eno_bad_eno(self):
+        self.assertRaises(TypeError, TF.pad_eno, eno=None)
 
     def test_tags_add(self):
         actual = TF.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
         expected = 'a,b,c'
         self.assertEqual(actual, expected)
+
+    def test_tags_add_key_error(self):
+        self.assertRaises(KeyError, TF.tags_add, self.tag_map, k0='A,B,XXX')
 
     def test_tags_split(self):
         fieldvalue = 'A,B'
@@ -219,7 +232,7 @@ class Test(unittest.TestCase):
 
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
-        self.assertRaises(KeyError, TF.tags_split,self.tag_map, k0)
+        self.assertRaises(KeyError, TF.tags_split, self.tag_map, k0)
 
 
 if __name__ == "__main__":

@@ -25,10 +25,6 @@ class FileHandler(object):
     '''Handle reading and writing files, including the config file which is loaded as a Python module.
     '''
 
-    def config_load(self, modulename):
-        mods = import_module(modulename)
-        return mods.config
-
     def csv_read(self, pathname, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
@@ -38,8 +34,6 @@ class FileHandler(object):
     def csv_read_fh(self, fh, fieldnames_expected, skip_lines=0):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
-        for unused in range(skip_lines):
-            next(fh)
         dr = DictReader(fh)
         table = [row for row in dr]
         fieldnames = tuple(dr.fieldnames)
@@ -70,27 +64,6 @@ class FileHandler(object):
         dw = DictWriter(fh, fieldnames2)
         dw.writeheader()
         dw.writerows(table)
-
-    def xlsx_read(self, pathname, fieldnames_expected, skip_lines=0, sheet_index=1):
-        with open(pathname, 'r') as fh:
-
-            data = mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ)
-            book = xlrd.open_workbook(file_contents=data)
-            sheet = book.sheet_by_index(sheet_index)
-
-            def cell_value(i, j):
-                '''Convert xls date from days since ~1900 to '31/12/2014' '''
-                cell = sheet.cell(i, j)
-                value = cell.value
-                if cell.ctype == 3 and value:  # XL_CELL_DATE
-                    return datetime.datetime(*xlrd.xldate_as_tuple(value, book.datemode)).strftime('%d/%m/%Y')
-                else:
-                    return str(value).replace(',', '')
-
-            csv = (','.join([cell_value(i, j) for j in range(sheet.ncols)])
-                   for i in range(sheet.nrows))
-            return self.csv_read_fh(csv, fieldnames_expected, skip_lines)
-
 
 class CsvFixer(object):
 
@@ -155,8 +128,8 @@ class TableFixer(object):
                      kwargs = {k: row0[v] for (k, v) in kwargs0.items()}
                      return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
-        except (IndexError, KeyError,TypeError) as e:
-            e.args += ('fix_field','row0:',row0,'arg0:', arg0,)
+        except (IndexError, KeyError, TypeError) as e:
+            e.args += ('fix_field', 'row0:', row0, 'arg0:', arg0,)
             raise
 
     @classmethod
@@ -202,8 +175,8 @@ class TableFixer(object):
             pd = pd.lstrip('!')
             eno_padded = cls.pad_eno(eno)
             return pd + eno_padded
-        except (AttributeError, TypeError) as e:
-            e += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded))
+        except (TypeError) as e:
+            e.args += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded))
             raise
 
     @classmethod
@@ -227,7 +200,7 @@ class TableFixer(object):
             tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
             return tag_str1
         except (KeyError) as e:
-            e.args += ('tags_add','tag_map:', tag_map, 'kwargs:',kwargs,)
+            e.args += ('tags_add', 'tag_map:', tag_map, 'kwargs:', kwargs,)
             raise
 
     @classmethod
@@ -243,9 +216,9 @@ class TableFixer(object):
             tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
             return tag_list1
         except (KeyError) as e:
-            e.args += ('tags_split','tag_map:', tag_map, 'tag_str0:',tag_str0,)
+            e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
             raise
-        
+
 if __name__ == '__main__':
     from configurations2 import config_rl
     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')

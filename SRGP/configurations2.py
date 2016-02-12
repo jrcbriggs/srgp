@@ -58,7 +58,7 @@ config_rl = OD([
                 ('registered_zip', 'Postcode'),
                 ('email', 'E-mail'),
                 ('phone_number', 'Phone'),
-                ('background', (TableFixer.background_merge, [], {'notes':'Notes', 'comments':'Comments'})),
+                ('background', 'Comments'),
                 ('party', (TableFixer.fix_party, [party_map_rl], {'party': 'Party', })),
                 ('support_level', (TableFixer.fix_support_level, [support_level_map_rl], {'support_level': 'Party', })),
                 ('tag_list', (TableFixer.tags_add, [tag_map_rl], {'k0': 'Demographic',
