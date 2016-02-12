@@ -37,17 +37,14 @@ class FileHandler(object):
         dr = DictReader(fh)
         return [row for row in dr]
 
-    def csv_print(self, table, fieldnames2):
-        self.csv_write_fh(table, stdout, fieldnames2)
-
-    def csv_write(self, table, pathname, fieldnames2):
+    def csv_write(self, table1, pathname, fieldnames1):
         with open(pathname, 'w') as fh:
-            self. csv_write_fh(table, fh, fieldnames2)
+            self. csv_write_fh(table1, fh, fieldnames1)
 
-    def csv_write_fh(self, table, fh, fieldnames2):
-        dw = DictWriter(fh, fieldnames2)
+    def csv_write_fh(self, table1, fh, fieldnames1):
+        dw = DictWriter(fh, fieldnames1)
         dw.writeheader()
-        dw.writerows(table)
+        dw.writerows(table1)
 
 class CsvFixer(object):
 
@@ -57,19 +54,19 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-    def fix_csv(self, filename, config, filereader, filewriter):
+    def fix_csv(self, pathname, config, filereader, filewriter):
 
         # Read csv data file into a table
-        table0 = filereader(filename)
+        table0 = filereader(pathname)
 
         # Fix the data in table
         table1 = TableFixer(config=config).fix_table(table0)
 
         # Write the table to a new csv file for import to NB.
-        filename_new = filename.replace('.csv', 'NB.csv')
+        pathname_new = pathname.replace('.csv', 'NB.csv')
         fieldnames = config.keys()
-        filewriter(table1, filename_new, fieldnames)
-        return filename_new
+        filewriter(table1, pathname_new, fieldnames)
+        return pathname_new
 
 class TableFixer(object):
 
@@ -157,7 +154,7 @@ class TableFixer(object):
             eno_padded = cls.pad_eno(eno)
             return pd + eno_padded
         except (TypeError) as e:
-            e.args += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded))
+            e.args += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded),)
             raise
 
     @classmethod
@@ -206,9 +203,9 @@ class Main():
     def __init__(self, filereader=None, filewriter=None):
         '''Create filereader and fielwriter unless given in kwargs
         '''
-        fh = FileHandler()
-        self.filereader = filereader or fh.csv_read
-        self.filewriter = filereader or fh.csv_write
+        self.fh = FileHandler()
+        self.filereader = filereader or self.fh.csv_read
+        self.filewriter = filereader or self.fh.csv_write
 
     def main(self):
         '''Fix one or more files for input to NB
