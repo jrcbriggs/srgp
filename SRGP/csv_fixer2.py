@@ -110,9 +110,7 @@ class TableFixer(object):
             e.args += ('fix_field', 'row0:', row0, 'arg0:', arg0,)
             raise
 
-    @classmethod
-    def background_merge(cls, notes='', comments=''):
-        return ' '.join([notes, comments])
+class Generic(object):
 
     @classmethod
     def doa2dob(cls, doa=None):
@@ -126,40 +124,6 @@ class TableFixer(object):
         else:
             return doa
 
-    @classmethod
-    def fix_address1(cls, housename='', street_number='', street_name=''):
-        return ' '.join([housename, street_number, street_name]).strip()
-
-    @classmethod
-    def fix_address2(cls, block_name=''):
-        return block_name
-
-    @classmethod
-    def fix_party(cls, party_map, party=None):
-        return party_map[party]
-
-    @classmethod
-    def fix_support_level(cls, support_level_map, support_level=None):
-        return support_level_map[support_level]
-
-    @classmethod
-    def merge_pd_eno(cls, pd=None, eno=None):
-        '''Merged PD & zero padded eno,
-        takes: pd old and eno old.eg:
-        {'pd':'polldist', 'eno':'elect no',} -> {'statefile_id':EA0012',}
-        '''
-        eno_padded = None
-        try:
-            pd = pd.lstrip('!')
-            eno_padded = cls.pad_eno(eno)
-            return pd + eno_padded
-        except (TypeError) as e:
-            e.args += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded),)
-            raise
-
-    @classmethod
-    def pad_eno(cls, eno):
-        return '%04d' % (int(eno),)
 
     @classmethod
     def tags_add(cls, tag_map, **kwargs):
@@ -197,6 +161,49 @@ class TableFixer(object):
             e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
             raise
 
+class Voter(object):
+    '''Common to register and canvassing
+    '''
+    @classmethod
+    def merge_pd_eno(cls, pd=None, eno=None):
+        '''Merged PD & zero padded eno,
+        takes: pd old and eno old.eg:
+        {'pd':'polldist', 'eno':'elect no',} -> {'statefile_id':EA0012',}
+        '''
+        eno_padded = None
+        try:
+            pd = pd.lstrip('!')
+            eno_padded = cls.eno_pad(eno)
+            return pd + eno_padded
+        except (TypeError) as e:
+            e.args += ('pd:{} eno:{} eno_padded:{}'.format(pd, eno, eno_padded),)
+            raise
+
+    @classmethod
+    def eno_pad(cls, eno):
+        return '%04d' % (int(eno),)
+
+    @classmethod
+    def fix_party(cls, party_map, party=None):
+        return party_map[party]
+
+    @classmethod
+    def fix_support_level(cls, support_level_map, support_level=None):
+        return support_level_map[support_level]
+
+
+class Canvass(Generic):
+    @classmethod
+    def background_merge(cls, notes='', comments=''):
+        return ' '.join([notes, comments])
+
+    @classmethod
+    def fix_address1(cls, housename='', street_number='', street_name=''):
+        return ' '.join([housename, street_number, street_name]).strip()
+
+    @classmethod
+    def fix_address2(cls, block_name=''):
+        return block_name
 
 class Main():
 
