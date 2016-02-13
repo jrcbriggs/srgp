@@ -67,8 +67,8 @@ class TestTableFixer(unittest.TestCase):
                     'tag_list': 'a,b,c,d',
                     }
         self.tag_map = {'':'', 'A':'a', 'B':'b', 'C':'c', 'D':'d', }
-        # 1st element in tuple is class method
         self.config = OD([
+                            # 1st element in tuple is class method
                             ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
                             ('first_name', 'First name'),
                             ('tag_list', (GN.tags_add, [self.tag_map], {'k0': 'TagCol0',
