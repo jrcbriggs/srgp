@@ -11,30 +11,30 @@ Each config is an OrderedDict.
 from collections import OrderedDict as OD
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Register as RG, Voter as VT
 
-
 # Robin Latimer (Broomhill canvassing ) Database
 party_map_rl = {'':None, 'AT': None, 'G': 'G', 'L': 'L', 'LD': 'D', 'NG': None, 'NI': None, 'NV': None, 'SG': 'G', 'SL': 'L', 'SLD': 'D', }
 support_level_map_rl = {'':None, 'AT':5, 'G':1, 'L':5, 'LD':5, 'NG':4, 'NI':5, 'NV':4, 'SG':2, 'SL':3, 'SLD':3, }
-tag_map_rl = {'':'',
-                         'Case': 'casework15 ',
-                        'Poster': 'poster15',
-                        'Stdt': 'student15',
-                        'stdt': 'student15',
-                        'Ben': 'Benefits',
-                        'Crime':'Crime',
-                        'Litter':'Litter',
-                        'Recyc':'Recycling',
-                        '20mph': '20mph',
-                        'Lib':'Library',
-                        'Plan':'Planning',
-                        'Planning':'Planning',
-                        'ResPark':'ResidentsParking',
-                        'StrtAhed':'StreetsAhead',
-                        'Traf': 'Traffic',
-                        'Post': 'Postal15',
-                        'Vote14': 'Voted14',
-                        'Vote12': 'Voted12',
-                        }
+tag_map_rl = {
+              '':'',
+             'Case': 'casework15 ',
+            'Poster': 'poster15',
+            'Stdt': 'student15',
+            'stdt': 'student15',
+            'Ben': 'Benefits',
+            'Crime':'Crime',
+            'Litter':'Litter',
+            'Recyc':'Recycling',
+            '20mph': '20mph',
+            'Lib':'Library',
+            'Plan':'Planning',
+            'Planning':'Planning',
+            'ResPark':'ResidentsParking',
+            'StrtAhed':'StreetsAhead',
+            'Traf': 'Traffic',
+            'Post': 'Postal15',
+            'Vote14': 'Voted14',
+            'Vote12': 'Voted12',
+            }
 config_rl = OD([
                 # ('fieldname_new', 'fieldname_old'), # or
                 # ('fieldname_new', (func, [args]{kwargs})),
@@ -70,18 +70,18 @@ config_rl = OD([
                  ),
               ])
 
-tag_map_voter = {'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K', 
-                 'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local',  }
+tag_map_voter = {'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
+                 'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
 address_kwargs = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
-ward_lookup={'E': 'Broomhill',
-            'G': 'Central',
-            'H': 'Crookes',
-            'L': 'Ecclesall',
-            'O': 'Gleadless Valley',
-            'R': 'Manor Castle',
-            'T': 'Nether Edge',
-            'Z': 'Walkley',
-        }
+ward_lookup = {'E': 'Broomhill',
+                'G': 'Central',
+                'H': 'Crookes',
+                'L': 'Ecclesall',
+                'O': 'Gleadless Valley',
+                'R': 'Manor Castle',
+                'T': 'Nether Edge',
+                'Z': 'Walkley',
+                }
 config_register = OD([
                     ('config_name', 'config_register'),
                     ('statefile_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
@@ -94,10 +94,10 @@ config_register = OD([
                     ('registered_address1', (AD.address1_get, [], address_kwargs)),
                     ('registered_address2', (AD.address2_get, [], address_kwargs)),
                     ('registered_address3', (AD.address3_get, [], address_kwargs)),
-                    ('registered_city', (RG.city_get, [], {})), #Always Sheffield
+                    ('registered_city', (RG.city_get, [], {})),  # Always Sheffield
                     ('registered_zip', (AD.postcode_get, [], address_kwargs)),
-                    ('registered_country_code', (RG.country_code_get, [], {})), #Always GB
-                    ('ward', (RG.ward_get, [ward_lookup], {'pd':'PD',})),
+                    ('registered_country_code', (RG.country_code_get, [], {})),  # Always GB
+                    ('ward', (RG.ward_get, [ward_lookup], {'pd':'PD', })),
                     ('tag_list', (RG.tags_add_voter, [tag_map_voter], {'PD': 'PD',
                                                                         'status': 'Status',
                                                                         'franchise': 'Franchise Flag',

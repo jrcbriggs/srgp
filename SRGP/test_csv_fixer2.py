@@ -11,7 +11,6 @@ from unittest.mock import MagicMock
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Register as RG, TableFixer as TF, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
-# from configurations2 import regexes
 
 class TestFileHandler(unittest.TestCase):
     def setUp(self):
@@ -25,7 +24,6 @@ class TestFileHandler(unittest.TestCase):
         self.filehandler.csv_write(self.table0, self.pathname, self.fieldnames)
         table1 = self.filehandler.csv_read(self.pathname)
         self.assertListEqual(table1, self.table0)
-
 
 class TestCsvFixer(unittest.TestCase):
     def setUp(self):
@@ -46,7 +44,6 @@ class TestCsvFixer(unittest.TestCase):
         self.csvfixer.fix_csv(self.pathname, self.config, self.fh.csv_read, self.fh.csv_write)
         table1 = self.fh.csv_read(self.pathname)
         self.assertListEqual(table1, self.table0)
-
 
 class TestTableFixer(unittest.TestCase):
 
@@ -98,7 +95,6 @@ class TestTableFixer(unittest.TestCase):
         self.assertRaises(KeyError, self.tf.fix_row, self.row0)
 
     def test_fix_field_str(self):
-        fieldname1 = 'first_name'
         arg0 = 'First name'
         row0 = {'First name': self.first_name}
         actual = self.tf.fix_field(row0, arg0)
@@ -113,7 +109,6 @@ class TestTableFixer(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_fix_field_func(self):
-        fieldname1 = 'statefile_id'
         row0 = {'polldist':self.pd, 'elect no':self.eno}
         arg0 = (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no'})
         actual = self.tf.fix_field(row0, arg0)
@@ -123,7 +118,6 @@ class TestTableFixer(unittest.TestCase):
     def test_fix_field_bad_key1(self):
         '''First element  of tuple should be str or a callable
         '''
-        fieldname1 = 'statefile_id'
         row0 = {'pd': self.pd, 'eno':self.eno, }
         arg0 = (123, [], {'pd':'pd', 'eno':'eno'})
         self.assertRaises(TypeError, self.tf.fix_field, row0, arg0)
@@ -131,7 +125,6 @@ class TestTableFixer(unittest.TestCase):
     def test_fix_field_bad_key0(self):
         '''First element  of tuple should be str or a callable
         '''
-        fieldname1 = 'statefile_id'
         row0 = {'pd': self.pd, 'eno':self.eno, }
         arg0 = (123, [], {'pd':'pdXXX', 'eno':'eno'})
         self.assertRaises(TypeError, self.tf.fix_field, row0, arg0)
@@ -170,7 +163,6 @@ class TestMain(unittest.TestCase):
         self.main.fix_csv.assert_called_any_with('BroomhillCanvassData', self.config_test)
 
     def test_main_config_not_found(self):
-        filenames = [self.filename]
         self.assertRaises(AttributeError, self.main.main, 'XXX')
 
     def test_fix_csv(self):
@@ -196,7 +188,6 @@ class TestGeneric(unittest.TestCase):
         actual = GN.doa2dob(doa='')
         expected = ''
         self.assertEqual(actual, expected)
-
 
     def test_tags_add(self):
         actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
@@ -312,7 +303,6 @@ class TestAddressHandler(unittest.TestCase):
     ['Mackenzie House', '6, Mackenzie Crescent', 'Broomhall', 'Sheffield', 'Sheffield' ],
     ['Flat 110', 'Watsons Chambers', '5 - 15, Market Place', 'City Centre', 'Sheffield', 'Sheffield'],
     ['Flat 4', '108, Sellers Wheel', 'Arundel Lane', 'Sheffield',],
-    ['49, Cracknell', 'Millsands', 'Arundel Lane', 'Sheffield',],
     ['220', 'Stannington View Road', 'Sheffield',],
     ]
     '''
@@ -324,7 +314,6 @@ class TestAddressHandler(unittest.TestCase):
                     {'k0':'Mackenzie House', 'k1': '6, Mackenzie Crescent','k2': 'Broomhall', 'k3': 'Sheffield','k4': 'Sheffield' ,},
                     {'k0':'Flat 110','k1': 'Watsons Chambers','k2': '5 - 15 Market Place','k3': 'City Centre','k4': 'Sheffield','k5': 'Sheffield'},
                     {'k0':'Flat 4','k1': '108, Sellers Wheel','k2': 'Arundel Lane','k3': 'Sheffield','k4': 'Sheffield'},
-#                     {'k0':'49, Cracknell','k1': 'Millsands','k2': 'Sheffield','k3': 'Sheffield', },
                     {'k0':'220','k1': 'Stannington View Road','k2': 'Sheffield','k3':'',},#k3 is null value
                     {'k0':'220','k1': 'Stannington View Road','k2': '','k3':'Sheffield',},#k2 is block
                     ]
@@ -335,7 +324,6 @@ class TestAddressHandler(unittest.TestCase):
                 {'address1': '6, Mackenzie Crescent', 'address2': 'Mackenzie House', },
                 {'address1': '5 - 15 Market Place', 'address2': 'Flat 110 Watsons Chambers', },
                 {'address1': 'Arundel Lane', 'address2': 'Flat 4 108, Sellers Wheel', },
-#                 {'address1': '49, Cracknell', 'address3': 'Millsands', },
                 {'address1': '220 Stannington View Road',},
                 ]
 
@@ -343,7 +331,6 @@ class TestAddressHandler(unittest.TestCase):
         for (kwargs, expected) in zip(self.addresses, self.nb_fields):
             actual = AD.address_split(**kwargs)
             self.assertDictEqual(actual, expected)
-
         
     def test_address1_get(self):
         for (kwargs, expected) in zip(self.addresses, self.nb_fields):
@@ -379,7 +366,6 @@ class TestAddressHandler(unittest.TestCase):
         self.assertEqual(actual, 'S1 1AA')
         actual = AD.postcode_get(k0='Acacia Ave', k1='',k2='')
         self.assertEqual(actual, None)
-    
 
 if __name__ == "__main__":
     unittest.main()

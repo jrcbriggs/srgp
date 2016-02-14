@@ -40,12 +40,11 @@ regexes = {
                       'Backfields|Birkendale|Castlegate|Cracknell|'
                       'Cross Smithfield|Kelham Island|'
                       'Summerfield|Upperthorpe|Wicker|Woodcliffe|The Lawns|The Nook|'
-                      'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|' #blocks
+                      'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|'  # blocks
                       'Other Electors)$', IGNORECASE),
-     'block': compile(r'^()$', IGNORECASE), #Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
+     'block': compile(r'^()$', IGNORECASE),  # Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
     'street_number': compile(r'^(Above|Back|Back Of|Bk|First Floor|Flat Above|Flat Over|Ground Floor|Over|Rear|Rear Of)?[\s\d/-]+\w?$'),
 }
-
 
 class FileHandler(object):
 
@@ -218,7 +217,6 @@ class Voter(object):
     def fix_support_level(cls, support_level_map, support_level=None):
         return support_level_map[support_level]
 
-
 class Canvass(Generic):
     @classmethod
     def background_merge(cls, notes='', comments=''):
@@ -258,7 +256,6 @@ class Register(object):
     def ward_get(cls, ward_lookup, pd=None):
         return ward_lookup[pd[0]]
 
-
 class AddressHandler():
     
 #     @classmethod
@@ -289,13 +286,13 @@ class AddressHandler():
     def address_split(cls, **kwargs):
         address = {}
 #         block_needed=True
-        street_needed=True
-        street_number_needed=True
+        street_needed = True
+        street_number_needed = True
 
         # Scan each kwarg value, from last (eg postcode) to first (eg Flat 1) in turn for NB address fields
         for k in sorted(kwargs.keys(), reverse=True):
             v = kwargs[k].strip()
-            #Skip null values
+            # Skip null values
             if not v:
                 continue
             # Skip postcode, city, locality
@@ -305,13 +302,13 @@ class AddressHandler():
 #                 block_needed=False
 #                 address['address3'] = v
             if cls.is_street(v) and street_needed:
-                street_needed=False
+                street_needed = False
                 address['address1'] = v
             elif cls.is_street_number(v) and street_number_needed:
-                street_number_needed=False
-                address['address1'] = (v + ' '+address.get('address1','')).strip()
+                street_number_needed = False
+                address['address1'] = (v + ' ' + address.get('address1', '')).strip()
             else:
-                address['address2'] = (v + ' '+address.get('address2','')).strip()
+                address['address2'] = (v + ' ' + address.get('address2', '')).strip()
                 
         # Return
         return address
@@ -344,7 +341,6 @@ class AddressHandler():
             if cls.is_postcode(v):
                 return v
         return None     
-
 
 class Main():
 
@@ -380,10 +376,10 @@ class Main():
         filename_new = self.csv_fixer.fix_csv(filename, config, filereader=self.filereader, filewriter=self.filewriter)
         print(filename_new)
 
-
 if __name__ == '__main__':
     from configurations2 import config_rl, config_register
-    argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
+#     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
-#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
+    argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
     Main().main(argv[1:])
+    
