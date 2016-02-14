@@ -357,9 +357,7 @@ class TableFixer(object):
 
         afns: Address Field Names
         '''
-        afns = list(address_fields.values())[
-            :-3]  # omit rightmost 3 fields (city, zip, country)
-
+        afns = list(address_fields.values())[:-3]  # omit rightmost 3 fields (city, zip, country)
 
         if afns:
             alist = [row[afn] for afn in afns]

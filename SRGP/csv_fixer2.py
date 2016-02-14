@@ -4,20 +4,47 @@ Created on 1 Nov 2014
 
 @author: julian
 '''
-from collections import OrderedDict as OD
 from csv import DictReader, DictWriter
-from datetime import datetime as dt
-from datetime import timedelta
-import datetime
-from io import StringIO
-import mmap
-import os
-from os.path import basename, splitext
-from re import compile, IGNORECASE, sub
-from re import search
+from re import compile, IGNORECASE, search
 from sys import argv
-from sys import stdout
-import xlrd
+
+regexes = {
+    'city': compile('^(Rotherham|Sheffield|Stocksbridge)$', IGNORECASE),
+    'county': compile('^South Yorks$', IGNORECASE),
+    'house': compile('Barn|Building|College|Cottage|Farm|Hall|House|'
+                     'Lodge|Mansion|Mill|Residence', IGNORECASE),
+    'postcode': compile('^S\d\d? \d\w\w$'),
+    'locality': compile(r'^(Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Beauchief|Beighton|'
+                        'Bents Green|Bradway|Bramley|Brampton|Brincliffe|Broom|Broomhall|'
+                        'Broomhill|Burncross|Burngreave|Catcliffe|Chapeltown|Christchurch|'
+                        'City Centre|Clent|Clifton|Crookes|Crookesmoor|Crooks|Crosspool|'
+                        'Dalton|Darnall|Deepcar|Dinnington|Dore|East Dene|East Herringthorpe|'
+                        'Ecclesall|Firshill|Firth Park|Frecheville|Fulwood|Gleadless|Greasbrough|'
+                        'Greenhill|Grenoside|Hackenthorpe|Halfway|Hallam Rock|Handsworth|Hathersage|'
+                        'Heeley|Herdings|Herringthorpe|Highfield|High Green|Hillsborough|'
+                        'Hooton Levitt|Jordanthrope|Kimberworth|Kiveton Park|Malin Bridge|Maltby|'
+                        'Meersbrook|Mexborough|Midhopestones|Millhouses|Mosborough|Nether Edge|'
+                        'Nethergreen|Nether Green|Norfolk Park|Norton Lees|Nottingham|Oughtibridge|'
+                        'Owlthorpe|Parkgate|Park Hill|Pitsmoor|Rawmarsh|Rivelin|Shalesmoor|'
+                        'Sharrow|Shiregreen|Sothall|Stannington|Sunnyside|'
+                        'Swallownest|Swinton|Thorpe Hesley|Thurcroft|Todwick|Totley|Totley Rise|'
+                        'Upperthorpe|Wales Bar|Walkley|Waterthorpe|Wath upon Dearne|Wath-upon-Dearne|'
+                        'Well Court|Wellgate|Wentworth|Whiston|Wickersley|Wincobank|Wingfield|'
+                        'Woodhouse|Woodseats|Woodsetts|Worksop|Worrall)$', IGNORECASE),
+    'street': compile(r'\b(Anglo Works|Approach|Ashgrove|Ave|Avenue|Bakers Yard|Bank|Brg|Bridge|'
+                      'Brookside|Cir|Close|Common|Common Side|Crossways|Court|Cres|Crescent|Croft|Ct|Dell|'
+                      'Dl|Dr|Drive|Edward Street Flats|Endcliffe Village|Fields|Gdns|Gardens|Gate|Glade|Glen|Gr|Green|'
+                      'Grove|Hartshead|Head|Hl|Hill|Ln|Lane|Mdws|Mews|Moorfields Flats|Mt|Parade|Park|Park Centre|Pl|Place|Rd|Rise|'
+                      'Road|Road North|Road South|Row|Sq|Square|St|Street|Street South|Ter|Terrace|The Gln|Town|Turn|View|Vw|Victoria Villas|Waingate|'
+                      'Walk|Way|West Bar|Wharf|'
+                      'Backfields|Birkendale|Castlegate|Cracknell|'
+                      'Cross Smithfield|Kelham Island|'
+                      'Summerfield|Upperthorpe|Wicker|Woodcliffe|The Lawns|The Nook|'
+                      'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|' #blocks
+                      'Other Electors)$', IGNORECASE),
+     'block': compile(r'^()$', IGNORECASE), #Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
+    'street_number': compile(r'^(Above|Back|Back Of|Bk|First Floor|Flat Above|Flat Over|Ground Floor|Over|Rear|Rear Of)?[\s\d/-]+\w?$'),
+}
 
 
 class FileHandler(object):
@@ -87,9 +114,9 @@ class TableFixer(object):
         '''
         try:
             return {fieldname1: self.fix_field(row0, arg0)
-                for (fieldname1, arg0) in self.config.items()}
+                        for (fieldname1, arg0) in self.config.items()}
         except (IndexError, KeyError, TypeError) as e:
-            e.args += ('row0:', row0,)
+            e.args += ('row0:', row0)
             raise
 
     def fix_field(self, row0, arg0):
@@ -101,12 +128,12 @@ class TableFixer(object):
             elif isinstance(arg0, str):
                 return row0.get(arg0).strip()
             elif isinstance(arg0, tuple):
-                 (func, args, kwargs0) = arg0
-                 if callable(func):
-                     kwargs = {k: row0[v] for (k, v) in kwargs0.items()}
-                     return func(*args, **kwargs)
+                (func, args, kwargs0) = arg0
+                if callable(func):
+                    kwargs = {k: row0[v].strip() for (k, v) in kwargs0.items()}
+                    return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
-        except (IndexError, KeyError, TypeError) as e:
+        except (AttributeError, IndexError, KeyError, TypeError) as e:
             e.args += ('fix_field', 'row0:', row0, 'arg0:', arg0,)
             raise
 
@@ -205,6 +232,120 @@ class Canvass(Generic):
     def fix_address2(cls, block_name=''):
         return block_name
 
+class Register(object):
+
+    @classmethod
+    def tags_add_voter(cls, tag_map_voter, **kwargs):
+        '''Eg kwargs = {'PD':'ED', 'status':'K', 'franchise':'E'
+        '''
+        pd = kwargs['PD']
+        tag_map_voter.update({pd:pd, })
+        return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
+
+    @classmethod
+    def city_get(cls):
+        '''Naive method, just returns Sheffield. 
+        OK for Register and Canvassing.
+         AddressHandler.city_get OK for members etc and Postal
+        '''
+        return 'Sheffield'
+    
+    @classmethod
+    def country_code_get(cls):
+        return 'GB'
+    
+    @classmethod
+    def ward_get(cls, ward_lookup, pd=None):
+        return ward_lookup[pd[0]]
+
+
+class AddressHandler():
+    
+#     @classmethod
+#     def is_block(cls, v):
+#         return regexes['block'].search(v)
+    
+    @classmethod
+    def is_city(cls, v):  # is v a city
+        return regexes['city'].search(v)
+
+    @classmethod
+    def is_locality(cls, v):  # is v a locality (eg Broomhall)
+        return regexes['locality'].search(v)
+
+    @classmethod
+    def is_postcode(cls, v):  # is v a postcode
+        return regexes['postcode'].search(v)
+
+    @classmethod
+    def is_street(cls, v):  # is v a street
+        return regexes['street'].search(v)
+    
+    @classmethod
+    def is_street_number(cls, v):  # is v a street
+        return regexes['street_number'].search(v)
+    
+    @classmethod
+    def address_split(cls, **kwargs):
+        address = {}
+#         block_needed=True
+        street_needed=True
+        street_number_needed=True
+
+        # Scan each kwarg value, from last (eg postcode) to first (eg Flat 1) in turn for NB address fields
+        for k in sorted(kwargs.keys(), reverse=True):
+            v = kwargs[k].strip()
+            #Skip null values
+            if not v:
+                continue
+            # Skip postcode, city, locality
+            if cls.is_postcode(v) or cls.is_city(v) or cls.is_locality(v):
+                continue
+#             if cls.is_block(v) and block_needed:
+#                 block_needed=False
+#                 address['address3'] = v
+            if cls.is_street(v) and street_needed:
+                street_needed=False
+                address['address1'] = v
+            elif cls.is_street_number(v) and street_number_needed:
+                street_number_needed=False
+                address['address1'] = (v + ' '+address.get('address1','')).strip()
+            else:
+                address['address2'] = (v + ' '+address.get('address2','')).strip()
+                
+        # Return
+        return address
+
+    @classmethod
+    def address1_get(cls, **kwargs):
+        '''Get street address1 (NB sorts canvassing sheets on this)'''
+        return cls.address_split(**kwargs).get('address1')     
+        
+    @classmethod
+    def address2_get(cls, **kwargs):
+        '''Get street address2. Eg Flat 1'''
+        return cls.address_split(**kwargs).get('address2')     
+        
+    @classmethod
+    def address3_get(cls, **kwargs):
+        '''Get street address3. Block, eg Mill Cracknell'''
+        return cls.address_split(**kwargs).get('address3')     
+
+    @classmethod
+    def city_get(cls, **kwargs):
+        for v in kwargs.values():
+            if cls.is_city(v):
+                return v
+        return None     
+
+    @classmethod
+    def postcode_get(cls, **kwargs):
+        for v in kwargs.values():
+            if cls.is_postcode(v):
+                return v
+        return None     
+
+
 class Main():
 
     def __init__(self, config_lookup=None, filereader=None, filewriter=None):
@@ -215,6 +356,8 @@ class Main():
         self.filewriter = filereader or self.fh.csv_write
         self.config_lookup = config_lookup or [
                          ('BroomhillCanvassData', config_rl),
+                         ('CentralConstituencyRegister', config_register),
+                         ('CentralConstituencyWardRegisters', config_register),
                          ]
         self.csv_fixer = CsvFixer()
 
@@ -237,7 +380,10 @@ class Main():
         filename_new = self.csv_fixer.fix_csv(filename, config, filereader=self.filereader, filewriter=self.filewriter)
         print(filename_new)
 
+
 if __name__ == '__main__':
-    from configurations2 import config_rl
+    from configurations2 import config_rl, config_register
     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
+#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
+#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
     Main().main(argv[1:])

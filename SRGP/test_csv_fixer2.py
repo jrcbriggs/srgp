@@ -8,10 +8,10 @@ from collections import OrderedDict as OD
 import unittest
 from unittest.mock import MagicMock
 
-from csv_fixer2 import Canvass as CN, Generic as GN, TableFixer as TF, Voter as VT
+from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Register as RG, TableFixer as TF, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
-
+# from configurations2 import regexes
 
 class TestFileHandler(unittest.TestCase):
     def setUp(self):
@@ -276,6 +276,110 @@ class TestCanvass(unittest.TestCase):
         expected = self.block_name
         self.assertEqual(actual, expected)
 
+class TestRegister(unittest.TestCase):
+    
+    def setUp(self):
+        self.kwargs={'add1':'A', 'add2':'B', 'add3':'C', 'add4':'D', 'add5':'E'}
+
+    def test_tags_add_voter(self):
+        tag_map_voter = {'K':'k', 'E':'European', }
+        pd = 'EA'
+        status = 'K'
+        franchise = 'E'
+        actual = RG.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
+        expected = 'Franchise=European,PD=EA,Status=k'
+        self.assertEqual(actual, expected)
+
+    def test_country_code_get(self):
+        self.assertEqual(RG.country_code_get(), 'GB')
+
+    def test_city_get(self):
+        self.assertEqual(RG.city_get(), 'Sheffield')
+
+    def test_ward_get(self):
+        ward_lookup = {'E': 'Broomhill', }
+        self.assertEqual(RG.ward_get(ward_lookup, pd='EA'),'Broomhill')
+        self.assertRaises(KeyError, RG.ward_get, ward_lookup, pd='9')
+        self.assertRaises(IndexError, RG.ward_get, ward_lookup, pd='')
+
+class TestAddressHandler(unittest.TestCase):
+    '''
+    Split register addresses into NationBuilder fields (address1, address2, address3, city, postcode)
+    Sample addresses:
+    [['21, Botanical Road', 'Sheffield' ],
+    ['1, Woodbank Croft', '51, Botanical Road', 'Sheffield' ],
+    ['Flat 9', 'Broomgrove Trust N H', '30, Broomgrove Road', 'Sheffield' ],
+    ['Mackenzie House', '6, Mackenzie Crescent', 'Broomhall', 'Sheffield', 'Sheffield' ],
+    ['Flat 110', 'Watsons Chambers', '5 - 15, Market Place', 'City Centre', 'Sheffield', 'Sheffield'],
+    ['Flat 4', '108, Sellers Wheel', 'Arundel Lane', 'Sheffield',],
+    ['49, Cracknell', 'Millsands', 'Arundel Lane', 'Sheffield',],
+    ['220', 'Stannington View Road', 'Sheffield',],
+    ]
+    '''
+    def setUp(self):
+        self.addresses=[
+                    {'k0':'21, Botanical Road', 'k1': 'Sheffield',},
+                    {'k0':'1, Woodbank Croft', 'k1': '51, Botanical Road', 'k2': 'Sheffield',},
+                    {'k0':'Flat 9', 'k1': 'Broomgrove Trust N H', 'k2': '30, Broomgrove Road', 'k3': 'Sheffield',},
+                    {'k0':'Mackenzie House', 'k1': '6, Mackenzie Crescent','k2': 'Broomhall', 'k3': 'Sheffield','k4': 'Sheffield' ,},
+                    {'k0':'Flat 110','k1': 'Watsons Chambers','k2': '5 - 15 Market Place','k3': 'City Centre','k4': 'Sheffield','k5': 'Sheffield'},
+                    {'k0':'Flat 4','k1': '108, Sellers Wheel','k2': 'Arundel Lane','k3': 'Sheffield','k4': 'Sheffield'},
+#                     {'k0':'49, Cracknell','k1': 'Millsands','k2': 'Sheffield','k3': 'Sheffield', },
+                    {'k0':'220','k1': 'Stannington View Road','k2': 'Sheffield','k3':'',},#k3 is null value
+                    {'k0':'220','k1': 'Stannington View Road','k2': '','k3':'Sheffield',},#k2 is block
+                    ]
+        self.nb_fields=[
+                {'address1': '21, Botanical Road',},
+                {'address1': '51, Botanical Road', 'address2': '1, Woodbank Croft', },
+                {'address1': '30, Broomgrove Road', 'address2': 'Flat 9 Broomgrove Trust N H', },
+                {'address1': '6, Mackenzie Crescent', 'address2': 'Mackenzie House', },
+                {'address1': '5 - 15 Market Place', 'address2': 'Flat 110 Watsons Chambers', },
+                {'address1': 'Arundel Lane', 'address2': 'Flat 4 108, Sellers Wheel', },
+#                 {'address1': '49, Cracknell', 'address3': 'Millsands', },
+                {'address1': '220 Stannington View Road',},
+                ]
+
+    def test_address_split(self):
+        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
+            actual = AD.address_split(**kwargs)
+            self.assertDictEqual(actual, expected)
+
+        
+    def test_address1_get(self):
+        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
+            actual = AD.address1_get(**kwargs)
+            self.assertEqual(actual, expected.get('address1'))
+    
+    def test_address2_get(self):
+        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
+            actual = AD.address2_get(**kwargs)
+            self.assertEqual(actual, expected.get('address2'))
+    
+    def test_address3_get(self):
+        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
+            actual = AD.address3_get(**kwargs)
+            self.assertEqual(actual, expected.get('address3'))
+    
+    def test_city_get(self):
+        actual = AD.city_get(k0='1 Acacia Ave', k1='Sheffield',k2='S1 1AA')
+        self.assertEqual(actual, 'Sheffield')
+        actual = AD.city_get(k0='1 Acacia Ave', k1='Rotherham',k2='S1 1AA')
+        self.assertEqual(actual, 'Rotherham')
+        actual = AD.city_get(k0='1 Acacia Ave', k1='Sheffield',k2='')
+        self.assertEqual(actual, 'Sheffield')
+        actual = AD.city_get(k0='1 Acacia Ave', k1='XXX',k2='')
+        self.assertEqual(actual, None)
+    
+    def test_postcode_get(self):
+        actual = AD.postcode_get(k0='1 Acacia Ave', k1='Sheffield',k2='S1 1AA')
+        self.assertEqual(actual, 'S1 1AA')
+        actual = AD.postcode_get(k0='1 Acacia Ave', k1='S1 1AA',k2='')
+        self.assertEqual(actual, 'S1 1AA')
+        actual = AD.postcode_get(k0='S1 1AA', k1='',k2='')
+        self.assertEqual(actual, 'S1 1AA')
+        actual = AD.postcode_get(k0='Acacia Ave', k1='',k2='')
+        self.assertEqual(actual, None)
+    
 
 if __name__ == "__main__":
     unittest.main()
