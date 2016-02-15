@@ -11,6 +11,7 @@ Each config is an OrderedDict.
 from collections import OrderedDict as OD
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Register as RG, Voter as VT
 
+
 # Robin Latimer (Broomhill canvassing ) Database
 party_map_rl = {'':None, 'AT': None, 'G': 'G', 'L': 'L', 'LD': 'D', 'NG': None, 'NI': None, 'NV': None, 'SG': 'G', 'SL': 'L', 'SLD': 'D', }
 support_level_map_rl = {'':None, 'AT':5, 'G':1, 'L':5, 'LD':5, 'NG':4, 'NI':5, 'NV':4, 'SG':2, 'SL':3, 'SLD':3, }
@@ -91,9 +92,9 @@ config_register = OD([
                     ('last_name', 'Surname'),
                     ('suffix', 'Suffix'),
                     ('dob', (GN.doa2dob, [], {'doa': 'Date Of Attainment'})),
-                    ('registered_address1', (AD.address1_get, [], address_kwargs)),
-                    ('registered_address2', (AD.address2_get, [], address_kwargs)),
-                    ('registered_address3', (AD.address3_get, [], address_kwargs)),
+                    ('registered_address1', (AD.address_get, ['address1'], address_kwargs)),
+                    ('registered_address2', (AD.address_get, ['address2'], address_kwargs)),
+                    ('registered_address3', (AD.address_get, ['address3'], address_kwargs)),
                     ('registered_city', (RG.city_get, [], {})),  # Always Sheffield
                     ('registered_zip', (AD.postcode_get, [], address_kwargs)),
                     ('registered_country_code', (RG.country_code_get, [], {})),  # Always GB
@@ -103,3 +104,9 @@ config_register = OD([
                                                                         'franchise': 'Franchise Flag',
                                                                         })),
                     ])
+
+config_lookup = [
+     ('BroomhillCanvassData', config_rl),
+     ('CentralConstituencyRegister', config_register),
+     ('CentralConstituencyWardRegisters', config_register),
+     ]

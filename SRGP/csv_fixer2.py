@@ -258,6 +258,7 @@ class Register(object):
 
 class AddressHandler():
     
+    address=None
 #     @classmethod
 #     def is_block(cls, v):
 #         return regexes['block'].search(v)
@@ -282,12 +283,20 @@ class AddressHandler():
     def is_street_number(cls, v):  # is v a street
         return regexes['street_number'].search(v)
     
+   
     @classmethod
-    def address_split(cls, **kwargs):
+    def address_get(cls, key, **kwargs):
+        '''Get address1, address2, address3,
+        Must call once for each and in that order
+        '''
+        if key=='address1':
+            cls.address=cls.address_get_helper(**kwargs)
+        return cls.address.get(key)
+        
+    @classmethod
+    def address_get_helper(cls, **kwargs):
         address = {}
-#         block_needed=True
-        street_needed = True
-        street_number_needed = True
+        street_number = ''
 
         # Scan each kwarg value, from last (eg postcode) to first (eg Flat 1) in turn for NB address fields
         for k in sorted(kwargs.keys(), reverse=True):
@@ -298,46 +307,28 @@ class AddressHandler():
             # Skip postcode, city, locality
             if cls.is_postcode(v) or cls.is_city(v) or cls.is_locality(v):
                 continue
-#             if cls.is_block(v) and block_needed:
-#                 block_needed=False
-#                 address['address3'] = v
-            if cls.is_street(v) and street_needed:
-                street_needed = False
+            if cls.is_street(v) and not address.get('address1'):
                 address['address1'] = v
-            elif cls.is_street_number(v) and street_number_needed:
-                street_number_needed = False
-                address['address1'] = (v + ' ' + address.get('address1', '')).strip()
+            elif cls.is_street_number(v) and not street_number:
+                street_number = v
             else:
                 address['address2'] = (v + ' ' + address.get('address2', '')).strip()
                 
-        # Return
+        address['address1'] = ' '.join([street_number,address['address1']]).strip()
         return address
-
-    @classmethod
-    def address1_get(cls, **kwargs):
-        '''Get street address1 (NB sorts canvassing sheets on this)'''
-        return cls.address_split(**kwargs).get('address1')     
-        
-    @classmethod
-    def address2_get(cls, **kwargs):
-        '''Get street address2. Eg Flat 1'''
-        return cls.address_split(**kwargs).get('address2')     
-        
-    @classmethod
-    def address3_get(cls, **kwargs):
-        '''Get street address3. Block, eg Mill Cracknell'''
-        return cls.address_split(**kwargs).get('address3')     
-
+    
     @classmethod
     def city_get(cls, **kwargs):
-        for v in kwargs.values():
+        for k in sorted(kwargs.keys(),reverse=True):
+            v=kwargs[k]
             if cls.is_city(v):
                 return v
         return None     
 
     @classmethod
     def postcode_get(cls, **kwargs):
-        for v in kwargs.values():
+        for k in sorted(kwargs.keys(),reverse=True):
+            v=kwargs[k]
             if cls.is_postcode(v):
                 return v
         return None     
@@ -347,14 +338,10 @@ class Main():
     def __init__(self, config_lookup=None, filereader=None, filewriter=None):
         '''Create filereader and fielwriter unless given in kwargs
         '''
+        self.config_lookup=config_lookup
         self.fh = FileHandler()
         self.filereader = filereader or self.fh.csv_read
         self.filewriter = filereader or self.fh.csv_write
-        self.config_lookup = config_lookup or [
-                         ('BroomhillCanvassData', config_rl),
-                         ('CentralConstituencyRegister', config_register),
-                         ('CentralConstituencyWardRegisters', config_register),
-                         ]
         self.csv_fixer = CsvFixer()
 
     def main(self, filenames):
@@ -377,9 +364,11 @@ class Main():
         print(filename_new)
 
 if __name__ == '__main__':
-    from configurations2 import config_rl, config_register
+    from configurations2 import config_lookup
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
-    Main().main(argv[1:])
+    Main(config_lookup=config_lookup).main(argv[1:])
+#     import cProfile
+#     cProfile.run('Main().main(argv[1:])')
     

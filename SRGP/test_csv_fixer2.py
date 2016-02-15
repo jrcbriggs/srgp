@@ -327,25 +327,11 @@ class TestAddressHandler(unittest.TestCase):
                 {'address1': '220 Stannington View Road',},
                 ]
 
-    def test_address_split(self):
+    def test_address_get(self):
         for (kwargs, expected) in zip(self.addresses, self.nb_fields):
-            actual = AD.address_split(**kwargs)
-            self.assertDictEqual(actual, expected)
-        
-    def test_address1_get(self):
-        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
-            actual = AD.address1_get(**kwargs)
-            self.assertEqual(actual, expected.get('address1'))
-    
-    def test_address2_get(self):
-        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
-            actual = AD.address2_get(**kwargs)
-            self.assertEqual(actual, expected.get('address2'))
-    
-    def test_address3_get(self):
-        for (kwargs, expected) in zip(self.addresses, self.nb_fields):
-            actual = AD.address3_get(**kwargs)
-            self.assertEqual(actual, expected.get('address3'))
+            for key in ('address1','address2','address3',):
+                actual = AD.address_get(key, **kwargs)
+                self.assertEqual(actual, expected.get(key), key)
     
     def test_city_get(self):
         actual = AD.city_get(k0='1 Acacia Ave', k1='Sheffield',k2='S1 1AA')
