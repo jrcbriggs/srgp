@@ -418,7 +418,7 @@ class TableFixer(object):
             v = row[fieldname]
             if self.iscity(v):
                 row[fieldname] = ''
-                row[field_city] = v
+                row[field_city] = v.capitalize()
 
     def fix_contact_name(self, row):
         '''civi Contact name is 'last_name, first name'

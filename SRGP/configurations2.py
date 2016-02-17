@@ -9,7 +9,8 @@ Each config is an OrderedDict.
 '''
 
 from collections import OrderedDict as OD
-from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Register as RG, Voter as VT
+
+from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Voter as VT
 
 
 # Robin Latimer (Broomhill canvassing ) Database
@@ -73,7 +74,7 @@ config_rl = OD([
 
 tag_map_voter = {'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
                  'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
-address_kwargs = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
+address_register = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
 ward_lookup = {'E': 'Broomhill',
                 'G': 'Central',
                 'H': 'Crookes',
@@ -92,21 +93,51 @@ config_register = OD([
                     ('last_name', 'Surname'),
                     ('suffix', 'Suffix'),
                     ('dob', (GN.doa2dob, [], {'doa': 'Date Of Attainment'})),
-                    ('registered_address1', (AD.address_get, ['address1'], address_kwargs)),
-                    ('registered_address2', (AD.address_get, ['address2'], address_kwargs)),
-                    ('registered_address3', (AD.address_get, ['address3'], address_kwargs)),
+                    ('registered_address1', (AD.address_get, ['address1'], address_register)),
+                    ('registered_address2', (AD.address_get, ['address2'], address_register)),
+                    ('registered_address3', (AD.address_get, ['address3'], address_register)),
                     ('registered_city', (RG.city_get, [], {})),  # Always Sheffield
-                    ('registered_zip', (AD.postcode_get, [], address_kwargs)),
-                    ('registered_country_code', (RG.country_code_get, [], {})),  # Always GB
+                    ('registered_zip', (AD.postcode_get, [], address_register)),
+                    ('registered_state', (GN.state_get, [], {})),
                     ('ward', (RG.ward_get, [ward_lookup], {'pd':'PD', })),
                     ('tag_list', (RG.tags_add_voter, [tag_map_voter], {'PD': 'PD',
                                                                         'status': 'Status',
                                                                         'franchise': 'Franchise Flag',
                                                                         })),
                     ])
+address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2'}
+config_member = OD([
+                    ('config_name', 'config_member'),
+                    ('first_name', 'First Name'),
+                    ('last_name', 'Last Name'),
+                    ('civicrm_id', 'Contact ID'),
+                    ('membership_type', 'Membership Type'),
+                    ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
+                    ('started_at', (MB.fix_date, [], {'date':'Member Since', })),
+                    ('membership_status', (MB.get_status, [], {'status':'Status', })),
+                    ('address_address1', (AD.address_get, ['address1'], address_member)),
+                    ('address_address2', (AD.address_get, ['address2'], address_member)),
+                    ('address_address3', (AD.address_get, ['address3'], address_member)),
+                    ('address_city', (AD.city_get,[],{'city':'City'})),
+                    ('address_zip', 'Postal Code'),
+                    ('address_country_code', (RG.country_code_get, [], {})),  # Always GB
+                    ('email', 'Email'),
+                    ('phone_number', 'Phone (primary)'),
+                    ('mobile_number', 'Mobile'),
+                    ('precinct_name', 'Ward'),
+                    ('party', (MB.get_party, [], {})),
+                    ('is_deceased', (MB.is_deceased, [], {'status':'Status', })),
+                    ('party_member', (MB.get_party_member, [], {'status':'Status',})),
+                    ('support_level', (MB.get_support_level, [], {'status':'Status', })),
+                    ('registered_state', (GN.state_get, [], {})),
+#                     ('ward', 'Ward'),
+#                     ('constituency', 'Westminster parliament constituency'),
+                    ('tag_list', (GN.tags_add, [{}], {'basename':'basename'})),
+                    ])
 
 config_lookup = [
      ('BroomhillCanvassData', config_rl),
      ('CentralConstituencyRegister', config_register),
      ('CentralConstituencyWardRegisters', config_register),
+     ('SRGP_MembersAll', config_member),
      ]

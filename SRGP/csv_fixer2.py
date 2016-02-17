@@ -5,8 +5,10 @@ Created on 1 Nov 2014
 @author: julian
 '''
 from csv import DictReader, DictWriter
+from os import path
 from re import compile, IGNORECASE, search
 from sys import argv
+
 
 regexes = {
     'city': compile('^(Rotherham|Sheffield|Stocksbridge)$', IGNORECASE),
@@ -32,7 +34,7 @@ regexes = {
                         'Well Court|Wellgate|Wentworth|Whiston|Wickersley|Wincobank|Wingfield|'
                         'Woodhouse|Woodseats|Woodsetts|Worksop|Worrall)$', IGNORECASE),
     'street': compile(r'\b(Anglo Works|Approach|Ashgrove|Ave|Avenue|Bakers Yard|Bank|Brg|Bridge|'
-                      'Brookside|Cir|Close|Common|Common Side|Crossways|Court|Cres|Crescent|Croft|Ct|Dell|'
+                      'Brookside|Cir|Close|Common|Common Side|Crookes|Crossways|Court|Cres|Crescent|Croft|Ct|Dell|'
                       'Dl|Dr|Drive|Edward Street Flats|Endcliffe Village|Fields|Gdns|Gardens|Gate|Glade|Glen|Gr|Green|'
                       'Grove|Hartshead|Head|Hl|Hill|Ln|Lane|Mdws|Mews|Moorfields Flats|Mt|Parade|Park|Park Centre|Pl|Place|Rd|Rise|'
                       'Road|Road North|Road South|Row|Sq|Square|St|Street|Street South|Ter|Terrace|The Gln|Town|Turn|View|Vw|Victoria Villas|Waingate|'
@@ -41,6 +43,7 @@ regexes = {
                       'Cross Smithfield|Kelham Island|'
                       'Summerfield|Upperthorpe|Wicker|Woodcliffe|The Lawns|The Nook|'
                       'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|'  # blocks
+                      'Midhopecourt|' #Members streets
                       'Other Electors)$', IGNORECASE),
      'block': compile(r'^()$', IGNORECASE),  # Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
     'street_number': compile(r'^(Above|Back|Back Of|Bk|First Floor|Flat Above|Flat Over|Ground Floor|Over|Rear|Rear Of)?[\s\d/-]+\w?$'),
@@ -81,12 +84,15 @@ class CsvFixer(object):
     Write the table to a new csv file for import to NB.
     '''
     def fix_csv(self, pathname, config, filereader, filewriter):
+        
+        #Get the basename
+        basename=path.basename(pathname).replace('.csv','')
 
         # Read csv data file into a table
         table0 = filereader(pathname)
 
         # Fix the data in table
-        table1 = TableFixer(config=config).fix_table(table0)
+        table1 = TableFixer(config=config,basename=basename).fix_table(table0)
 
         # Write the table to a new csv file for import to NB.
         pathname_new = pathname.replace('.csv', 'NB.csv')
@@ -96,8 +102,9 @@ class CsvFixer(object):
 
 class TableFixer(object):
 
-    def __init__(self, config=None):
+    def __init__(self, config=None,basename=None):
         self.config = config
+        self.basename=basename
 
     def fix_table(self, table0):
         '''Returns new table given old table
@@ -110,7 +117,9 @@ class TableFixer(object):
 
     def fix_row(self, row0):
         '''Creates new row from old row
+        Adding basename to the row provides option in config to add the basename to the tags
         '''
+        row0.update({'basename':self.basename})
         try:
             return {fieldname1: self.fix_field(row0, arg0)
                         for (fieldname1, arg0) in self.config.items()}
@@ -150,7 +159,21 @@ class Generic(object):
         else:
             return doa
 
+    @classmethod
+    def fix_date(cls, date=None):
+        '''Convert date from UK format (dd/mm/yyyy) to US format: mm/dd/yyyy.
+        '''
+        if date:
+            (day, month, year) = date.split('/')
+            return '/'.join([month, day, year])
+        else:
+            return date
 
+
+    @classmethod
+    def state_get(cls):
+        return 'Sheffield'
+    
     @classmethod
     def tags_add(cls, tag_map, **kwargs):
         '''For tag_str0 in tag_lists0 (values in kwargs), eg: 'ResidentsParking,StreetsAhead','Ben, Bins', '','', 'Vote14', 'Vote12'}
@@ -181,7 +204,7 @@ class Generic(object):
         '''
         try:
             tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-            tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
+            tag_list1 = [tag_map.get(tag0.strip(), tag0) for tag0 in tag_list0]  # ['Student','ResidentsParking']
             return tag_list1
         except (KeyError) as e:
             e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
@@ -305,16 +328,18 @@ class AddressHandler():
             if not v:
                 continue
             # Skip postcode, city, locality
-            if cls.is_postcode(v) or cls.is_city(v) or cls.is_locality(v):
+            if cls.is_postcode(v) or cls.is_city(v):
                 continue
-            if cls.is_street(v) and not address.get('address1'):
+            if cls.is_locality(v) and not address.get('address3'):
+                address['address3'] = v
+            elif cls.is_street(v) and not address.get('address1'):
                 address['address1'] = v
             elif cls.is_street_number(v) and not street_number:
                 street_number = v
             else:
                 address['address2'] = (v + ' ' + address.get('address2', '')).strip()
                 
-        address['address1'] = ' '.join([street_number,address['address1']]).strip()
+        address['address1'] = ' '.join([street_number,address.get('address1','')]).strip()
         return address
     
     @classmethod
@@ -322,7 +347,7 @@ class AddressHandler():
         for k in sorted(kwargs.keys(),reverse=True):
             v=kwargs[k]
             if cls.is_city(v):
-                return v
+                return v.capitalize()
         return None     
 
     @classmethod
@@ -333,6 +358,69 @@ class AddressHandler():
                 return v
         return None     
 
+class Member():
+    
+    @classmethod
+    def fix_date(cls, date=None):
+        '''Convert date from UK format (dd/mm/yyyy) to US format: mm/dd/yyyy.
+        '''
+        if date:
+            (year, month, day) = date.split('-')
+            return '/'.join([month, day, year])
+        else:
+            return date
+
+    @classmethod
+    def get_party(cls):
+        return 'G'
+     
+    @classmethod
+    def get_party_member(cls, status=None):
+        '''Party member flag for is currently a member: 
+        False for: Cancelled, Deceased, Expired 
+        True for: Current, Grace, New
+        (Alternatively one could argue that a cancelled member is still a member, so True.)
+        TODO uncomment after matching to original csv 
+        '''
+        return {
+                'Current':True,
+                'Cancelled':True,#False,
+                'Deceased':True,#False,
+                'Expired':True,#False,
+                'Grace':True,
+                'New':True,
+                }[status]
+    @classmethod
+    def get_status(cls, status=None):
+        '''NB: active, canceled, expired, grace period
+        '''
+        return {
+                'Current':'active',
+                'Cancelled':'canceled',
+                'Deceased':'deceased',
+                'Expired':'expired',
+                'Grace':'grace period',
+                'New':'active',
+                }[status]
+    @classmethod
+    def get_support_level(cls, status=None):
+        '''Support level: Cancelled, Deceased, Expired
+        Unclear what level to set for: cancelled, expired 
+        TODO uncomment after matching to original csv
+        '''
+        return {
+                'Current':1,
+                'Cancelled':1,#4,
+                'Deceased':1,#None,
+                'Expired':1,#2,
+                'Grace':1,
+                'New':1,
+                }[status]
+    
+    @classmethod
+    def is_deceased(cls, status=None):
+        return status=='Deceased'
+     
 class Main():
 
     def __init__(self, config_lookup=None, filereader=None, filewriter=None):
@@ -367,7 +455,8 @@ if __name__ == '__main__':
     from configurations2 import config_lookup
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
-    argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
+#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
+    argv.append('/home/julian/SRGP/civi/20160210/SRGP_MembersAll_20160210-0711.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')
