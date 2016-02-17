@@ -456,7 +456,7 @@ if __name__ == '__main__':
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
-    argv.append('/home/julian/SRGP/civi/20160210/SRGP_MembersAll_20160210-0711.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')
