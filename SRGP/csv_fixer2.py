@@ -15,7 +15,7 @@ regexes = {
     'county': compile('^South Yorks$', IGNORECASE),
     'house': compile('Barn|Building|College|Cottage|Farm|Hall|House|'
                      'Lodge|Mansion|Mill|Residence', IGNORECASE),
-    'postcode': compile('^S\d\d? \d\w\w$'),
+    'postcode': compile('^S\d\d? ?\d\w\w$'),
     'locality': compile(r'^(Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Beauchief|Beighton|'
                         'Bents Green|Bradway|Bramley|Brampton|Brincliffe|Broom|Broomhall|'
                         'Broomhill|Burncross|Burngreave|Catcliffe|Chapeltown|Christchurch|'
@@ -28,7 +28,7 @@ regexes = {
                         'Meersbrook|Mexborough|Midhopestones|Millhouses|Mosborough|Nether Edge|'
                         'Nethergreen|Nether Green|Norfolk Park|Norton Lees|Nottingham|Oughtibridge|'
                         'Owlthorpe|Parkgate|Park Hill|Pitsmoor|Rawmarsh|Rivelin|Shalesmoor|'
-                        'Sharrow|Shiregreen|Sothall|Stannington|Sunnyside|'
+                        'Sharrow|Shiregreen|Sothall|Stannington|Stocksbridge|Sunnyside|'
                         'Swallownest|Swinton|Thorpe Hesley|Thurcroft|Todwick|Totley|Totley Rise|'
                         'Upperthorpe|Wales Bar|Walkley|Waterthorpe|Wath upon Dearne|Wath-upon-Dearne|'
                         'Well Court|Wellgate|Wentworth|Whiston|Wickersley|Wincobank|Wingfield|'
@@ -169,11 +169,6 @@ class Generic(object):
         else:
             return date
 
-
-    @classmethod
-    def state_get(cls):
-        return 'Sheffield'
-    
     @classmethod
     def tags_add(cls, tag_map, **kwargs):
         '''For tag_str0 in tag_lists0 (values in kwargs), eg: 'ResidentsParking,StreetsAhead','Ben, Bins', '','', 'Vote14', 'Vote12'}
@@ -240,6 +235,10 @@ class Voter(object):
     def fix_support_level(cls, support_level_map, support_level=None):
         return support_level_map[support_level]
 
+    @classmethod
+    def state_get(cls):
+        return 'Sheffield'
+ 
 class Canvass(Generic):
     @classmethod
     def background_merge(cls, notes='', comments=''):
@@ -327,10 +326,11 @@ class AddressHandler():
             # Skip null values
             if not v:
                 continue
-            # Skip postcode, city, locality
-            if cls.is_postcode(v) or cls.is_city(v):
-                continue
-            if cls.is_locality(v) and not address.get('address3'):
+            elif cls.is_postcode(v) and not address.get('postcode'):
+                address['postcode'] = v
+            elif cls.is_city(v) and not address.get('city'):
+                address['city'] = v
+            elif cls.is_locality(v) and not address.get('address3'):
                 address['address3'] = v
             elif cls.is_street(v) and not address.get('address1'):
                 address['address1'] = v
@@ -339,24 +339,11 @@ class AddressHandler():
             else:
                 address['address2'] = (v + ' ' + address.get('address2', '')).strip()
                 
-        address['address1'] = ' '.join([street_number,address.get('address1','')]).strip()
+        address['address1'] = ' '.join([street_number, address.get('address1','')]).strip()
+        address['city'] = address.get('city','').capitalize()
+        
         return address
     
-    @classmethod
-    def city_get(cls, **kwargs):
-        for k in sorted(kwargs.keys(),reverse=True):
-            v=kwargs[k]
-            if cls.is_city(v):
-                return v.capitalize()
-        return None     
-
-    @classmethod
-    def postcode_get(cls, **kwargs):
-        for k in sorted(kwargs.keys(),reverse=True):
-            v=kwargs[k]
-            if cls.is_postcode(v):
-                return v
-        return None     
 
 class Member():
     
@@ -380,13 +367,12 @@ class Member():
         False for: Cancelled, Deceased, Expired 
         True for: Current, Grace, New
         (Alternatively one could argue that a cancelled member is still a member, so True.)
-        TODO uncomment after matching to original csv 
         '''
         return {
                 'Current':True,
-                'Cancelled':True,#False,
-                'Deceased':True,#False,
-                'Expired':True,#False,
+                'Cancelled':False,
+                'Deceased':False,
+                'Expired':False,
                 'Grace':True,
                 'New':True,
                 }[status]
@@ -410,9 +396,9 @@ class Member():
         '''
         return {
                 'Current':1,
-                'Cancelled':1,#4,
-                'Deceased':1,#None,
-                'Expired':1,#2,
+                'Cancelled':4,
+                'Deceased':None,
+                'Expired':2,
                 'Grace':1,
                 'New':1,
                 }[status]
@@ -455,8 +441,8 @@ if __name__ == '__main__':
     from configurations2 import config_lookup
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
-#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
+    argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')

@@ -8,7 +8,7 @@ from collections import OrderedDict as OD
 import unittest
 from unittest.mock import MagicMock
 
-from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Register as RG, TableFixer as TF, Voter as VT
+from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
 from unittest.case import skip
@@ -192,6 +192,16 @@ class TestGeneric(unittest.TestCase):
         expected = ''
         self.assertEqual(actual, expected)
 
+    def test_fix_date(self):
+        actual = GN.fix_date(date='31/12/1956')
+        expected = '12/31/1956'
+        self.assertEqual(actual, expected)
+        
+    def test_fix_date_empty(self):
+        actual = GN.fix_date(date='')
+        expected = ''
+        self.assertEqual(actual, expected)
+        
     def test_tags_add(self):
         actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
         expected = 'a,b,c'
@@ -207,7 +217,6 @@ class TestGeneric(unittest.TestCase):
         expected = ['a', 'b']
         self.assertEqual(actual, expected, actual)
 
-    @skip
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
         self.assertRaises(KeyError, GN.tags_split, self.tag_map, k0)
@@ -243,6 +252,11 @@ class TestVoter(unittest.TestCase):
         expected = 5
         self.assertEqual(actual, expected)
 
+    def test_state_get(self):
+        actual = VT.state_get()
+        expected = 'Sheffield'
+        self.assertEqual(actual, expected)
+
 class TestCanvass(unittest.TestCase):
     def setUp(self):
         self.housename = 'Avalon'
@@ -275,7 +289,7 @@ class TestCanvass(unittest.TestCase):
 class TestRegister(unittest.TestCase):
     
     def setUp(self):
-        self.kwargs={'add1':'A', 'add2':'B', 'add3':'C', 'add4':'D', 'add5':'E'}
+        self.kwargs = {'add1':'A', 'add2':'B', 'add3':'C', 'add4':'D', 'add5':'E'}
 
     def test_tags_add_voter(self):
         tag_map_voter = {'K':'k', 'E':'European', }
@@ -294,7 +308,7 @@ class TestRegister(unittest.TestCase):
 
     def test_ward_get(self):
         ward_lookup = {'E': 'Broomhill', }
-        self.assertEqual(RG.ward_get(ward_lookup, pd='EA'),'Broomhill')
+        self.assertEqual(RG.ward_get(ward_lookup, pd='EA'), 'Broomhill')
         self.assertRaises(KeyError, RG.ward_get, ward_lookup, pd='9')
         self.assertRaises(IndexError, RG.ward_get, ward_lookup, pd='')
 
@@ -312,51 +326,100 @@ class TestAddressHandler(unittest.TestCase):
     ]
     '''
     def setUp(self):
-        self.addresses=[
-                    {'k0':'21, Botanical Road', 'k1': 'Sheffield',},
-                    {'k0':'1, Woodbank Croft', 'k1': '51, Botanical Road', 'k2': 'Sheffield',},
-                    {'k0':'Flat 9', 'k1': 'Broomgrove Trust N H', 'k2': '30, Broomgrove Road', 'k3': 'Sheffield',},
-                    {'k0':'Mackenzie House', 'k1': '6, Mackenzie Crescent','k2': 'Broomhall', 'k3': 'Sheffield','k4': 'Sheffield' ,},
-                    {'k0':'Flat 110','k1': 'Watsons Chambers','k2': '5 - 15 Market Place','k3': 'City Centre','k4': 'Sheffield','k5': 'Sheffield'},
-                    {'k0':'Flat 4','k1': '108, Sellers Wheel','k2': 'Arundel Lane','k3': 'Sheffield','k4': 'Sheffield'},
-                    {'k0':'220','k1': 'Stannington View Road','k2': 'Sheffield','k3':'',},#k3 is null value
-                    {'k0':'220','k1': 'Stannington View Road','k2': '','k3':'Sheffield',},#k2 is block
+        self.addresses = [
+                    {'k0':'21, Botanical Road', 'k1': 'Sheffield', },
+                    {'k0':'1, Woodbank Croft', 'k1': '51, Botanical Road', 'k2': 'Sheffield', },
+                    {'k0':'Flat 9', 'k1': 'Broomgrove Trust N H', 'k2': '30, Broomgrove Road', 'k3': 'Sheffield', },
+                    {'k0':'Mackenzie House', 'k1': '6, Mackenzie Crescent', 'k2': 'Broomhall', 'k3': 'Sheffield', 'k4': 'S1 1AB' , },
+                    {'k0':'Flat 110', 'k1': 'Watsons Chambers', 'k2': '5 - 15 Market Place', 'k3': 'City Centre', 'k4': 'Sheffield', 'k5': 'S1 1AB', },
+                    {'k0':'Flat 4', 'k1': '108, Sellers Wheel', 'k2': 'Arundel Lane', 'k3': 'Sheffield', 'k4': 'S1 1AB', },
+                    {'k0':'220', 'k1': 'Stannington View Road', 'k2': 'Sheffield', 'k3':'S10 1ST', },  # k3 is null value
+                    {'k0':'220', 'k1': 'Stannington View Road', 'k2': '', 'k3':'Sheffield', 'k4': '', },  # k2 is block
                     ]
-        self.nb_fields=[
-                {'address1': '21, Botanical Road',},
-                {'address1': '51, Botanical Road', 'address2': '1, Woodbank Croft', },
-                {'address1': '30, Broomgrove Road', 'address2': 'Flat 9 Broomgrove Trust N H', },
-                {'address1': '6, Mackenzie Crescent', 'address2': 'Mackenzie House', 'address3': 'Broomhall', },
-                {'address1': '5 - 15 Market Place', 'address2': 'Flat 110 Watsons Chambers', 'address3': 'City Centre',},
-                {'address1': 'Arundel Lane', 'address2': 'Flat 4 108, Sellers Wheel', },
-                {'address1': '220 Stannington View Road',},
+        self.nb_fields = [
+                {'address1': '21, Botanical Road', 'city':'Sheffield', 'postcode':None, },
+                {'address1': '51, Botanical Road', 'address2': '1, Woodbank Croft', 'city':'Sheffield', },
+                {'address1': '30, Broomgrove Road', 'address2': 'Flat 9 Broomgrove Trust N H', 'city':'Sheffield', },
+                {'address1': '6, Mackenzie Crescent', 'address2': 'Mackenzie House', 'address3': 'Broomhall', 'city':'Sheffield', 'postcode':'S1 1AB', },
+                {'address1': '5 - 15 Market Place', 'address2': 'Flat 110 Watsons Chambers', 'address3': 'City Centre', 'city':'Sheffield', 'postcode':'S1 1AB', },
+                {'address1': 'Arundel Lane', 'address2': 'Flat 4 108, Sellers Wheel', 'city':'Sheffield', 'postcode':'S1 1AB', },
+                {'address1': '220 Stannington View Road', 'city':'Sheffield', 'postcode':'S10 1ST', },
+                {'address1': '220 Stannington View Road', 'city':'Sheffield',  },
                 ]
 
     def test_address_get(self):
         for (kwargs, expected) in zip(self.addresses, self.nb_fields):
-            for key in ('address1','address2','address3',):
+            for key in ('address1', 'address2', 'address3', 'city', 'postcode',):
                 actual = AD.address_get(key, **kwargs)
-                self.assertEqual(actual, expected.get(key), key)
+                self.assertEqual(actual, expected.get(key), 'key:{}  kwargs:{}'.format(key, kwargs))
     
-    def test_city_get(self):
-        actual = AD.city_get(k0='1 Acacia Ave', k1='Sheffield',k2='S1 1AA')
-        self.assertEqual(actual, 'Sheffield')
-        actual = AD.city_get(k0='1 Acacia Ave', k1='Rotherham',k2='S1 1AA')
-        self.assertEqual(actual, 'Rotherham')
-        actual = AD.city_get(k0='1 Acacia Ave', k1='Sheffield',k2='')
-        self.assertEqual(actual, 'Sheffield')
-        actual = AD.city_get(k0='1 Acacia Ave', k1='XXX',k2='')
-        self.assertEqual(actual, None)
-    
-    def test_postcode_get(self):
-        actual = AD.postcode_get(k0='1 Acacia Ave', k1='Sheffield',k2='S1 1AA')
-        self.assertEqual(actual, 'S1 1AA')
-        actual = AD.postcode_get(k0='1 Acacia Ave', k1='S1 1AA',k2='')
-        self.assertEqual(actual, 'S1 1AA')
-        actual = AD.postcode_get(k0='S1 1AA', k1='',k2='')
-        self.assertEqual(actual, 'S1 1AA')
-        actual = AD.postcode_get(k0='Acacia Ave', k1='',k2='')
-        self.assertEqual(actual, None)
+class TestMember(unittest.TestCase):
+    def test_fix_date(self):
+        actual = MB.fix_date(date='1956-12-31')
+        expected = '12/31/1956'
+        self.assertEqual(actual, expected)
+        
+    def test_fix_date_empty(self):
+        actual = MB.fix_date(date='')
+        expected = ''
+        self.assertEqual(actual, expected)
+
+    def test_get_party(self):
+        actual = MB.get_party()
+        expected = 'G'
+        self.assertEqual(actual, expected)
+
+    def test_get_party_member(self):
+        for (k,v) in {
+                'Current':True,
+                'Cancelled':False,
+                'Deceased':False,
+                'Expired':False,
+                'Grace':True,
+                'New':True,
+                }.items():
+            actual = MB.get_party_member(status=k)
+            expected = v
+            self.assertEqual(actual, expected)
+
+    def test_get_status(self):
+        for (k,v) in {
+                'Current':'active',
+                'Cancelled':'canceled',
+                'Deceased':'deceased',
+                'Expired':'expired',
+                'Grace':'grace period',
+                'New':'active',
+                }.items():
+            actual = MB.get_status(status=k)
+            expected = v
+            self.assertEqual(actual, expected)
+
+    def test_get_support_level(self):
+        for (k,v) in {
+                'Current':1,
+                'Cancelled':4,
+                'Deceased':None,
+                'Expired':2,
+                'Grace':1,
+                'New':1,
+                }.items():
+            actual = MB.get_support_level(status=k)
+            expected = v
+            self.assertEqual(actual, expected)
+
+    def test_is_deceased(self):
+        for (k,v) in {
+                'Current':False,
+                'Cancelled':False,
+                'Deceased':True,
+                'Expired':False,
+                'Grace':False,
+                'New':False,
+                }.items():
+            actual = MB.is_deceased(status=k)
+            expected = v
+            self.assertEqual(actual, expected)
 
 if __name__ == "__main__":
     unittest.main()

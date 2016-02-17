@@ -96,8 +96,8 @@ config_register = OD([
                     ('registered_address1', (AD.address_get, ['address1'], address_register)),
                     ('registered_address2', (AD.address_get, ['address2'], address_register)),
                     ('registered_address3', (AD.address_get, ['address3'], address_register)),
-                    ('registered_city', (RG.city_get, [], {})),  # Always Sheffield
-                    ('registered_zip', (AD.postcode_get, [], address_register)),
+                    ('registered_city', (AD.address_get, ['city'], address_register)),
+                    ('registered_zip', (AD.address_get, ['postcode'], address_register)),
                     ('registered_state', (GN.state_get, [], {})),
                     ('ward', (RG.ward_get, [ward_lookup], {'pd':'PD', })),
                     ('tag_list', (RG.tags_add_voter, [tag_map_voter], {'PD': 'PD',
@@ -105,7 +105,7 @@ config_register = OD([
                                                                         'franchise': 'Franchise Flag',
                                                                         })),
                     ])
-address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2'}
+address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2','k3':'City','k4':'Postal Code'}
 config_member = OD([
                     ('config_name', 'config_member'),
                     ('first_name', 'First Name'),
@@ -118,8 +118,8 @@ config_member = OD([
                     ('address_address1', (AD.address_get, ['address1'], address_member)),
                     ('address_address2', (AD.address_get, ['address2'], address_member)),
                     ('address_address3', (AD.address_get, ['address3'], address_member)),
-                    ('address_city', (AD.city_get,[],{'city':'City'})),
-                    ('address_zip', 'Postal Code'),
+                    ('address_city', (AD.address_get, ['city'], address_member)),
+                    ('address_zip', (AD.address_get, ['postcode'], address_member)),
                     ('address_country_code', (RG.country_code_get, [], {})),  # Always GB
                     ('email', 'Email'),
                     ('phone_number', 'Phone (primary)'),
