@@ -9,7 +9,6 @@ from os import path
 from re import compile, IGNORECASE, search
 from sys import argv
 
-
 regexes = {
     'city': compile('^(Rotherham|Sheffield|Stocksbridge)$', IGNORECASE),
     'county': compile('^South Yorks$', IGNORECASE),
@@ -101,8 +100,8 @@ class CsvFixer(object):
         return pathname_new
 
 class TableFixer(object):
-
-    def __init__(self, config=None,basename=None):
+    
+    def __init__(self, config=None, basename=None):
         self.config = config
         self.basename=basename
 
@@ -170,6 +169,10 @@ class Generic(object):
             return date
 
     @classmethod
+    def state_get(cls):
+        return 'Sheffield'
+ 
+    @classmethod
     def tags_add(cls, tag_map, **kwargs):
         '''For tag_str0 in tag_lists0 (values in kwargs), eg: 'ResidentsParking,StreetsAhead','Ben, Bins', '','', 'Vote14', 'Vote12'}
             Split into tag0 elements in tag_list0:
@@ -199,6 +202,7 @@ class Generic(object):
         '''
         try:
             tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
+#             tag_list1 = [tag_map.get(tag0.strip(), tag0) for tag0 in tag_list0]  # ['Student','ResidentsParking']
             tag_list1 = [tag_map.get(tag0.strip(), tag0) for tag0 in tag_list0]  # ['Student','ResidentsParking']
             return tag_list1
         except (KeyError) as e:
@@ -235,10 +239,6 @@ class Voter(object):
     def fix_support_level(cls, support_level_map, support_level=None):
         return support_level_map[support_level]
 
-    @classmethod
-    def state_get(cls):
-        return 'Sheffield'
- 
 class Canvass(Generic):
     @classmethod
     def background_merge(cls, notes='', comments=''):
@@ -441,8 +441,11 @@ if __name__ == '__main__':
     from configurations2 import config_lookup
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
-    argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
+#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')

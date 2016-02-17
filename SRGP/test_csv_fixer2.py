@@ -202,6 +202,11 @@ class TestGeneric(unittest.TestCase):
         expected = ''
         self.assertEqual(actual, expected)
         
+    def test_state_get(self):
+        actual = GN.state_get()
+        expected = 'Sheffield'
+        self.assertEqual(actual, expected)
+
     def test_tags_add(self):
         actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
         expected = 'a,b,c'
@@ -217,6 +222,7 @@ class TestGeneric(unittest.TestCase):
         expected = ['a', 'b']
         self.assertEqual(actual, expected, actual)
 
+    @skip
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
         self.assertRaises(KeyError, GN.tags_split, self.tag_map, k0)
@@ -250,11 +256,6 @@ class TestVoter(unittest.TestCase):
     def test_fix_support_level(self):
         actual = VT.fix_support_level(self.support_level_map, 'LD')
         expected = 5
-        self.assertEqual(actual, expected)
-
-    def test_state_get(self):
-        actual = VT.state_get()
-        expected = 'Sheffield'
         self.assertEqual(actual, expected)
 
 class TestCanvass(unittest.TestCase):

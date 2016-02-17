@@ -9,6 +9,7 @@ Each config is an OrderedDict.
 '''
 
 from collections import OrderedDict as OD
+from copy import deepcopy
 
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Voter as VT
 
@@ -105,6 +106,8 @@ config_register = OD([
                                                                         'franchise': 'Franchise Flag',
                                                                         })),
                     ])
+
+#########################################################################################
 address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2','k3':'City','k4':'Postal Code'}
 config_member = OD([
                     ('config_name', 'config_member'),
@@ -135,9 +138,53 @@ config_member = OD([
                     ('tag_list', (GN.tags_add, [{}], {'basename':'basename'})),
                     ])
 
+#########################################################################################
+address_supporter = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k3':'City','k4':'Postal Code'}
+config_supporter = OD([
+                    ('config_name', 'config_supporter'),
+                    ('name', 'Contact Name'),
+                    ('civicrm_id', 'Contact ID'),
+                    ('address_address1', (AD.address_get, ['address1'], address_supporter)),
+                    ('address_address2', (AD.address_get, ['address2'], address_supporter)),
+                    ('address_address3', (AD.address_get, ['address3'], address_supporter)),
+                    ('address_city', (AD.address_get, ['city'], address_supporter)),
+                    ('address_zip', (AD.address_get, ['postcode'], address_supporter)),
+                    ('address_country_code', (RG.country_code_get, [], {})),  # Always GB
+                    ('email', 'Email'),
+                    ('phone_number', 'Phone (primary)'),
+                    ('mobile_number', 'Mobile'),
+                    ('precinct_name', 'Ward'),
+                    ('party', (MB.get_party, [], {})),
+                    ('registered_state', (GN.state_get, [], {})),
+#                     ('ward', 'Ward'),
+#                     ('constituency', 'Westminster parliament constituency'),
+                    ('tag_list', (GN.tags_add, [{}], {'basename':'basename'})),
+                    ])
+
+#########################################################################################
+config_young_greens = OD([
+                    ('config_name', 'config_supporter'),
+                    ('first_name', 'First Name'),
+                    ('last_name', 'Last Name'),
+                    ('civicrm_id', 'Contact ID'),
+                    ('started_at', (MB.fix_date, [], {'date':'Start Date', })),
+                    ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
+                    ('membership_status', (MB.get_status, [], {'status':'Status', })),
+                    ('email', 'Email'),
+                    ('party', (MB.get_party, [], {})),
+                    ('registered_state', (GN.state_get, [], {})),
+                    ('is_deceased', (MB.is_deceased, [], {'status':'Status', })),
+                    ('party_member', (MB.get_party_member, [], {'status':'Status',})),
+                    ('support_level', (MB.get_support_level, [], {'status':'Status', })),
+                    ('tag_list', (GN.tags_add, [{}], {'basename':'basename',
+                                                      })),
+                    ])
+
 config_lookup = [
      ('BroomhillCanvassData', config_rl),
      ('CentralConstituencyRegister', config_register),
      ('CentralConstituencyWardRegisters', config_register),
      ('SRGP_MembersAll', config_member),
+     ('SRGP_SupportersAll', config_supporter),
+     ('SRGP_YoungGreens', config_young_greens),
      ]

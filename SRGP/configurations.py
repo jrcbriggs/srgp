@@ -171,7 +171,7 @@ config_supporters = {
     'doa_fields': (),
     'fieldmap': OD([
         ('Contact Name', 'name'),
-        ('Do not mail', 'email opt in'),  # Reverse Sense
+#         ('Do not mail', 'email opt in'),  # Reverse Sense
         ('Contact ID', 'civicrm_id'),
         ('Email', 'email'),
         ('Street Address', 'address1'),
