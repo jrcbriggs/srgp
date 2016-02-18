@@ -4,10 +4,12 @@ Created on 1 Nov 2014
 
 @author: julian
 '''
+from copy import deepcopy
 from csv import DictReader, DictWriter
 from os import path
 from re import compile, IGNORECASE, search
 from sys import argv
+
 
 regexes = {
     'city': compile('^(Rotherham|Sheffield|Stocksbridge)$', IGNORECASE),
@@ -96,6 +98,7 @@ class CsvFixer(object):
         # Write the table to a new csv file for import to NB.
         pathname_new = pathname.replace('.csv', 'NB.csv')
         fieldnames = config.keys()
+        
         filewriter(table1, pathname_new, fieldnames)
         return pathname_new
 
@@ -145,7 +148,7 @@ class TableFixer(object):
             raise
 
 class Generic(object):
-
+    
     @classmethod
     def doa2dob(cls, doa=None):
         '''Convert date of attainment (ie reach 18years old) to DoB in US format: mm/dd/yyyy.
@@ -184,6 +187,10 @@ class Generic(object):
             Return tags_str1
         '''
         try:
+            basename = kwargs.get('basename')
+            if basename:
+                tag_map.update({basename:basename})
+                        
             tag_lists0 = kwargs.values()
             tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
             tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
@@ -203,7 +210,7 @@ class Generic(object):
         try:
             tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
 #             tag_list1 = [tag_map.get(tag0.strip(), tag0) for tag0 in tag_list0]  # ['Student','ResidentsParking']
-            tag_list1 = [tag_map.get(tag0.strip(), tag0) for tag0 in tag_list0]  # ['Student','ResidentsParking']
+            tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
             return tag_list1
         except (KeyError) as e:
             e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
@@ -260,6 +267,9 @@ class Register(object):
         '''
         pd = kwargs['PD']
         tag_map_voter.update({pd:pd, })
+        basename = kwargs.get('basename')
+        if basename:
+            tag_map_voter.update({basename:basename, })
         return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
 
     @classmethod
@@ -281,9 +291,6 @@ class Register(object):
 class AddressHandler():
     
     address=None
-#     @classmethod
-#     def is_block(cls, v):
-#         return regexes['block'].search(v)
     
     @classmethod
     def is_city(cls, v):  # is v a city
@@ -427,8 +434,9 @@ class Main():
             for (name , config) in self.config_lookup:
                 if search(name, filename):
                     print('Using config: {}'.format(config.get('config_name')))
-                    del config['config_name']
-                    self.fix_csv(filename, config)
+                    config_anon = deepcopy(config)
+                    del config_anon['config_name']
+                    self.fix_csv(filename, config_anon)
                     break
             else:
                 raise AttributeError('config not found for filename:{}'.format(filename))
@@ -444,8 +452,8 @@ if __name__ == '__main__':
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')

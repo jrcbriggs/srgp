@@ -212,7 +212,6 @@ class TestGeneric(unittest.TestCase):
         expected = 'a,b,c'
         self.assertEqual(actual, expected)
     
-    @skip
     def test_tags_add_key_error(self):
         self.assertRaises(KeyError, GN.tags_add, self.tag_map, k0='A,B,XXX')
 
@@ -222,7 +221,6 @@ class TestGeneric(unittest.TestCase):
         expected = ['a', 'b']
         self.assertEqual(actual, expected, actual)
 
-    @skip
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
         self.assertRaises(KeyError, GN.tags_split, self.tag_map, k0)
