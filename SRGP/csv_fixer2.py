@@ -188,10 +188,9 @@ class Generic(object):
         '''
         try:
             #Handle basename and pd
-            for k in ('basename', 'PD'):
-                v = kwargs.get(k)
-                if v:
-                    tag_map.update({v:v})
+            basename = kwargs.get('basename')
+            if basename:
+                tag_map.update({basename:basename})
                         
             tag_lists0 = kwargs.values()
             tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
@@ -257,7 +256,8 @@ class Voter(object):
         basename = kwargs.get('basename')
         if basename:
             tag_map_voter.update({basename:basename, })
-        return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
+        tag_str= ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
+        return tag_str.replace('basename=','')
 
 class Canvass(Generic):
     @classmethod

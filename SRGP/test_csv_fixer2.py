@@ -82,7 +82,6 @@ class TestTableFixer(unittest.TestCase):
         expected = self.table1
         self.assertListEqual(actual, expected)
 
-    @skip
     def test_fix_table_bad(self):
         self.row0['TagCol0'] = 'XXX'
         self.assertRaises(KeyError, self.tf.fix_table, table0=self.table0)
@@ -92,7 +91,6 @@ class TestTableFixer(unittest.TestCase):
         expected = self.row1
         self.assertDictEqual(actual, expected)
 
-    @skip
     def test_fix_row_bad(self):
         self.row0['TagCol0'] = 'XXX'
         self.assertRaises(KeyError, self.tf.fix_row, self.row0)
@@ -207,8 +205,8 @@ class TestGeneric(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_tags_add(self):
-        actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='')
-        expected = 'a,b,c'
+        actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='', basename='myfile',)
+        expected = 'a,b,c,myfile'
         self.assertEqual(actual, expected)
     
     def test_tags_add_key_error(self):
@@ -287,15 +285,15 @@ class TestCanvass(unittest.TestCase):
 class TestRegister(unittest.TestCase):
     
     def setUp(self):
-        self.kwargs = {'add1':'A', 'add2':'B', 'add3':'C', 'add4':'D', 'add5':'E'}
+        self.kwargs = {'add1':'A', 'add2':'B', 'add3':'C', 'add4':'D', 'add5':'E', }
 
     def test_tags_add_voter(self):
         tag_map_voter = {'K':'k', 'E':'European', }
         pd = 'EA'
         status = 'K'
         franchise = 'E'
-        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
-        expected = 'Franchise=European,PD=EA,Status=k'
+        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise,basename='myfile',)
+        expected = 'Franchise=European,PD=EA,Status=k,myfile'
         self.assertEqual(actual, expected)
 
     def test_country_code_get(self):
