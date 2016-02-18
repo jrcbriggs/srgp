@@ -66,7 +66,6 @@ config_rl = OD([
                                              'k3': 'Post',
                                              'k4': 'Vote14',
                                              'k5': 'Vote12',
-                                             'basename':'basename' ,                                                                       
                                              }
                   )
      ),
@@ -102,7 +101,6 @@ config_register = OD([
     ('tag_list', (VT.tags_add_voter, [tag_map_voter], {'PD': 'PD',
                                                 'Status': 'Status',
                                                 'Franchise': 'Franchise Flag',
-                                                'basename':'basename' ,                                                                       
                                                 })),
     ])
 
@@ -133,7 +131,6 @@ config_member = OD([
     ('registered_state', (GN.state_get, [], {})),
 #                     ('ward', 'Ward'),
 #                     ('constituency', 'Westminster parliament constituency'),
-    ('tag_list', (GN.tags_add, [{}], {'basename':'basename'})),
     ])
 
 #########################################################################################
@@ -155,7 +152,6 @@ config_supporter = OD([
     ('registered_state', (GN.state_get, [], {})),
 #                     ('ward', 'Ward'),
 #                     ('constituency', 'Westminster parliament constituency'),
-    ('tag_list', (GN.tags_add, [{}], {'basename':'basename'})),
     ])
 
 tag_map_volunteer={}
@@ -171,7 +167,6 @@ config_volunteers = OD([
 #                     ('ward', 'Ward'),
 #                     ('constituency', 'Westminster parliament constituency'),
     ('tag_list', (GN.tags_add, [{}], {
-                                    'basename':'basename',
 #                                       'volunteer_status':'Status',
 #                                       'volunteer_availability':'Availability',
 #                                       'volunteer_can_help_from':'I can help from',
@@ -195,8 +190,6 @@ config_young_greens = OD([
     ('is_deceased', (MB.is_deceased, [], {'status':'Status', })),
     ('party_member', (MB.get_party_member, [], {'status':'Status',})),
     ('support_level', (MB.get_support_level, [], {'status':'Status', })),
-    ('tag_list', (GN.tags_add, [{}], {'basename':'basename',
-                                      })),
     ])
 
 config_lookup = [

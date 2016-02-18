@@ -11,40 +11,40 @@ from unittest.mock import MagicMock
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
-from unittest.case import skip
 
 class TestFileHandler(unittest.TestCase):
     def setUp(self):
         self.fieldnames = ('A', 'B',)
-        self.filehandler = FileHandler()
-        self.pathname = '/tmp/test.py'
+        self.fh = FileHandler()
+        self.pathname = '/tmp/test.csv'
         self.table0 = [{'A':'a', 'B':'b', },
                       {'A':'c', 'B':'d', }]
 
     def test_csv_read(self):
-        self.filehandler.csv_write(self.table0, self.pathname, self.fieldnames)
-        table1 = self.filehandler.csv_read(self.pathname)
+        self.fh.csv_write(self.table0, self.pathname, self.fieldnames)
+        table1 = self.fh.csv_read(self.pathname)
         self.assertListEqual(table1, self.table0)
 
 class TestCsvFixer(unittest.TestCase):
     def setUp(self):
         self.csvfixer = CsvFixer()
-        self.fieldnames = ('A', 'B',)
         self.fh = FileHandler()
-        self.pathname = '/tmp/test.py'
+        self.pathname = '/tmp/test.csv'
+        self.pathname1 = '/tmp/testNB.csv'
         self.config = OD([
                           ('AA', 'A'),
                           ('BB', 'B'), ])
         self.table0 = [{'A':'a', 'B':'b', },
                       {'A':'c', 'B':'d', }]
 
-        self.table0 = [{'AA':'a', 'BB':'b', },
-                      {'AA':'c', 'BB':'d', }]
+        self.table1 = [{'AA':'a', 'BB':'b', 'tag_list':'test', },
+                      {'AA':'c', 'BB':'d', 'tag_list':'test', },]
 
     def test_csv_read(self):
+        self.fh.csv_write(self.table0, self.pathname, ['A', 'B'])
         self.csvfixer.fix_csv(self.pathname, self.config, self.fh.csv_read, self.fh.csv_write)
-        table1 = self.fh.csv_read(self.pathname)
-        self.assertListEqual(table1, self.table0)
+        table1 = self.fh.csv_read(self.pathname1)
+        self.assertListEqual(table1, self.table1)
 
 class TestTableFixer(unittest.TestCase):
 
@@ -205,8 +205,8 @@ class TestGeneric(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_tags_add(self):
-        actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='', basename='myfile',)
-        expected = 'a,b,c,myfile'
+        actual = GN.tags_add(self.tag_map, k0='A,B', k1='C', k2='',)
+        expected = 'a,b,c'
         self.assertEqual(actual, expected)
     
     def test_tags_add_key_error(self):
@@ -292,8 +292,8 @@ class TestRegister(unittest.TestCase):
         pd = 'EA'
         status = 'K'
         franchise = 'E'
-        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise,basename='myfile',)
-        expected = 'Franchise=European,PD=EA,Status=k,myfile'
+        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
+        expected = 'Franchise=European,PD=EA,Status=k'
         self.assertEqual(actual, expected)
 
     def test_country_code_get(self):

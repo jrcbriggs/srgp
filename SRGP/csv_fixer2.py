@@ -94,20 +94,27 @@ class CsvFixer(object):
         table0 = filereader(pathname)
 
         # Fix the data in table
-        table1 = TableFixer(config=config,basename=basename).fix_table(table0)
+        table1 = TableFixer(config=config).fix_table(table0)
+        
+        #Append basename to tags
+        for row1 in table1:
+            tag_list = row1.get('tag_list')
+            row1['tag_list']=tag_list +','+basename if tag_list else basename
 
         # Write the table to a new csv file for import to NB.
         pathname_new = pathname.replace('.csv', 'NB.csv')
-        fieldnames = config.keys()
+        fieldnames = [k for k in config.keys()]
+        #Enusre tag_list is in keys
+        if not 'tag_list' in fieldnames:
+            fieldnames.append('tag_list')
         
         filewriter(table1, pathname_new, fieldnames)
         return pathname_new
 
 class TableFixer(object):
     
-    def __init__(self, config=None, basename=None):
+    def __init__(self, config=None):
         self.config = config
-        self.basename=basename
 
     def fix_table(self, table0):
         '''Returns new table given old table
@@ -120,9 +127,7 @@ class TableFixer(object):
 
     def fix_row(self, row0):
         '''Creates new row from old row
-        Adding basename to the row provides option in config to add the basename to the tags
         '''
-        row0.update({'basename':self.basename})
         try:
             return {fieldname1: self.fix_field(row0, arg0)
                         for (fieldname1, arg0) in self.config.items()}
@@ -188,11 +193,6 @@ class Generic(object):
             Return tags_str1
         '''
         try:
-            #Handle basename and pd
-            basename = kwargs.get('basename')
-            if basename:
-                tag_map.update({basename:basename})
-                        
             tag_lists0 = kwargs.values()
             tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
             tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
@@ -254,11 +254,7 @@ class Voter(object):
         '''
         pd = kwargs['PD']
         tag_map_voter.update({pd:pd, })
-        basename = kwargs.get('basename')
-        if basename:
-            tag_map_voter.update({basename:basename, })
-        tag_str= ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
-        return tag_str.replace('basename=','')
+        return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
 
 class Canvass(Generic):
     @classmethod
