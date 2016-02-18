@@ -12,11 +12,12 @@ from sys import argv
 
 
 regexes = {
-    'city': compile('^(Rotherham|Sheffield|Stocksbridge)$', IGNORECASE),
+    'city': compile('^(Barnsley|Hathersage|Mexborough|Rotherham|Sheffield|Stocksbridge|Worksop)$', IGNORECASE),
     'county': compile('^South Yorks$', IGNORECASE),
     'house': compile('Barn|Building|College|Cottage|Farm|Hall|House|'
                      'Lodge|Mansion|Mill|Residence', IGNORECASE),
-    'postcode': compile('^S\d\d? ?\d\w\w$'),
+    'postcode': compile('^S\d\d? \d\w\w$'),
+#     'postcode': compile('^S\d\d? ?\d\w\w$'),
     'locality': compile(r'^(Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Beauchief|Beighton|'
                         'Bents Green|Bradway|Bramley|Brampton|Brincliffe|Broom|Broomhall|'
                         'Broomhill|Burncross|Burngreave|Catcliffe|Chapeltown|Christchurch|'
@@ -448,12 +449,12 @@ class Main():
 if __name__ == '__main__':
     from configurations2 import config_lookup
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
-    argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
+#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
+    argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')
