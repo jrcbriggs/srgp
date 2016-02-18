@@ -40,7 +40,6 @@ tag_map_rl = {
 config_rl = OD([
     # ('fieldname_new', 'fieldname_old'), # or
     # ('fieldname_new', (func, [args]{kwargs})),
-    ('config_name', 'config_rl'),
     ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
     ('dob', (GN.doa2dob, [], {'doa': 'Date18'})),
     ('last_name', 'Surname'),
@@ -73,7 +72,7 @@ config_rl = OD([
      ),
   ])
 
-tag_map_voter = {'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
+tag_map_voter = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
                  'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
 address_register = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
 ward_lookup = {'E': 'Broomhill',
@@ -86,7 +85,6 @@ ward_lookup = {'E': 'Broomhill',
                 'Z': 'Walkley',
                 }
 config_register = OD([
-    ('config_name', 'config_register'),
     ('statefile_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
     ('prefix', 'Title'),
     ('first_name', 'First Name'),
@@ -101,17 +99,16 @@ config_register = OD([
     ('registered_zip', (AD.address_get, ['postcode'], address_register)),
     ('registered_state', (GN.state_get, [], {})),
     ('ward', (RG.ward_get, [ward_lookup], {'pd':'PD', })),
-    ('tag_list', (RG.tags_add_voter, [tag_map_voter], {'PD': 'PD',
-                                                        'status': 'Status',
-                                                        'franchise': 'Franchise Flag',
-                                                        'basename':'basename' ,                                                                       
-                                                        })),
+    ('tag_list', (VT.tags_add_voter, [tag_map_voter], {'PD': 'PD',
+                                                'Status': 'Status',
+                                                'Franchise': 'Franchise Flag',
+                                                'basename':'basename' ,                                                                       
+                                                })),
     ])
 
 #########################################################################################
 address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2','k3':'City','k4':'Postal Code'}
 config_member = OD([
-    ('config_name', 'config_member'),
     ('first_name', 'First Name'),
     ('last_name', 'Last Name'),
     ('civicrm_id', 'Contact ID'),
@@ -142,7 +139,6 @@ config_member = OD([
 #########################################################################################
 address_supporter = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k3':'City','k4':'Postal Code'}
 config_supporter = OD([
-    ('config_name', 'config_supporter'),
     ('name', 'Contact Name'),
     ('civicrm_id', 'Contact ID'),
     ('address_address1', (AD.address_get, ['address1'], address_supporter)),
@@ -164,7 +160,6 @@ config_supporter = OD([
 
 tag_map_volunteer={}
 config_volunteers = OD([
-    ('config_name', 'config_supporter'),
     ('name', 'Contact Name'),
     ('civicrm_id', 'Contact ID'),
     ('email', 'Email'),
@@ -188,7 +183,6 @@ config_volunteers = OD([
 
 #########################################################################################
 config_young_greens = OD([
-    ('config_name', 'config_supporter'),
     ('first_name', 'First Name'),
     ('last_name', 'Last Name'),
     ('civicrm_id', 'Contact ID'),
@@ -206,11 +200,11 @@ config_young_greens = OD([
     ])
 
 config_lookup = [
-     ('BroomhillCanvassData', config_rl),
-     ('CentralConstituencyRegister', config_register),
-     ('CentralConstituencyWardRegisters', config_register),
-     ('SRGP_MembersAll', config_member),
-     ('SRGP_SupportersAll', config_supporter),
-     ('SRGP_VolunteersAll', config_volunteers),
-     ('SRGP_YoungGreens', config_young_greens),
+     ('BroomhillCanvassData', config_rl,'config_rl',),
+     ('CentralConstituencyRegister', config_register,'config_register',),
+     ('CentralConstituencyWardRegisters', config_register,'config_register',),
+     ('SRGP_MembersAll', config_member,'config_member',),
+     ('SRGP_SupportersAll', config_supporter,'config_supporter',),
+     ('SRGP_VolunteersAll', config_volunteers,'config_volunteers',),
+     ('SRGP_YoungGreens', config_young_greens,'config_young_greens',),
      ]

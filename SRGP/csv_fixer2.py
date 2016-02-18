@@ -187,9 +187,11 @@ class Generic(object):
             Return tags_str1
         '''
         try:
-            basename = kwargs.get('basename')
-            if basename:
-                tag_map.update({basename:basename})
+            #Handle basename and pd
+            for k in ('basename', 'PD'):
+                v = kwargs.get(k)
+                if v:
+                    tag_map.update({v:v})
                         
             tag_lists0 = kwargs.values()
             tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
@@ -246,6 +248,17 @@ class Voter(object):
     def fix_support_level(cls, support_level_map, support_level=None):
         return support_level_map[support_level]
 
+    @classmethod
+    def tags_add_voter(cls, tag_map_voter, **kwargs):
+        '''Eg kwargs = {'PD':'ED', 'status':'K', 'franchise':'E'
+        '''
+        pd = kwargs['PD']
+        tag_map_voter.update({pd:pd, })
+        basename = kwargs.get('basename')
+        if basename:
+            tag_map_voter.update({basename:basename, })
+        return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
+
 class Canvass(Generic):
     @classmethod
     def background_merge(cls, notes='', comments=''):
@@ -260,17 +273,6 @@ class Canvass(Generic):
         return block_name
 
 class Register(object):
-
-    @classmethod
-    def tags_add_voter(cls, tag_map_voter, **kwargs):
-        '''Eg kwargs = {'PD':'ED', 'status':'K', 'franchise':'E'
-        '''
-        pd = kwargs['PD']
-        tag_map_voter.update({pd:pd, })
-        basename = kwargs.get('basename')
-        if basename:
-            tag_map_voter.update({basename:basename, })
-        return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
 
     @classmethod
     def city_get(cls):
@@ -431,12 +433,10 @@ class Main():
         '''
         for filename in filenames:  # skip scriptname in argv[0]
             # Find config varname to match csv filename
-            for (name , config) in self.config_lookup:
+            for (name, config, config_name) in self.config_lookup:
                 if search(name, filename):
-                    print('Using config: {}'.format(config.get('config_name')))
-                    config_anon = deepcopy(config)
-                    del config_anon['config_name']
-                    self.fix_csv(filename, config_anon)
+                    print('Using config: {}'.format(config_name))
+                    self.fix_csv(filename, config)
                     break
             else:
                 raise AttributeError('config not found for filename:{}'.format(filename))
@@ -448,11 +448,11 @@ class Main():
 if __name__ == '__main__':
     from configurations2 import config_lookup
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
-#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
+    argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile

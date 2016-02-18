@@ -138,7 +138,6 @@ class TestMain(unittest.TestCase):
         self.fh = FileHandler()
         self.pathname = '/tmp/test.py'
         self.config_test = OD([
-                          ('config_name', 'config_test'),
                           ('AA', 'A'),
                           ('BB', 'B'), ])
         self.table0 = [{'A':'a', 'B':'b', },
@@ -148,7 +147,7 @@ class TestMain(unittest.TestCase):
                       {'AA':'c', 'BB':'d', }]
         csv_fixer2.config_test = self.config_test
         self.config_lookup = [
-                         ('BroomhillCanvassData', self.config_test),
+                         ('BroomhillCanvassData', self.config_test, 'config_test'),
                          ]
         self.main = Main(config_lookup=self.config_lookup)
         self.filename = 'BroomhillCanvassData'
@@ -163,7 +162,7 @@ class TestMain(unittest.TestCase):
         filenames = [t[0] for t in self.config_lookup]
         self.main.fix_csv = MagicMock()
         self.main.main(filenames)
-        self.main.fix_csv.assert_called_any_with('BroomhillCanvassData', self.config_test)
+        self.main.fix_csv.assert_called_any_with('BroomhillCanvassData', self.config_test, 'config_test')
 
     def test_main_config_not_found(self):
         self.assertRaises(AttributeError, self.main.main, 'XXX')
@@ -295,7 +294,7 @@ class TestRegister(unittest.TestCase):
         pd = 'EA'
         status = 'K'
         franchise = 'E'
-        actual = RG.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
+        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
         expected = 'Franchise=European,PD=EA,Status=k'
         self.assertEqual(actual, expected)
 
