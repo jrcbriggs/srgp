@@ -4,11 +4,11 @@ Created on 1 Nov 2014
 
 @author: julian
 '''
-from copy import deepcopy
 from csv import DictReader, DictWriter
 from os import path
 from re import compile, IGNORECASE, search
 from sys import argv
+from logging import warning
 
 
 regexes = {
@@ -84,7 +84,7 @@ class CsvFixer(object):
     Create new table: with NB table column headings
     Write the table to a new csv file for import to NB.
     '''
-    def fix_csv(self, pathname, config, filereader, filewriter):
+    def fix_csv(self, pathname, config, config_name, filereader, filewriter):
         
         #Get the basename
         basename=path.basename(pathname).replace('.csv','')
@@ -93,7 +93,7 @@ class CsvFixer(object):
         table0 = filereader(pathname)
 
         # Fix the data in table
-        table1 = TableFixer(config=config).fix_table(table0)
+        table1 = TableFixer(config=config, config_name=config_name).fix_table(table0)
         
         #Append basename to tags
         for row1 in table1:
@@ -114,8 +114,9 @@ class CsvFixer(object):
 
 class TableFixer(object):
     
-    def __init__(self, config=None):
+    def __init__(self, config=None, config_name=None):
         self.config = config
+        self.config_name = config_name
 
     def fix_table(self, table0):
         '''Returns new table given old table
@@ -125,15 +126,16 @@ class TableFixer(object):
     def fix_row(self, row0):
         '''Creates new row from old row
         '''
-        try:
-            return {fieldname1: self.fix_field(row0, arg0)
-                        for (fieldname1, arg0) in self.config.items()}
-        except (IndexError, KeyError, TypeError) as e:
-            e.args += ('row0:', row0)
-            raise
+        return {fieldname1: self.fix_field(row0, arg0)
+                    for (fieldname1, arg0) in self.config.items()}
 
     def fix_field(self, row0, arg0):
         '''Creates new field from old field(s)
+        row0 ={k0:v0,...}
+        row1 ={k1:v1,...}
+        field1 is in row1
+        Replaced list comp by for loop to allow exception handling
+        was: kwargs = {k: row0[v].strip() for (k, v) in kwargs0.items()}
         '''
         try:
             if arg0 == None:
@@ -143,8 +145,12 @@ class TableFixer(object):
             elif isinstance(arg0, tuple):
                 (func, args, kwargs0) = arg0
                 if callable(func):
-#                     kwargs = {k: row0[v].replace(',',' ').strip() for (k, v) in kwargs0.items()}
-                    kwargs = {k: row0[v].strip() for (k, v) in kwargs0.items()}
+                    kwargs={}
+                    for (k1, k0) in kwargs0.items():
+                        try:
+                            kwargs[k1]= row0[k0].strip() 
+                        except(KeyError):
+                            warning('In {} in config file, check config row {}, header {} not in row0:{}'.format(self.config_name, k1, k0, row0))
                     return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
         except (AttributeError, IndexError, KeyError, TypeError) as e:
@@ -190,14 +196,11 @@ class Generic(object):
               Convert to string tag_str1
             Return tags_str1
         '''
-        try:
-            tag_lists0 = kwargs.values()
-            tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
-            tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
-            return tag_str1
-        except (KeyError) as e:
-            e.args += ('tags_add', 'tag_map:', tag_map, 'kwargs:', kwargs,)
-            raise
+        tag_lists0 = kwargs.values()
+        tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
+        tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
+        return tag_str1
+
 
     @classmethod
     def tags_split(cls, tag_map, tag_str0):
@@ -207,13 +210,14 @@ class Generic(object):
               Convert tag0 to tag1 elements in tag_list1
            Return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
-        try:
-            tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-            tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]
-            return tag_list1
-        except (KeyError, TypeError) as e:
-            e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
-            raise
+        tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
+        tag_list1=[]
+        for tag0 in tag_list0:
+            try:
+                tag_list1.append(tag_map[tag0.strip()])
+            except:
+                warning('key {} not found in tagmap {}'.format(tag0,tag_map)) 
+        return tag_list1
 
     @classmethod
     def value_get(cls, value):
@@ -316,7 +320,8 @@ class AddressHandler():
     @classmethod
     def address_get(cls, key, **kwargs):
         '''Get address1, address2, address3,
-        Must call once for each and in that order
+        Caches address (all parts) for use by subsequent calls for address parts
+        Must call once for each row and in that order
         '''
         if key=='address1':
             cls.address=cls.address_get_helper(**kwargs)
@@ -334,7 +339,7 @@ class AddressHandler():
             if not v:
                 continue
             elif cls.is_postcode(v) and not address.get('postcode'):
-                address['postcode'] = v
+                address['postcode'] = v.upper()
             elif cls.is_city(v) and not address.get('city'):
                 address['city'] = v
             elif cls.is_locality(v) and not address.get('address3'):
@@ -428,13 +433,13 @@ class Main():
             for (name, config, config_name) in self.config_lookup:
                 if search(name, filename):
                     print('Using config: {}'.format(config_name))
-                    self.fix_csv(filename, config)
+                    self.fix_csv(filename, config, config_name)
                     break
             else:
                 raise AttributeError('config not found for filename:{}'.format(filename))
 
-    def fix_csv(self, filename, config):
-        filename_new = self.csv_fixer.fix_csv(filename, config, filereader=self.filereader, filewriter=self.filewriter)
+    def fix_csv(self, filename, config, config_name):
+        filename_new = self.csv_fixer.fix_csv(filename, config, config_name, filereader=self.filereader, filewriter=self.filewriter)
         print(filename_new)
 
 if __name__ == '__main__':
@@ -445,9 +450,7 @@ if __name__ == '__main__':
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
 #     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
-#     import cProfile
-#     cProfile.run('Main().main(argv[1:])')
     print('Done')
       

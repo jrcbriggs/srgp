@@ -31,6 +31,7 @@ class TestCsvFixer(unittest.TestCase):
         self.fh = FileHandler()
         self.pathname = '/tmp/test.csv'
         self.pathname1 = '/tmp/testNB.csv'
+        self.config_name = 'config_test'
         self.config = OD([
                           ('AA', 'A'),
                           ('BB', 'B'), ])
@@ -42,7 +43,7 @@ class TestCsvFixer(unittest.TestCase):
 
     def test_csv_read(self):
         self.fh.csv_write(self.table0, self.pathname, ['A', 'B'])
-        self.csvfixer.fix_csv(self.pathname, self.config, self.fh.csv_read, self.fh.csv_write)
+        self.csvfixer.fix_csv(self.pathname, self.config, self.config_name, self.fh.csv_read, self.fh.csv_write)
         table1 = self.fh.csv_read(self.pathname1)
         self.assertListEqual(table1, self.table1)
 
@@ -84,7 +85,10 @@ class TestTableFixer(unittest.TestCase):
 
     def test_fix_table_bad(self):
         self.row0['TagCol0'] = 'XXX'
-        self.assertRaises(KeyError, self.tf.fix_table, table0=self.table0)
+        actual=self.tf.fix_table(table0=self.table0)
+        self.table1[0]['tag_list']= 'c,d'
+        expected = self.table1
+        self.assertListEqual(actual, expected)
 
     def test_fix_row(self):
         actual = self.tf.fix_row(self.row0)
@@ -93,7 +97,10 @@ class TestTableFixer(unittest.TestCase):
 
     def test_fix_row_bad(self):
         self.row0['TagCol0'] = 'XXX'
-        self.assertRaises(KeyError, self.tf.fix_row, self.row0)
+        actual = self.tf.fix_row(self.row0)
+        self.row1['tag_list']= 'c,d'
+        expected = self.row1
+        self.assertDictEqual(actual, expected)
 
     def test_fix_field_str(self):
         arg0 = 'First name'
@@ -130,11 +137,19 @@ class TestTableFixer(unittest.TestCase):
         arg0 = (123, [], {'pd':'pdXXX', 'eno':'eno'})
         self.assertRaises(TypeError, self.tf.fix_field, row0, arg0)
 
+    def test_fix_field_bad_kwargs_value(self):
+        '''First element  of tuple should be str or a callable
+        '''
+        row0 = {'pd': self.pd, 'eno':self.eno, }
+        arg0 = (GN.value_get, [], {'xxx':'XXX', })
+        self.assertRaises(TypeError, self.tf.fix_field, row0, arg0)
+
 class TestMain(unittest.TestCase):
     def setUp(self):
         self.fieldnames = ('A', 'B',)
         self.fh = FileHandler()
         self.pathname = '/tmp/test.py'
+        self.config_name = 'config_test'
         self.config_test = OD([
                           ('AA', 'A'),
                           ('BB', 'B'), ])
@@ -167,8 +182,8 @@ class TestMain(unittest.TestCase):
 
     def test_fix_csv(self):
         self.main.csv_fixer.fix_csv = MagicMock()
-        self.main.fix_csv(self.filename, self.config_test)
-        self.main.csv_fixer.fix_csv.assert_called_once_with(self.filename, self.config_test,
+        self.main.fix_csv(self.filename, self.config_test, self.config_name)
+        self.main.csv_fixer.fix_csv.assert_called_once_with(self.filename, self.config_test,self.config_name,
                                                             filereader=self.main.filereader, filewriter=self.main.filewriter)
 
 #########################################################################################################
@@ -210,7 +225,9 @@ class TestGeneric(unittest.TestCase):
         self.assertEqual(actual, expected)
     
     def test_tags_add_key_error(self):
-        self.assertRaises(KeyError, GN.tags_add, self.tag_map, k0='A,B,XXX')
+        actual=GN.tags_add(self.tag_map, k0='A,B,XXX')
+        expected ='a,b'
+        self.assertEqual(actual, expected)
 
     def test_tags_split(self):
         fieldvalue = 'A,B'
@@ -220,7 +237,9 @@ class TestGeneric(unittest.TestCase):
 
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
-        self.assertRaises(KeyError, GN.tags_split, self.tag_map, k0)
+        actual=GN.tags_split(self.tag_map, k0)
+        expected =['a', 'b']
+        self.assertEqual(actual, expected)
         
     def test_value_get(self):
         value='asdf'
