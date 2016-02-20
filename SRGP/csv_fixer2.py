@@ -10,15 +10,14 @@ from re import compile, IGNORECASE, search
 from sys import argv
 from logging import warning
 
-
 regexes = {
+    'block': compile(r'^()$', IGNORECASE),  # Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
     'city': compile('^(Barnsley|Hathersage|Mexborough|Rotherham|Sheffield|Stocksbridge|Worksop)$', IGNORECASE),
     'county': compile('^South Yorks$', IGNORECASE),
     'house': compile('Barn|Building|College|Cottage|Farm|Hall|House|'
                      'Lodge|Mansion|Mill|Residence', IGNORECASE),
-#     'postcode': compile('^S\d\d? \d\w\w$'),
-    'postcode': compile('^S\d\d? ?\d\w\w$', IGNORECASE),
-    'locality': compile(r'^(Abbeydale|Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Bate Green|Beauchief|Beighton|'                        'Bents Green|Bingley Seat|Birley|Bradway|Bramley|Brampton|Brincliffe|Brinsworth|Broom|Broomhall|'
+    'locality': compile(r'^(Abbeydale|Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Bate Green|Beauchief|Beighton|'
+                        'Bents Green|Bingley Seat|Birley|Bradway|Bramley|Brampton|Brincliffe|Brinsworth|Broom|Broomhall|'
                         'Broomhill|Burncross|Burngreave|Carterknowle|Catcliffe|Chapeltown|Christchurch|'
                         'City Centre|Clent|Clifton|Crookes|Crookesmoor|Crooks|Crosspool|'
                         'Dalton|Darnall|Deepcar|Dinnington|Dore|East Dene|East Herringthorpe|'
@@ -34,6 +33,7 @@ regexes = {
                         'Upperthorpe|Wales Bar|Walkley|Waterthorpe|Wath upon Dearne|Wath-upon-Dearne|'
                         'Well Court|Wellgate|Wentworth|West Melton|Whiston|Wickersley|Wincobank|Wingfield|'
                         'Woodend|Woodhouse|Woodseats|Woodsetts|Worksop|Worrall)$', IGNORECASE),
+    'postcode': compile('^S\d\d? ?\d\w\w$', IGNORECASE),
     'street': compile(r'\b(Anglo Works|Approach|Ashgrove|Ave|Avenue|Bakers Yard|Bank|Brg|Bridge|'
                       'Brookside|Cir|Close|Common|Common Side|Crookes|Crossways|Court|Cres|Crescent|Croft|Ct|Dell|'
                       'Dl|Dr|Drive|Edward Street Flats|Endcliffe Village|Fields|Gdns|Gardens|Gate|Glade|Glen|Gr|Green|'
@@ -44,11 +44,123 @@ regexes = {
                       'Cross Smithfield|Kelham Island|'
                       'Summerfield|Upperthorpe|Wicker|Woodcliffe|The Lawns|The Nook|'
                       'Fairleigh|Foster|Hartshead|Millsands|Pinsent|Redgrave|The Circle|'  # blocks
-                      'Midhopecourt|' #Members streets
+                      'Midhopecourt|'
                       'Other Electors)$', IGNORECASE),
-     'block': compile(r'^()$', IGNORECASE),  # Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
-    'street_number': compile(r'^(Above|Back|Back Of|Bk|First Floor|Flat Above|Flat Over|Ground Floor|Over|Rear|Rear Of)?[\s\d/-]+\w?$'),
+    'street_number': compile(r'^(Above|Back|Back Of|Bk|First Floor|Flat Above|Flat Over|Ground Floor|Over|Rear|Rear Of)?[\s\d/-]+\w?$', IGNORECASE),
 }
+
+class AddressHandler():
+    
+    address = None
+    
+    @classmethod
+    def is_city(cls, v):  # is v a city
+        return regexes['city'].search(v)
+
+    @classmethod
+    def is_locality(cls, v):  # is v a locality (eg Broomhall)
+        return regexes['locality'].search(v)
+
+    @classmethod
+    def is_postcode(cls, v):  # is v a postcode
+        return regexes['postcode'].search(v)
+
+    @classmethod
+    def is_street(cls, v):  # is v a street
+        return regexes['street'].search(v)
+    
+    @classmethod
+    def is_street_number(cls, v):  # is v a street
+        return regexes['street_number'].search(v)
+    
+   
+    @classmethod
+    def address_get(cls, key, **kwargs):
+        '''Get address1, address2, address3,
+        Caches address (all parts) for use by subsequent calls for address parts
+        Must call once for each row and in that order
+        '''
+        if key == 'address1':
+            cls.address = cls.address_get_helper(**kwargs)
+        return cls.address.get(key)
+        
+    @classmethod
+    def address_get_helper(cls, **kwargs):
+        address = {}
+        street_number = ''
+
+        # Scan each kwarg value, from last (eg postcode) to first (eg Flat 1) in turn for NB address fields
+        for k in sorted(kwargs.keys(), reverse=True):
+            v = kwargs[k].strip()
+            # Skip null values
+            if not v:
+                continue
+            elif cls.is_postcode(v) and not address.get('postcode'):
+                address['postcode'] = v.upper()
+            elif cls.is_city(v) and not address.get('city'):
+                address['city'] = v
+            elif cls.is_locality(v) and not address.get('address3'):
+                address['address3'] = v
+            elif cls.is_street(v) and not address.get('address1'):
+                address['address1'] = v
+            elif cls.is_street_number(v) and not street_number:
+                street_number = v
+            else:
+                address['address2'] = (v + ' ' + address.get('address2', '')).strip()
+                
+        address['address1'] = ' '.join([street_number, address.get('address1', '')]).strip()
+        address['city'] = address.get('city', '').capitalize()
+        
+        return address  
+
+class Canvass():
+    @classmethod
+    def background_merge(cls, notes='', comments=''):
+        return ' '.join([notes, comments])
+
+    @classmethod
+    def fix_address1(cls, housename='', street_number='', street_name=''):
+        return ' '.join([housename, street_number, street_name]).strip()
+
+    @classmethod
+    def fix_address2(cls, block_name=''):
+        return block_name
+
+class CsvFixer(object):
+
+    '''The top level class.
+    Read csv data file into a table
+    Fix the data in table
+    Create new table: with NB table column headings
+    Write the table to a new csv file for import to NB.
+    '''
+    def fix_csv(self, pathname, config, config_name, filereader, filewriter):
+        
+        # Get the basename
+        basename = path.basename(pathname).replace('.csv', '')
+
+        # Read csv data file into a table
+        table0 = filereader(pathname)
+
+        # Fix the data in table
+        table1 = TableFixer(config=config, config_name=config_name).fix_table(table0)
+        
+        # Append basename to tags
+        for row1 in table1:
+            # Replace - by _ in basename: NB throws error if tag list contains just a single tag containing a minus sign -
+            basename.replace('-', '_') 
+            tag_list = row1.get('tag_list')
+            row1['tag_list'] = tag_list + ',' + basename if tag_list else basename
+
+        # Write the table to a new csv file for import to NB.
+        pathname_new = pathname.replace('.csv', 'NB.csv')
+        fieldnames = [k for k in config.keys()]
+        # Enusre tag_list is in keys
+        if not 'tag_list' in fieldnames:
+            fieldnames.append('tag_list')
+        
+        filewriter(table1, pathname_new, fieldnames)
+        return pathname_new
 
 class FileHandler(object):
 
@@ -75,87 +187,6 @@ class FileHandler(object):
         dw = DictWriter(fh, fieldnames1)
         dw.writeheader()
         dw.writerows(table1)
-
-class CsvFixer(object):
-
-    '''The top level class.
-    Read csv data file into a table
-    Fix the data in table
-    Create new table: with NB table column headings
-    Write the table to a new csv file for import to NB.
-    '''
-    def fix_csv(self, pathname, config, config_name, filereader, filewriter):
-        
-        #Get the basename
-        basename=path.basename(pathname).replace('.csv','')
-
-        # Read csv data file into a table
-        table0 = filereader(pathname)
-
-        # Fix the data in table
-        table1 = TableFixer(config=config, config_name=config_name).fix_table(table0)
-        
-        #Append basename to tags
-        for row1 in table1:
-            #Replace - by _ in basename: NB throws error if tag list contains just a single tag containing a minus sign -
-            basename.replace('-','_') 
-            tag_list = row1.get('tag_list')
-            row1['tag_list']=tag_list +','+basename if tag_list else basename
-
-        # Write the table to a new csv file for import to NB.
-        pathname_new = pathname.replace('.csv', 'NB.csv')
-        fieldnames = [k for k in config.keys()]
-        #Enusre tag_list is in keys
-        if not 'tag_list' in fieldnames:
-            fieldnames.append('tag_list')
-        
-        filewriter(table1, pathname_new, fieldnames)
-        return pathname_new
-
-class TableFixer(object):
-    
-    def __init__(self, config=None, config_name=None):
-        self.config = config
-        self.config_name = config_name
-
-    def fix_table(self, table0):
-        '''Returns new table given old table
-        '''
-        return [self.fix_row(row0) for row0 in table0]
-
-    def fix_row(self, row0):
-        '''Creates new row from old row
-        '''
-        return {fieldname1: self.fix_field(row0, arg0)
-                    for (fieldname1, arg0) in self.config.items()}
-
-    def fix_field(self, row0, arg0):
-        '''Creates new field from old field(s)
-        row0 ={k0:v0,...}
-        row1 ={k1:v1,...}
-        field1 is in row1
-        Replaced list comp by for loop to allow exception handling
-        was: kwargs = {k: row0[v].strip() for (k, v) in kwargs0.items()}
-        '''
-        try:
-            if arg0 == None:
-                return None
-            elif isinstance(arg0, str):
-                return row0.get(arg0).strip()
-            elif isinstance(arg0, tuple):
-                (func, args, kwargs0) = arg0
-                if callable(func):
-                    kwargs={}
-                    for (k1, k0) in kwargs0.items():
-                        try:
-                            kwargs[k1]= row0[k0].strip() 
-                        except(KeyError):
-                            warning('In {} in config file, check config row {}, header {} not in row0:{}'.format(self.config_name, k1, k0, row0))
-                    return func(*args, **kwargs)
-            raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
-        except (AttributeError, IndexError, KeyError, TypeError) as e:
-            e.args += ('fix_field', 'row0:', row0, 'arg0:', arg0,)
-            raise
 
 class Generic(object):
     
@@ -211,18 +242,136 @@ class Generic(object):
            Return tag_list as string, eg: 'ResidentsParking,StreetsAhead'
         '''
         tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-        tag_list1=[]
+        tag_list1 = []
         for tag0 in tag_list0:
             try:
                 tag_list1.append(tag_map[tag0.strip()])
             except:
-                warning('key {} not found in tagmap {}'.format(tag0,tag_map)) 
+                warning('key {} not found in tagmap {}'.format(tag0, tag_map)) 
         return tag_list1
 
     @classmethod
     def value_get(cls, value):
         return value
  
+class Member():
+    
+    @classmethod
+    def fix_date(cls, date=None):
+        '''Convert date from UK format (dd/mm/yyyy) to US format: mm/dd/yyyy.
+        '''
+        if date:
+            (year, month, day) = date.split('-')
+            return '/'.join([month, day, year])
+        else:
+            return date
+
+    @classmethod
+    def get_party(cls, party_map, status=None):
+        return party_map[status]
+     
+    @classmethod
+    def get_party_green(cls,):
+        '''Return 'G'. Used for supporters and volunteers (civi has no status for them)'''
+        return 'G'
+     
+    @classmethod
+    def get_party_member(cls, party_member_map, status=None):
+        '''Party member flag for is currently a member: 
+        False for: Cancelled, Deceased, Expired 
+        True for: Current, Grace, New
+        (Alternatively one could argue that a cancelled member is still a member, so True.)
+        '''
+        return party_member_map[status]
+    
+    @classmethod
+    def get_status(cls, party_status_map, status=None):
+        '''NB: active, canceled, expired, grace period
+        '''
+        return party_status_map[status]
+    @classmethod
+    def get_support_level(cls, support_level_map, status=None):
+        '''Support level: Cancelled, Deceased, Expired
+        Unclear what level to set for: cancelled, expired 
+        TODO uncomment after matching to original csv
+        '''
+        return support_level_map[status]
+    
+   
+    @classmethod
+    def is_deceased(cls, status=None):
+        return status == 'Deceased'
+     
+class Register(object):
+
+    @classmethod
+    def city_get(cls):
+        '''Naive method, just returns Sheffield. 
+        OK for Register and Canvassing.
+         AddressHandler.city_get OK for members etc and Postal
+        '''
+        return 'Sheffield'
+    
+    @classmethod
+    def country_code_get(cls):
+        return 'GB'
+    
+    @classmethod
+    def ward_get(cls, ward_lookup, pd=None):
+        return ward_lookup[pd[0]]
+
+class TableFixer(object):
+    
+    def __init__(self, config=None, config_name=None):
+        self.config = config
+        self.config_name = config_name
+
+    def fix_table(self, table0):
+        '''Returns new table given old table
+        '''
+        return [self.fix_row(row0) for row0 in table0]
+
+    def fix_row(self, row0):
+        '''Creates new row from old row
+        '''
+        return {fieldname1: self.fix_field(row0, arg0)
+                    for (fieldname1, arg0) in self.config.items()}
+
+    def fix_field(self, row0, arg0):
+        '''Creates new field from old field(s)
+        row0 ={k0:v0,...}
+        row1 ={k1:v1,...}
+        field1 is in row1
+        Replaced list comp by for loop to allow exception handling
+        was: kwargs = {k: row0[v].strip() for (k, v) in kwargs0.items()}
+        '''
+        try:
+            if arg0 == None:
+                return None
+            elif isinstance(arg0, str):
+                return row0.get(arg0).strip()
+            elif isinstance(arg0, tuple):
+                (func, args, kwargs0) = arg0
+                if callable(func):
+                    kwargs = {}
+                    for (k1, k0) in kwargs0.items():
+                        try:
+                            kwargs[k1] = row0[k0].strip() 
+                        except(KeyError):
+                            warning('In {} in config file, check config row {}, header {} not in row0:{}'.format(self.config_name, k1, k0, row0))
+                    return func(*args, **kwargs)
+            raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
+        except (AttributeError, IndexError, KeyError, TypeError) as e:
+            e.args += ('fix_field', 'row0:', row0, 'arg0:', arg0,)
+            raise
+
+class Volunteer():
+    
+    @classmethod
+    def tag_add_volunteer(cls, tags_map, **kwargs):
+        kwargs['volunteer_at'] = kwargs['volunteer_at'].replace('  ', ',')
+        return Generic.tags_add(tags_map, **kwargs)
+    
 class Voter(object):
     '''Common to register and canvassing
     '''
@@ -261,164 +410,12 @@ class Voter(object):
         tag_map_voter.update({pd:pd, })
         return ','.join(sorted(['{}={}'.format(k, tag_map_voter[v]) for (k, v) in kwargs.items() if v]))
 
-class Canvass(Generic):
-    @classmethod
-    def background_merge(cls, notes='', comments=''):
-        return ' '.join([notes, comments])
-
-    @classmethod
-    def fix_address1(cls, housename='', street_number='', street_name=''):
-        return ' '.join([housename, street_number, street_name]).strip()
-
-    @classmethod
-    def fix_address2(cls, block_name=''):
-        return block_name
-
-class Register(object):
-
-    @classmethod
-    def city_get(cls):
-        '''Naive method, just returns Sheffield. 
-        OK for Register and Canvassing.
-         AddressHandler.city_get OK for members etc and Postal
-        '''
-        return 'Sheffield'
-    
-    @classmethod
-    def country_code_get(cls):
-        return 'GB'
-    
-    @classmethod
-    def ward_get(cls, ward_lookup, pd=None):
-        return ward_lookup[pd[0]]
-
-class AddressHandler():
-    
-    address=None
-    
-    @classmethod
-    def is_city(cls, v):  # is v a city
-        return regexes['city'].search(v)
-
-    @classmethod
-    def is_locality(cls, v):  # is v a locality (eg Broomhall)
-        return regexes['locality'].search(v)
-
-    @classmethod
-    def is_postcode(cls, v):  # is v a postcode
-        return regexes['postcode'].search(v)
-
-    @classmethod
-    def is_street(cls, v):  # is v a street
-        return regexes['street'].search(v)
-    
-    @classmethod
-    def is_street_number(cls, v):  # is v a street
-        return regexes['street_number'].search(v)
-    
-   
-    @classmethod
-    def address_get(cls, key, **kwargs):
-        '''Get address1, address2, address3,
-        Caches address (all parts) for use by subsequent calls for address parts
-        Must call once for each row and in that order
-        '''
-        if key=='address1':
-            cls.address=cls.address_get_helper(**kwargs)
-        return cls.address.get(key)
-        
-    @classmethod
-    def address_get_helper(cls, **kwargs):
-        address = {}
-        street_number = ''
-
-        # Scan each kwarg value, from last (eg postcode) to first (eg Flat 1) in turn for NB address fields
-        for k in sorted(kwargs.keys(), reverse=True):
-            v = kwargs[k].strip()
-            # Skip null values
-            if not v:
-                continue
-            elif cls.is_postcode(v) and not address.get('postcode'):
-                address['postcode'] = v.upper()
-            elif cls.is_city(v) and not address.get('city'):
-                address['city'] = v
-            elif cls.is_locality(v) and not address.get('address3'):
-                address['address3'] = v
-            elif cls.is_street(v) and not address.get('address1'):
-                address['address1'] = v
-            elif cls.is_street_number(v) and not street_number:
-                street_number = v
-            else:
-                address['address2'] = (v + ' ' + address.get('address2', '')).strip()
-                
-        address['address1'] = ' '.join([street_number, address.get('address1','')]).strip()
-        address['city'] = address.get('city','').capitalize()
-        
-        return address
-    
-
-class Member():
-    
-    @classmethod
-    def fix_date(cls, date=None):
-        '''Convert date from UK format (dd/mm/yyyy) to US format: mm/dd/yyyy.
-        '''
-        if date:
-            (year, month, day) = date.split('-')
-            return '/'.join([month, day, year])
-        else:
-            return date
-
-    @classmethod
-    def get_party(cls,party_map, status=None):
-        return party_map[status]
-     
-    @classmethod
-    def get_party_green(cls,):
-        '''Return 'G'. Used for supporters and volunteers (civi has no status for them)'''
-        return 'G'
-     
-    @classmethod
-    def get_party_member(cls, party_member_map, status=None):
-        '''Party member flag for is currently a member: 
-        False for: Cancelled, Deceased, Expired 
-        True for: Current, Grace, New
-        (Alternatively one could argue that a cancelled member is still a member, so True.)
-        '''
-        return party_member_map[status]
-    
-    @classmethod
-    def get_status(cls, party_status_map,status=None):
-        '''NB: active, canceled, expired, grace period
-        '''
-        return party_status_map[status]
-    @classmethod
-    def get_support_level(cls, support_level_map, status=None):
-        '''Support level: Cancelled, Deceased, Expired
-        Unclear what level to set for: cancelled, expired 
-        TODO uncomment after matching to original csv
-        '''
-        return support_level_map[status]
-    
-   
-    @classmethod
-    def is_deceased(cls, status=None):
-        return status=='Deceased'
-     
-class Volunteer():
-    
-    @classmethod
-    def tag_add_volunteer(cls, tags_map, **kwargs):
-        kwargs['volunteer_at']=kwargs['volunteer_at'].replace('  ',',')
-        return Generic.tags_add(tags_map,**kwargs)
-    
-    
 class Main():
 
     def __init__(self, config_lookup=None, filereader=None, filewriter=None):
         '''Create filereader and fielwriter unless given in kwargs
         '''
-        self.config_lookup=config_lookup
+        self.config_lookup = config_lookup
         self.fh = FileHandler()
         self.filereader = filereader or self.fh.csv_read
         self.filewriter = filereader or self.fh.csv_write
@@ -432,7 +429,7 @@ class Main():
             # Find config varname to match csv filename
             for (name, config, config_name) in self.config_lookup:
                 if search(name, filename):
-                    print('Using config: {}'.format(config_name))
+                    print('Using: {}'.format(config_name))
                     self.fix_csv(filename, config, config_name)
                     break
             else:
@@ -444,13 +441,15 @@ class Main():
 
 if __name__ == '__main__':
     from configurations2 import config_lookup
-#     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
-#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
-#     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
-#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
+    argv += [
+#             '/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv',
+#             '/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv',
+#             '/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv',
+#             '/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv',
+#             '/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv',
+#             '/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv',
+#             '/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv',
+            ]
     Main(config_lookup=config_lookup).main(argv[1:])
     print('Done')
       
