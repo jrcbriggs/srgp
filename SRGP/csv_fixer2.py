@@ -16,25 +16,24 @@ regexes = {
     'county': compile('^South Yorks$', IGNORECASE),
     'house': compile('Barn|Building|College|Cottage|Farm|Hall|House|'
                      'Lodge|Mansion|Mill|Residence', IGNORECASE),
-    'postcode': compile('^S\d\d? \d\w\w$'),
-#     'postcode': compile('^S\d\d? ?\d\w\w$'),
-    'locality': compile(r'^(Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Beauchief|Beighton|'
-                        'Bents Green|Bradway|Bramley|Brampton|Brincliffe|Broom|Broomhall|'
-                        'Broomhill|Burncross|Burngreave|Catcliffe|Chapeltown|Christchurch|'
+#     'postcode': compile('^S\d\d? \d\w\w$'),
+    'postcode': compile('^S\d\d? ?\d\w\w$', IGNORECASE),
+    'locality': compile(r'^(Abbeydale|Arbourthorne|Aston|Aughton|Barnsley|Basegreen|Bate Green|Beauchief|Beighton|'                        'Bents Green|Bingley Seat|Birley|Bradway|Bramley|Brampton|Brincliffe|Brinsworth|Broom|Broomhall|'
+                        'Broomhill|Burncross|Burngreave|Carterknowle|Catcliffe|Chapeltown|Christchurch|'
                         'City Centre|Clent|Clifton|Crookes|Crookesmoor|Crooks|Crosspool|'
                         'Dalton|Darnall|Deepcar|Dinnington|Dore|East Dene|East Herringthorpe|'
-                        'Ecclesall|Firshill|Firth Park|Frecheville|Fulwood|Gleadless|Greasbrough|'
+                        'Ecclesall|Ecclesfield|Firshill|Firth Park|Frecheville|Fulwood|Gleadless|Greasbrough|'
                         'Greenhill|Grenoside|Hackenthorpe|Halfway|Hallam Rock|Handsworth|Hathersage|'
-                        'Heeley|Herdings|Herringthorpe|Highfield|High Green|Hillsborough|'
-                        'Hooton Levitt|Jordanthrope|Kimberworth|Kiveton Park|Malin Bridge|Maltby|'
-                        'Meersbrook|Mexborough|Midhopestones|Millhouses|Mosborough|Nether Edge|'
-                        'Nethergreen|Nether Green|Norfolk Park|Norton Lees|Nottingham|Oughtibridge|'
-                        'Owlthorpe|Parkgate|Park Hill|Pitsmoor|Rawmarsh|Rivelin|Shalesmoor|'
-                        'Sharrow|Shiregreen|Sothall|Stannington|Stocksbridge|Sunnyside|'
+                        'Heeley|Hellaby|Herdings|Herringthorpe|Highfield|High Green|Hillsborough|'
+                        'Hooton Levitt|Hunters Bar|Intake|Jordanthrope|Kimberworth|Kiveton Park|Loxley|Malin Bridge|Maltby|'
+                        'Meersbrook|Mexborough|Midhopestones|Millhouses|Mosborough|Nether Edge|Netheredge|'
+                        'Nethergreen|Nether Green|Norfolk Park|Norton|Norton Lees|Nottingham|Oughtibridge|'
+                        'Owlthorpe|Parkgate|Park Hill|Pitsmoor|Ranmoor|Rawmarsh|Rivelin|Shalesmoor|'
+                        'Sharrow|Shiregreen|Sothall|Stannington|Stocksbridge|Storrs|Sunnyside|'
                         'Swallownest|Swinton|Thorpe Hesley|Thurcroft|Todwick|Totley|Totley Rise|'
                         'Upperthorpe|Wales Bar|Walkley|Waterthorpe|Wath upon Dearne|Wath-upon-Dearne|'
-                        'Well Court|Wellgate|Wentworth|Whiston|Wickersley|Wincobank|Wingfield|'
-                        'Woodhouse|Woodseats|Woodsetts|Worksop|Worrall)$', IGNORECASE),
+                        'Well Court|Wellgate|Wentworth|West Melton|Whiston|Wickersley|Wincobank|Wingfield|'
+                        'Woodend|Woodhouse|Woodseats|Woodsetts|Worksop|Worrall)$', IGNORECASE),
     'street': compile(r'\b(Anglo Works|Approach|Ashgrove|Ave|Avenue|Bakers Yard|Bank|Brg|Bridge|'
                       'Brookside|Cir|Close|Common|Common Side|Crookes|Crossways|Court|Cres|Crescent|Croft|Ct|Dell|'
                       'Dl|Dr|Drive|Edward Street Flats|Endcliffe Village|Fields|Gdns|Gardens|Gate|Glade|Glen|Gr|Green|'
@@ -98,6 +97,8 @@ class CsvFixer(object):
         
         #Append basename to tags
         for row1 in table1:
+            #Replace - by _ in basename: NB throws error if tag list contains just a single tag containing a minus sign -
+            basename.replace('-','_') 
             tag_list = row1.get('tag_list')
             row1['tag_list']=tag_list +','+basename if tag_list else basename
 
@@ -119,11 +120,7 @@ class TableFixer(object):
     def fix_table(self, table0):
         '''Returns new table given old table
         '''
-        try:
-            return [self.fix_row(row0) for row0 in table0]
-        except (IndexError, KeyError, TypeError) as e:
-            e.args += ('config:', self.config,)
-            raise
+        return [self.fix_row(row0) for row0 in table0]
 
     def fix_row(self, row0):
         '''Creates new row from old row
@@ -146,6 +143,7 @@ class TableFixer(object):
             elif isinstance(arg0, tuple):
                 (func, args, kwargs0) = arg0
                 if callable(func):
+#                     kwargs = {k: row0[v].replace(',',' ').strip() for (k, v) in kwargs0.items()}
                     kwargs = {k: row0[v].strip() for (k, v) in kwargs0.items()}
                     return func(*args, **kwargs)
             raise TypeError('TableFixer.fix_field: expected str or (func, kwargs). Got:{}'.format(arg0))
@@ -211,13 +209,16 @@ class Generic(object):
         '''
         try:
             tag_list0 = tag_str0.split(',')  # 'stdt,ResPark' -> ['stdt','ResPark']
-#             tag_list1 = [tag_map.get(tag0.strip(), tag0) for tag0 in tag_list0]  # ['Student','ResidentsParking']
-            tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]  # ['Student','ResidentsParking']
+            tag_list1 = [tag_map[tag0.strip()] for tag0 in tag_list0]
             return tag_list1
-        except (KeyError) as e:
+        except (KeyError, TypeError) as e:
             e.args += ('tags_split', 'tag_map:', tag_map, 'tag_str0:', tag_str0,)
             raise
 
+    @classmethod
+    def value_get(cls, value):
+        return value
+ 
 class Voter(object):
     '''Common to register and canvassing
     '''
@@ -364,55 +365,49 @@ class Member():
             return date
 
     @classmethod
-    def get_party(cls):
+    def get_party(cls,party_map, status=None):
+        return party_map[status]
+     
+    @classmethod
+    def get_party_green(cls,):
+        '''Return 'G'. Used for supporters and volunteers (civi has no status for them)'''
         return 'G'
      
     @classmethod
-    def get_party_member(cls, status=None):
+    def get_party_member(cls, party_member_map, status=None):
         '''Party member flag for is currently a member: 
         False for: Cancelled, Deceased, Expired 
         True for: Current, Grace, New
         (Alternatively one could argue that a cancelled member is still a member, so True.)
         '''
-        return {
-                'Current':True,
-                'Cancelled':False,
-                'Deceased':False,
-                'Expired':False,
-                'Grace':True,
-                'New':True,
-                }[status]
+        return party_member_map[status]
+    
     @classmethod
-    def get_status(cls, status=None):
+    def get_status(cls, party_status_map,status=None):
         '''NB: active, canceled, expired, grace period
         '''
-        return {
-                'Current':'active',
-                'Cancelled':'canceled',
-                'Deceased':'deceased',
-                'Expired':'expired',
-                'Grace':'grace period',
-                'New':'active',
-                }[status]
+        return party_status_map[status]
     @classmethod
-    def get_support_level(cls, status=None):
+    def get_support_level(cls, support_level_map, status=None):
         '''Support level: Cancelled, Deceased, Expired
         Unclear what level to set for: cancelled, expired 
         TODO uncomment after matching to original csv
         '''
-        return {
-                'Current':1,
-                'Cancelled':4,
-                'Deceased':None,
-                'Expired':2,
-                'Grace':1,
-                'New':1,
-                }[status]
+        return support_level_map[status]
     
+   
     @classmethod
     def is_deceased(cls, status=None):
         return status=='Deceased'
      
+class Volunteer():
+    
+    @classmethod
+    def tag_add_volunteer(cls, tags_map, **kwargs):
+        kwargs['volunteer_at']=kwargs['volunteer_at'].replace('  ',',')
+        return Generic.tags_add(tags_map,**kwargs)
+    
+    
 class Main():
 
     def __init__(self, config_lookup=None, filereader=None, filewriter=None):
@@ -447,11 +442,12 @@ if __name__ == '__main__':
 #     argv.append('/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv')
 #     argv.append('/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
-    argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv')
+#     argv.append('/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv')
     argv.append('/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv')
     Main(config_lookup=config_lookup).main(argv[1:])
 #     import cProfile
 #     cProfile.run('Main().main(argv[1:])')
-    
+    print('Done')
+      

@@ -8,7 +8,7 @@ from collections import OrderedDict as OD
 import unittest
 from unittest.mock import MagicMock
 
-from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Voter as VT
+from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Volunteer as VL, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
 
@@ -221,6 +221,12 @@ class TestGeneric(unittest.TestCase):
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
         self.assertRaises(KeyError, GN.tags_split, self.tag_map, k0)
+        
+    def test_value_get(self):
+        value='asdf'
+        actual = GN.value_get(value)
+        expected = value
+        self.assertEqual(actual, expected, actual)
 
 class TestVoter(unittest.TestCase):
     '''Common to register and canvassing
@@ -361,46 +367,56 @@ class TestMember(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_get_party(self):
-        actual = MB.get_party()
+        party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
+        for (status,v) in party_map.items():
+            actual = MB.get_party(party_map, status)
+            expected = v
+            self.assertEqual(actual, expected)
+
+    def test_get_party_green(self):
+        actual = MB.get_party_green()
         expected = 'G'
         self.assertEqual(actual, expected)
 
     def test_get_party_member(self):
-        for (k,v) in {
+        party_member_map={
                 'Current':True,
                 'Cancelled':False,
                 'Deceased':False,
                 'Expired':False,
                 'Grace':True,
                 'New':True,
-                }.items():
-            actual = MB.get_party_member(status=k)
+                }
+        for (k,v) in party_member_map.items():
+            actual = MB.get_party_member(party_member_map, status=k)
             expected = v
             self.assertEqual(actual, expected)
 
     def test_get_status(self):
-        for (k,v) in {
+        status_map={
                 'Current':'active',
                 'Cancelled':'canceled',
                 'Deceased':'deceased',
                 'Expired':'expired',
                 'Grace':'grace period',
                 'New':'active',
-                }.items():
-            actual = MB.get_status(status=k)
+                }
+        for (status,v) in status_map.items():
+            actual = MB.get_status(status_map, status=status)
             expected = v
             self.assertEqual(actual, expected)
 
     def test_get_support_level(self):
-        for (k,v) in {
+        support_level_map={
                 'Current':1,
                 'Cancelled':4,
                 'Deceased':None,
                 'Expired':2,
                 'Grace':1,
                 'New':1,
-                }.items():
-            actual = MB.get_support_level(status=k)
+                }
+        for (k,v) in support_level_map.items():
+            actual = MB.get_support_level(support_level_map,status=k)
             expected = v
             self.assertEqual(actual, expected)
 
@@ -416,6 +432,14 @@ class TestMember(unittest.TestCase):
             actual = MB.is_deceased(status=k)
             expected = v
             self.assertEqual(actual, expected)
+
+class TestVolunteer(unittest.TestCase):
+    def test_tag_add_volunteer(self):
+        tag_map = {'Weekends':'volunteer_at_weekends'}        
+        actual = VL.tag_add_volunteer(tag_map, volunteer_at='Weekends')
+        expected = 'volunteer_at_weekends'
+        self.assertEqual(actual, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

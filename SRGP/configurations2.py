@@ -10,7 +10,7 @@ Each config is an OrderedDict.
 
 from collections import OrderedDict as OD
 
-from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Voter as VT
+from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
 
 
 # Robin Latimer (Broomhill canvassing ) Database
@@ -105,7 +105,11 @@ config_register = OD([
     ])
 
 #########################################################################################
-address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2','k3':'City','k4':'Postal Code'}
+address_member = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2', 'k3':'City', 'k4':'Postal Code'}
+party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
+party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, }
+party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'deceased', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
+support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, }
 config_member = OD([
     ('first_name', 'First Name'),
     ('last_name', 'Last Name'),
@@ -113,7 +117,7 @@ config_member = OD([
     ('membership_type', 'Membership Type'),
     ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
     ('started_at', (MB.fix_date, [], {'date':'Member Since', })),
-    ('membership_status', (MB.get_status, [], {'status':'Status', })),
+    ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', })),
     ('address_address1', (AD.address_get, ['address1'], address_member)),
     ('address_address2', (AD.address_get, ['address2'], address_member)),
     ('address_address3', (AD.address_get, ['address3'], address_member)),
@@ -124,17 +128,18 @@ config_member = OD([
     ('phone_number', 'Phone (primary)'),
     ('mobile_number', 'Mobile'),
     ('precinct_name', 'Ward'),
-    ('party', (MB.get_party, [], {})),
+    ('party', (MB.get_party, [party_map], {'status':'Status', })),
     ('is_deceased', (MB.is_deceased, [], {'status':'Status', })),
-    ('party_member', (MB.get_party_member, [], {'status':'Status',})),
-    ('support_level', (MB.get_support_level, [], {'status':'Status', })),
+    ('party_member', (MB.get_party_member, [party_member_map], {'status':'Status', })),
+    ('support_level', (MB.get_support_level, [support_level_map], {'status':'Status', })),
     ('registered_state', (GN.state_get, [], {})),
 #                     ('ward', 'Ward'),
 #                     ('constituency', 'Westminster parliament constituency'),
     ])
 
 #########################################################################################
-address_supporter = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k3':'City','k4':'Postal Code'}
+address_supporter = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k3':'City', 'k4':'Postal Code'}
+party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
 config_supporter = OD([
     ('name', 'Contact Name'),
     ('civicrm_id', 'Contact ID'),
@@ -148,13 +153,17 @@ config_supporter = OD([
     ('phone_number', 'Phone (primary)'),
     ('mobile_number', 'Mobile'),
     ('precinct_name', 'Ward'),
-    ('party', (MB.get_party, [], {})),
+    ('party', (MB.get_party_green, [], {})),
     ('registered_state', (GN.state_get, [], {})),
 #                     ('ward', 'Ward'),
 #                     ('constituency', 'Westminster parliament constituency'),
     ])
 
-tag_map_volunteer={}
+volunteer_status_map = {"I've not been contacted":"volunteer_not_contacted", "I've been contacted but not yet helping":"volunteer_contacted", "I'm already helping":"volunteer_helping", }
+volunteer_availability_map = {'Anytime':'volunteer_anytime', 'Election Time':'volunteer_election_time', 'Evenings':'volunteer_evenings','Weekdays':'volunteer_weekdays','Weekends':'volunteer_weekends',  }
+tag_map_volunteer = {'':''}
+tag_map_volunteer.update(volunteer_status_map)
+tag_map_volunteer.update(volunteer_availability_map)
 config_volunteers = OD([
     ('name', 'Contact Name'),
     ('civicrm_id', 'Contact ID'),
@@ -162,13 +171,13 @@ config_volunteers = OD([
     ('phone_number', 'Phone (primary)'),
     ('mobile_number', 'Mobile'),
     ('precinct_name', 'Ward'),
-    ('party', (MB.get_party, [], {})),
+    ('party', (MB.get_party_green, [], {})),
     ('registered_state', (GN.state_get, [], {})),
 #                     ('ward', 'Ward'),
 #                     ('constituency', 'Westminster parliament constituency'),
-    ('tag_list', (GN.tags_add, [{}], {
-#                                       'volunteer_status':'Status',
-#                                       'volunteer_availability':'Availability',
+    ('tag_list', (VL.tag_add_volunteer, [tag_map_volunteer], {
+                                    'volunteer_status':'Status',
+                                    'volunteer_at':'Availability',
 #                                       'volunteer_can_help_from':'I can help from',
 #                                       'volunteer_actions':'Actions',
 #                                       'volunteer_skills':'Skills',
@@ -177,27 +186,23 @@ config_volunteers = OD([
     ])
 
 #########################################################################################
+party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'deceased', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
 config_young_greens = OD([
     ('first_name', 'First Name'),
     ('last_name', 'Last Name'),
     ('civicrm_id', 'Contact ID'),
     ('started_at', (MB.fix_date, [], {'date':'Start Date', })),
     ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
-    ('membership_status', (MB.get_status, [], {'status':'Status', })),
-    ('email', 'Email'),
-    ('party', (MB.get_party, [], {})),
-    ('registered_state', (GN.state_get, [], {})),
-    ('is_deceased', (MB.is_deceased, [], {'status':'Status', })),
-    ('party_member', (MB.get_party_member, [], {'status':'Status',})),
-    ('support_level', (MB.get_support_level, [], {'status':'Status', })),
+    ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', })),
+    ('membership_type', (GN.value_get, ['YoungGreen'], {})),
     ])
 
 config_lookup = [
-     ('BroomhillCanvassData', config_rl,'config_rl',),
-     ('CentralConstituencyRegister', config_register,'config_register',),
-     ('CentralConstituencyWardRegisters', config_register,'config_register',),
-     ('SRGP_MembersAll', config_member,'config_member',),
-     ('SRGP_SupportersAll', config_supporter,'config_supporter',),
-     ('SRGP_VolunteersAll', config_volunteers,'config_volunteers',),
-     ('SRGP_YoungGreens', config_young_greens,'config_young_greens',),
+     ('BroomhillCanvassData', config_rl, 'config_rl',),
+     ('CentralConstituencyRegister', config_register, 'config_register',),
+     ('CentralConstituencyWardRegisters', config_register, 'config_register',),
+     ('SRGP_MembersAll', config_member, 'config_member',),
+     ('SRGP_SupportersAll', config_supporter, 'config_supporter',),
+     ('SRGP_VolunteersAll', config_volunteers, 'config_volunteers',),
+     ('SRGP_YoungGreens', config_young_greens, 'config_young_greens',),
      ]
