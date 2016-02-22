@@ -4,7 +4,6 @@ Created on 7 Feb 2016
 
 @author: julian
 '''
-from collections import OrderedDict as OD
 import unittest
 from unittest.mock import MagicMock
 
@@ -89,9 +88,9 @@ class TestCsvFixer(unittest.TestCase):
         self.pathname = '/tmp/test.csv'
         self.pathname1 = '/tmp/testNB.csv'
         self.config_name = 'config_test'
-        self.config = OD([
+        self.config = [
                           ('AA', 'A'),
-                          ('BB', 'B'), ])
+                          ('BB', 'B'), ]
         self.table0 = [{'A':'a', 'B':'b', },
                       {'A':'c', 'B':'d', }]
 
@@ -180,9 +179,9 @@ class TestMain(unittest.TestCase):
         self.fh = FileHandler()
         self.pathname = '/tmp/test.py'
         self.config_name = 'config_test'
-        self.config_test = OD([
+        self.config_test = [
                           ('AA', 'A'),
-                          ('BB', 'B'), ])
+                          ('BB', 'B'), ]
         self.table0 = [{'A':'a', 'B':'b', },
                       {'A':'c', 'B':'d', }]
 
@@ -343,14 +342,14 @@ class TestTableFixer(unittest.TestCase):
                     'tag_list': 'a,b,c,d',
                     }
         self.tag_map = {'':'', 'A':'a', 'B':'b', 'C':'c', 'D':'d', }
-        self.config = OD([
+        self.config = [
                             # 1st element in tuple is class method
                             ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
                             ('first_name', 'First name'),
                             ('tag_list', (GN.tags_add, [self.tag_map], {'k0': 'TagCol0',
                                                                         'k1': 'TagCol1',
                                                                          })),
-                          ])
+                          ]
         self.table0 = [self.row0]
         self.table1 = [self.row1]
         self.tf = TF(config=self.config)
@@ -423,8 +422,8 @@ class TestTableFixer(unittest.TestCase):
 
 class TestVolunteer(unittest.TestCase):
     def test_tag_add_volunteer(self):
-        tag_map = {'Weekends':'volunteer_at_weekends'}        
-        actual = VL.tag_add_volunteer(tag_map, volunteer_at='Weekends')
+        tag_map = {'Weekends':'at_weekends'}        
+        actual = VL.tag_add_volunteer('volunteer_', tag_map, volunteer_at='Weekends')
         expected = 'volunteer_at_weekends'
         self.assertEqual(actual, expected)
 

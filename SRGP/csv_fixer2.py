@@ -137,7 +137,7 @@ class CsvFixer(object):
     def fix_csv(self, pathname, config, config_name, filereader, filewriter):
         
         # Get the basename
-        basename = path.basename(pathname).replace('.csv', '')
+        basename = path.basename(pathname).replace('.csv', '').replace('-','_') #NB complains about - in tags sometimes
 
         # Read csv data file into a table
         table0 = filereader(pathname)
@@ -154,7 +154,7 @@ class CsvFixer(object):
 
         # Write the table to a new csv file for import to NB.
         pathname_new = pathname.replace('.csv', 'NB.csv')
-        fieldnames = [k for k in config.keys()]
+        fieldnames = [k for (k,unused) in config]
         # Enusre tag_list is in keys
         if not 'tag_list' in fieldnames:
             fieldnames.append('tag_list')
@@ -229,7 +229,7 @@ class Generic(object):
         '''
         tag_lists0 = kwargs.values()
         tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
-        tag_str1 = ','.join(sorted([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))
+        tag_str1 = ','.join(sorted(set([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))) #set to remove duplicates
         return tag_str1
 
 
@@ -335,7 +335,7 @@ class TableFixer(object):
         '''Creates new row from old row
         '''
         return {fieldname1: self.fix_field(row0, arg0)
-                    for (fieldname1, arg0) in self.config.items()}
+                    for (fieldname1, arg0) in self.config}
 
     def fix_field(self, row0, arg0):
         '''Creates new field from old field(s)
@@ -368,9 +368,10 @@ class TableFixer(object):
 class Volunteer():
     
     @classmethod
-    def tag_add_volunteer(cls, tags_map, **kwargs):
-        kwargs['volunteer_at'] = kwargs['volunteer_at'].replace('  ', ',')
-        return Generic.tags_add(tags_map, **kwargs)
+    def tag_add_volunteer(cls, stem, tags_map, **kwargs):
+#         kwargs['volunteer_at'] = kwargs['volunteer_at'].replace('  ', ',')
+#         return Generic.tags_add(tags_map, **kwargs)
+        return ','.join([stem+ v for v in Generic.tags_add(tags_map, **kwargs).split(',')])
     
 class Voter(object):
     '''Common to register and canvassing

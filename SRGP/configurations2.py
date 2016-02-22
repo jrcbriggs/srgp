@@ -12,8 +12,6 @@ In configs:
     ('fieldname_new', (func, [args]{kwargs})),
 '''
 
-from collections import OrderedDict as OD
-
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
 
 class Member(object):
@@ -22,7 +20,7 @@ class Member(object):
     party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, }
     party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'deceased', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
     support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, }
-    config = OD([
+    config = [
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
@@ -45,7 +43,7 @@ class Member(object):
         ('party_member', (MB.get_party_member, [party_member_map], {'status':'Status', })),
         ('support_level', (MB.get_support_level, [support_level_map], {'status':'Status', })),
         ('registered_state', (GN.state_get, [], {})),
-        ])
+        ]
     
 class Register(object):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
@@ -60,7 +58,7 @@ class Register(object):
                     'T': 'Nether Edge',
                     'Z': 'Walkley',
                     }
-    config = OD([
+    config = [
         ('statefile_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
         ('prefix', 'Title'),
         ('first_name', 'First Name'),
@@ -79,7 +77,7 @@ class Register(object):
                                                     'Status': 'Status',
                                                     'Franchise': 'Franchise Flag',
                                                     })),
-        ])
+        ]
     
 class RobinLatimer(object):
     ''' Robin Latimer (Broomhill canvassing ) Database'''
@@ -106,7 +104,7 @@ class RobinLatimer(object):
         'Vote14': 'Voted14',
         'Vote12': 'Voted12',
                 }
-    config = OD([
+    config = [
         ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
         ('dob', (GN.doa2dob, [], {'doa': 'Date18'})),
         ('last_name', 'Surname'),
@@ -136,12 +134,12 @@ class RobinLatimer(object):
                                                  }
                       )
          ),
-      ])
+      ]
 
 class Supporter(object):
     address_headers = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k3':'City', 'k4':'Postal Code'}
     party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
-    config = OD([
+    config = [
         ('name', 'Contact Name'),
         ('civicrm_id', 'Contact ID'),
         ('address_address1', (AD.address_get, ['address1'], address_headers)),
@@ -156,15 +154,46 @@ class Supporter(object):
         ('precinct_name', 'Ward'),
         ('party', (MB.get_party_green, [], {})),
         ('registered_state', (GN.state_get, [], {})),
-        ])
+        ]
 
 class Volunteer(object):
     status_map = {"I've not been contacted":"volunteer_not_contacted", "I've been contacted but not yet helping":"volunteer_contacted", "I'm already helping":"volunteer_helping", }
     availability_map = {'Anytime':'volunteer_anytime', 'Election Time':'volunteer_election_time', 'Evenings':'volunteer_evenings','Weekdays':'volunteer_weekdays','Weekends':'volunteer_weekends',  }
+    action_map={'Attend an Action Day':'',
+                'Canvassing':'volunteer_canvass',
+                'Donate':'donor',
+                'Election Day Telling':'canvass_electionday',
+                'Leafletting':'canvass_leaflet',
+                'Envelope Stuffing':'envelope', #TODO
+                'Phone Canvassing':'canvass_phone',
+                'Postal Vote':'',
+                'Poster Display':'Poster16',
+                'Run a Stall':'canvass_stall',
+                'Vote Green':'',
+                }
+    skill_map={'Admin':'volunteer_skill',
+                'Any Other':'volunteer_skill',
+                'Campaigning':'volunteer_skill',
+                'Designer':'volunteer_skill',
+                'Driver':'volunteer_skill',
+                'Events':'volunteer_skill',
+                'Film Making':'volunteer_skill',
+                'Food':'volunteer_skill',
+                'HR':'volunteer_skill',
+                'Fundraising':'volunteer_skill',
+                'NGO and Government':'volunteer_skill',
+                'Poster Board':'volunteer_skill',
+                'PR and Media':'volunteer_skill',
+                'Press':'volunteer_skill',
+                'Social Media':'volunteer_skill',
+                'Web Development':'volunteer_skill',
+                'Writing':'volunteer_skill',}
     tag_map = {'':''}
     tag_map.update(status_map)
     tag_map.update(availability_map)
-    config = OD([
+    tag_map.update(action_map)
+    tag_map.update(skill_map)
+    config = [
         ('name', 'Contact Name'),
         ('civicrm_id', 'Contact ID'),
         ('email', 'Email'),
@@ -173,19 +202,19 @@ class Volunteer(object):
         ('precinct_name', 'Ward'),
         ('party', (MB.get_party_green, [], {})),
         ('registered_state', (GN.state_get, [], {})),
-        ('tag_list', (VL.tag_add_volunteer, [tag_map], {
+        ('tag_list', (GN.tags_add, [tag_map], {
                                         'volunteer_status':'Status',
                                         'volunteer_at':'Availability',
     #                                       'volunteer_can_help_from':'I can help from',
-    #                                       'volunteer_actions':'Actions',
-    #                                       'volunteer_skills':'Skills',
+                                        'volunteer_actions':'Actions',
+                                        'volunteer_skills':'Skills',
     #                                       'volunteer_skills_other':'Skills: Other',
                                           })),
-        ])
+        ]
     
 class YoungGreens(object):
     party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'deceased', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
-    config = OD([
+    config = [
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
@@ -193,7 +222,7 @@ class YoungGreens(object):
         ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
         ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', })),
         ('membership_type', (GN.value_get, ['YoungGreen'], {})),
-        ])
+        ]
     
 config_lookup = [
      ('BroomhillCanvassData', RobinLatimer.config, 'RobinLatimer.config',),
