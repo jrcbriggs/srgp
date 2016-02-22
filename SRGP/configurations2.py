@@ -18,16 +18,16 @@ class Member(object):
     address_headers = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2', 'k3':'City', 'k4':'Postal Code'}
     party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
     party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, }
-    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'deceased', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
+    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
     support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, }
     config = [
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
         ('membership_type', 'Membership Type'),
-        ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
+        ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status',})),
         ('started_at', (MB.fix_date, [], {'date':'Member Since', })),
-        ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', })),
+        ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', 'end_date':'End Date'})),
         ('address_address1', (AD.address_get, ['address1'], address_headers)),
         ('address_address2', (AD.address_get, ['address2'], address_headers)),
         ('address_address3', (AD.address_get, ['address3'], address_headers)),
@@ -213,14 +213,14 @@ class Volunteer(object):
         ]
     
 class YoungGreens(object):
-    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'deceased', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
+    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
     config = [
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
         ('started_at', (MB.fix_date, [], {'date':'Start Date', })),
-        ('expires_on', (MB.fix_date, [], {'date':'End Date', })),
-        ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', })),
+        ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status',})),
+        ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', 'end_date':'End Date'})),
         ('membership_type', (GN.value_get, ['YoungGreen'], {})),
         ]
     

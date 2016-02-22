@@ -5,10 +5,13 @@ Created on 1 Nov 2014
 @author: julian
 '''
 from csv import DictReader, DictWriter
+from datetime import datetime
+from logging import warning
 from os import path
 from re import compile, IGNORECASE, search
 from sys import argv
-from logging import warning
+from time import strftime
+
 
 regexes = {
     'block': compile(r'^()$', IGNORECASE),  # Fairleigh|Foster|Hartshead|Pinsent|Redgrave|The Circle
@@ -137,7 +140,7 @@ class CsvFixer(object):
     def fix_csv(self, pathname, config, config_name, filereader, filewriter):
         
         # Get the basename
-        basename = path.basename(pathname).replace('.csv', '').replace('-','_') #NB complains about - in tags sometimes
+        basename = path.basename(pathname).replace('.csv', '').replace('-', '_')  # NB complains about - in tags sometimes
 
         # Read csv data file into a table
         table0 = filereader(pathname)
@@ -154,7 +157,7 @@ class CsvFixer(object):
 
         # Write the table to a new csv file for import to NB.
         pathname_new = pathname.replace('.csv', 'NB.csv')
-        fieldnames = [k for (k,unused) in config]
+        fieldnames = [k for (k, unused) in config]
         # Enusre tag_list is in keys
         if not 'tag_list' in fieldnames:
             fieldnames.append('tag_list')
@@ -229,7 +232,7 @@ class Generic(object):
         '''
         tag_lists0 = kwargs.values()
         tag_lists1 = [cls.tags_split(tag_map, tag_str0) for tag_str0 in tag_lists0]
-        tag_str1 = ','.join(sorted(set([tag for tag_list in tag_lists1 for tag in tag_list if tag != '']))) #set to remove duplicates
+        tag_str1 = ','.join(sorted(set([tag for tag_list in tag_lists1 for tag in tag_list if tag != ''])))  # set to remove duplicates
         return tag_str1
 
 
@@ -257,11 +260,19 @@ class Generic(object):
 class Member():
     
     @classmethod
-    def fix_date(cls, date=None):
+    def fix_date(cls, party_status_map={}, date=None, status=None):
         '''Convert date from UK format (dd/mm/yyyy) to US format: mm/dd/yyyy.
         '''
+        #Handle expired members with future expiry date. Set expiry date to today 
+        status = party_status_map.get(status)
+        if status == 'canceled':
+            today = datetime.now().strftime('%Y-%m-%d')
+            if date > today:
+                date = today
+
+        #Fix date
         if date:
-            (year, month, day) = date.split('-')
+            (year, month, day) = date.split('-')                
             return '/'.join([month, day, year])
         else:
             return date
@@ -285,10 +296,18 @@ class Member():
         return party_member_map[status]
     
     @classmethod
-    def get_status(cls, party_status_map, status=None):
+    def get_status(cls, party_status_map, status=None, end_date=None):
         '''NB: active, canceled, expired, grace period
+        civi shows some ppl with end date in the past as active
+        fix by changing these to grace period
         '''
-        return party_status_map[status]
+        status = party_status_map[status]
+        if status == 'active':
+            today = datetime.now().strftime('%Y-%m-%d')
+            if today > end_date:
+                status = 'grace period'
+        return status 
+    
     @classmethod
     def get_support_level(cls, support_level_map, status=None):
         '''Support level: Cancelled, Deceased, Expired
@@ -371,7 +390,7 @@ class Volunteer():
     def tag_add_volunteer(cls, stem, tags_map, **kwargs):
 #         kwargs['volunteer_at'] = kwargs['volunteer_at'].replace('  ', ',')
 #         return Generic.tags_add(tags_map, **kwargs)
-        return ','.join([stem+ v for v in Generic.tags_add(tags_map, **kwargs).split(',')])
+        return ','.join([stem + v for v in Generic.tags_add(tags_map, **kwargs).split(',')])
     
 class Voter(object):
     '''Common to register and canvassing
