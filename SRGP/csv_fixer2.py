@@ -1,8 +1,34 @@
 #!/usr/bin/python3
 '''
-Created on 1 Nov 2014
+Created on 1 Feb 2016
 
-@author: julian
+@author: Julian Briggs
+
+Conventions
+===========
+variable suffix 0: refers to old csv, old table, old row, old value
+variable suffix 1: refers to new csv, new table, new row, new value
+
+Structure
+=========
+See configuration2.py module for description of config
+
+The classes: Main, CsvFixer, FileHandler and TableFixer provide general infrastructure
+The other classes contain class methods for specific file types (register, members, canvasing etc.)
+
+Main calls CsvFixer with config and old csv filename
+
+CsvFixer calls:
+1. FileHandler to read the old csv into the old table (list of dicts)
+2. TableFixer to create the new table
+3. Filehandler to write the new table to new csv
+
+FileHandler: reads old csv into old table table and writes new table to new csv
+configurations2 imports classes csv_fixer2 so configs can reference class methods.
+So csv_fixer cannot import configurations2 at the top of the module.
+But it can import config_lookup from configurations2 in the __main__ section at the bottom.
+
+See class docs for further details
 '''
 from csv import DictReader, DictWriter
 from datetime import datetime

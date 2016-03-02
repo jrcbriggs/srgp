@@ -5,11 +5,26 @@ Created on 7 Feb 2016
 @author: julian
 
 Configurations for preparing csv files for import to Nation Builder (NB).
-Each class has an OrderedDict config with supporting (mappings) dicts 
+Each class has an config (List of tuples) with supporting (mappings) dicts 
 
-In configs:
-    ('fieldname_new', 'fieldname_old'), # or
-    ('fieldname_new', (func, [args]{kwargs})),
+config =[
+    ('col1a', 'col0a'), # or
+    ('col1b', 'col0b'), # or
+    ('col1c', (func0c, [args0c]{kwargs0c})),
+    ('col1d', (func0d, [args0d]{kwargs0d})),
+    ...
+    ]
+    
+Where:
+  col1a, col1b etc are the column names for the new csv in order.
+  col0a, col0b etc are the column names for the old csv, where we can simply copy column values from old to new column
+  func0c, func0d etc are the function called with given args and kwargs which returns the value for the new column
+    the kwarg keys are named kwargs in the function, the kwarg values name columns in the old csv.
+    The function is called with the given args and given kwargs with kwarg values set to the values in the named columns in the old csv
+    See the csv_fixer2.py module for function definitions
+Most classes have maps which provide a lookup from old value to new value.
+ 
+
 '''
 
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
@@ -49,7 +64,7 @@ class Register(object):
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
                      'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
     address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
-    ward_lookup = {'E': 'Broomhill',
+    ward_map = {'E': 'Broomhill',
                     'G': 'Central',
                     'H': 'Crookes',
                     'L': 'Ecclesall',
@@ -72,7 +87,7 @@ class Register(object):
         ('registered_city', (AD.address_get, ['city'], address_headers)),
         ('registered_zip', (AD.address_get, ['postcode'], address_headers)),
         ('registered_state', (GN.state_get, [], {})),
-        ('ward', (RG.ward_get, [ward_lookup], {'pd':'PD', })),
+        ('ward', (RG.ward_get, [ward_map], {'pd':'PD', })),
         ('tag_list', (VT.tags_add_voter, [tag_map], {'PD': 'PD',
                                                     'Status': 'Status',
                                                     'Franchise': 'Franchise Flag',
