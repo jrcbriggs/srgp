@@ -74,7 +74,7 @@ class Register(object):
                     'Z': 'Walkley',
                     }
     config = [
-        ('statefile_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
+        ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
         ('prefix', 'Title'),
         ('first_name', 'First Name'),
         ('middle_name', 'Initials'),
@@ -120,7 +120,7 @@ class RobinLatimer(object):
         'Vote12': 'Voted12',
                 }
     config = [
-        ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
+        ('state_file_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
         ('dob', (GN.doa2dob, [], {'doa': 'Date18'})),
         ('last_name', 'Surname'),
         ('first_name', 'First name'),
