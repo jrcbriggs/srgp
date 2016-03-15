@@ -65,13 +65,13 @@ class Register(object):
                      'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
     address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
     ward_map = {'E': 'Broomhill',
-                    'G': 'Central',
-                    'H': 'Crookes',
-                    'L': 'Ecclesall',
-                    'O': 'Gleadless Valley',
-                    'R': 'Manor Castle',
-                    'T': 'Nether Edge',
-                    'Z': 'Walkley',
+                'G': 'Central',
+                'H': 'Crookes',
+                'L': 'Ecclesall',
+                'O': 'Gleadless Valley',
+                'R': 'Manor Castle',
+                'T': 'Nether Edge',
+                'Z': 'Walkley',
                     }
     config = [
         ('statefile_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
