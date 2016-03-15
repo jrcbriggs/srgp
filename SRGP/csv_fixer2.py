@@ -289,14 +289,14 @@ class Member():
     def fix_date(cls, party_status_map={}, date=None, status=None):
         '''Convert date from UK format (dd/mm/yyyy) to US format: mm/dd/yyyy.
         '''
-        #Handle expired members with future expiry date. Set expiry date to today 
+        # Handle expired members with future expiry date. Set expiry date to today 
         status = party_status_map.get(status)
         if status == 'canceled':
             today = datetime.now().strftime('%Y-%m-%d')
             if date > today:
                 date = today
 
-        #Fix date
+        # Fix date
         if date:
             (year, month, day) = date.split('-')                
             return '/'.join([month, day, year])
