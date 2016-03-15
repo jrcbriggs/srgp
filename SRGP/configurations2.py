@@ -40,7 +40,7 @@ class Member(object):
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
         ('membership_type', 'Membership Type'),
-        ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status',})),
+        ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status', })),
         ('started_at', (MB.fix_date, [], {'date':'Member Since', })),
         ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', 'end_date':'End Date'})),
         ('address_address1', (AD.address_get, ['address1'], address_headers)),
@@ -74,7 +74,7 @@ class Register(object):
                 'Z': 'Walkley',
                     }
     config = [
-        ('statefile_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
+        ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
         ('prefix', 'Title'),
         ('first_name', 'First Name'),
         ('middle_name', 'Initials'),
@@ -120,7 +120,7 @@ class RobinLatimer(object):
         'Vote12': 'Voted12',
                 }
     config = [
-        ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
+        ('state_file_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
         ('dob', (GN.doa2dob, [], {'doa': 'Date18'})),
         ('last_name', 'Surname'),
         ('first_name', 'First name'),
@@ -173,20 +173,20 @@ class Supporter(object):
 
 class Volunteer(object):
     status_map = {"I've not been contacted":"volunteer_not_contacted", "I've been contacted but not yet helping":"volunteer_contacted", "I'm already helping":"volunteer_helping", }
-    availability_map = {'Anytime':'volunteer_anytime', 'Election Time':'volunteer_election_time', 'Evenings':'volunteer_evenings','Weekdays':'volunteer_weekdays','Weekends':'volunteer_weekends',  }
-    action_map={'Attend an Action Day':'',
+    availability_map = {'Anytime':'volunteer_anytime', 'Election Time':'volunteer_election_time', 'Evenings':'volunteer_evenings', 'Weekdays':'volunteer_weekdays', 'Weekends':'volunteer_weekends', }
+    action_map = {'Attend an Action Day':'',
                 'Canvassing':'volunteer_canvass',
                 'Donate':'donor',
                 'Election Day Telling':'canvass_electionday',
                 'Leafletting':'canvass_leaflet',
-                'Envelope Stuffing':'envelope', #TODO
+                'Envelope Stuffing':'envelope',  # TODO
                 'Phone Canvassing':'canvass_phone',
                 'Postal Vote':'',
                 'Poster Display':'Poster16',
                 'Run a Stall':'canvass_stall',
                 'Vote Green':'',
                 }
-    skill_map={'Admin':'volunteer_skill',
+    skill_map = {'Admin':'volunteer_skill',
                 'Any Other':'volunteer_skill',
                 'Campaigning':'volunteer_skill',
                 'Designer':'volunteer_skill',
@@ -202,7 +202,7 @@ class Volunteer(object):
                 'Press':'volunteer_skill',
                 'Social Media':'volunteer_skill',
                 'Web Development':'volunteer_skill',
-                'Writing':'volunteer_skill',}
+                'Writing':'volunteer_skill', }
     tag_map = {'':''}
     tag_map.update(status_map)
     tag_map.update(availability_map)
@@ -234,15 +234,36 @@ class YoungGreens(object):
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
         ('started_at', (MB.fix_date, [], {'date':'Start Date', })),
-        ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status',})),
+        ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status', })),
         ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', 'end_date':'End Date'})),
         ('membership_type', (GN.value_get, ['YoungGreen'], {})),
         ]
     
+class NB(object):
+    fields = ('nationbuilder_id',
+              'state_file_id',
+                'prefix',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'suffix',
+                'registered_address1',
+                'registered_address2',
+                'registered_address3',
+                'registered_city',
+                'registered_zip',
+                'registered_state',
+                'precinct_name',
+                'tag_list',
+            )
+    config = [(f, f) for f in fields]
+
+
 config_lookup = [
      ('BroomhillCanvassData', RobinLatimer.config, 'RobinLatimer.config',),
      ('CentralConstituencyRegister', Register.config, 'Register.config',),
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
+     ('nationbuilder-people-export', NB.config, 'NB.config',),
      ('SRGP_MembersAll', Member.config, 'Member.config',),
      ('SRGP_SupportersAll', Supporter.config, 'Supporter.config',),
      ('SRGP_VolunteersAll', Volunteer.config, 'Volunteer.config',),
