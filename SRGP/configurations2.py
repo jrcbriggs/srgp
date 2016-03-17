@@ -64,13 +64,22 @@ class Register(object):
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
                      'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
     address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
+#     ward_map = {'E': 'Broomhill',
+#                 'G': 'Central',
+#                 'H': 'Crookes',
+#                 'L': 'Ecclesall',
+#                 'O': 'Gleadless Valley',
+#                 'R': 'Manor Castle',
+#                 'T': 'Nether Edge',
+#                 'Z': 'Walkley',
+#                     }
     ward_map = {'E': 'Broomhill',
-                'G': 'Central',
-                'H': 'Crookes',
+                'G': 'City',
+                'H': 'Crookes & Crosspool',
                 'L': 'Ecclesall',
                 'O': 'Gleadless Valley',
                 'R': 'Manor Castle',
-                'T': 'Nether Edge',
+                'T': 'Nether Edge & Sharrow',
                 'Z': 'Walkley',
                     }
     config = [
@@ -263,6 +272,7 @@ config_lookup = [
      ('BroomhillCanvassData', RobinLatimer.config, 'RobinLatimer.config',),
      ('CentralConstituencyRegister', Register.config, 'Register.config',),
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
+     ('TTWRegisters', Register.config, 'Register.config',),
      ('nationbuilder-people-export', NB.config, 'NB.config',),
      ('SRGP_MembersAll', Member.config, 'Member.config',),
      ('SRGP_SupportersAll', Supporter.config, 'Supporter.config',),

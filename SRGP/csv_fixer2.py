@@ -199,7 +199,7 @@ class FileHandler(object):
     def csv_read(self, pathname):
         '''Read csv file (excluding 1st row) into self.table.
         Populate self.fieldnames with fields from 1st row in order'''
-        with open(pathname, 'r', encoding='utf-8', errors='ignore') as fh:
+        with open(pathname, 'r', encoding='utf-8', errors='replace') as fh:
             return self.csv_read_fh(fh)
 
     def csv_read_fh(self, fh):
