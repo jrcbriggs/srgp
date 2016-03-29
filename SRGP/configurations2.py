@@ -281,7 +281,7 @@ class Volunteer(object):
         ]
     
 class YoungGreens(object):
-    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
+    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', 'Pending':'grace period', }
     config = [
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
