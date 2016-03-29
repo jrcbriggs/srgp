@@ -31,10 +31,10 @@ from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Membe
 
 class Member(object):
     address_headers = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2', 'k3':'City', 'k4':'Postal Code'}
-    party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
-    party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, }
-    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', }
-    support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, }
+    party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', 'Pending':'G', }
+    party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, 'Pending':True, }
+    party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', 'Pending':'grace period', }
+    support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, 'Pending':1,}
     config = [
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
@@ -102,6 +102,50 @@ class Register(object):
                                                     'Franchise': 'Franchise Flag',
                                                     })),
         ]
+
+class Register2015(Register):   
+    tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
+                     'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
+    address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
+#     ward_map = {'E': 'Broomhill',
+#                 'G': 'Central',
+#                 'H': 'Crookes',
+#                 'L': 'Ecclesall',
+#                 'O': 'Gleadless Valley',
+#                 'R': 'Manor Castle',
+#                 'T': 'Nether Edge',
+#                 'Z': 'Walkley',
+#                     }
+    ward_map = {'E': 'Broomhill',
+                'G': 'City',
+                'H': 'Crookes & Crosspool',
+                'L': 'Ecclesall',
+                'O': 'Gleadless Valley',
+                'R': 'Manor Castle',
+                'T': 'Nether Edge & Sharrow',
+                'Z': 'Walkley',
+                    }
+    config = [
+        ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
+        ('prefix', 'Title'),
+        ('first_name', 'First Names'),
+        ('middle_name', 'Initials'),
+        ('last_name', 'Surname'),
+        ('suffix', 'Suffix'),
+        ('dob', (GN.doa2dob, [], {'doa': 'Date of Attainment'})),
+        ('registered_address1', (AD.address_get, ['address1'], address_headers)),
+        ('registered_address2', (AD.address_get, ['address2'], address_headers)),
+        ('registered_address3', (AD.address_get, ['address3'], address_headers)),
+        ('registered_city', (AD.address_get, ['city'], address_headers)),
+        ('registered_zip', 'Postcode'),
+        ('registered_state', (GN.state_get, [], {})),
+        ('ward', (RG.ward_get, [ward_map], {'pd':'PD', })),
+        ('tag_list', (VT.tags_add_voter, [tag_map], {'PD': 'PD',
+                                                    'Status': 'Status',
+                                                    'Franchise': 'Franchise Flag',
+                                                    })),
+        ]
+
     
 class RobinLatimer(object):
     ''' Robin Latimer (Broomhill canvassing ) Database'''
@@ -273,6 +317,7 @@ config_lookup = [
      ('CentralConstituencyRegister', Register.config, 'Register.config',),
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
      ('TTWRegisters', Register.config, 'Register.config',),
+     ('Register2015', Register2015.config, 'Register2015.config',),
      ('Register', Register.config, 'Register.config',),
      ('nationbuilder-people-export', NB.config, 'NB.config',),
      ('SRGP_MembersAll', Member.config, 'Member.config',),

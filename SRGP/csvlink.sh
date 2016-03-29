@@ -23,3 +23,4 @@ cd $datadir
 #rm -f $training_file
 perl -pi.bak -e 's/,,/,_,/g;s/, ,/,_,/g;' $register_old $register_new
 csvlink --field_names $field_names --output_file $register_linked --skip_training $register_old $register_new
+perl -pi.bak -e 's/,_/,/g;' $register_linked

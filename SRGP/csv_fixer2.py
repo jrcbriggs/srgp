@@ -467,23 +467,25 @@ class Main():
         self.filewriter = filereader or self.fh.csv_write
         self.csv_fixer = CsvFixer()
 
-    def main(self, filenames):
+    def main(self, pathnames):
         '''Fix one or more files for input to NB
         Lookup config using part of filename in order
         '''
-        for filename in filenames:  # skip scriptname in argv[0]
+        for pathname in pathnames:  # skip scriptname in argv[0]
             # Find config varname to match csv filename
             for (name, config, config_name) in self.config_lookup:
-                if search(name, filename):
+                #if search(name, filename):
+                basename = path.basename(pathname)
+                if basename.startswith(name):
                     print('Using: {}'.format(config_name))
-                    self.fix_csv(filename, config, config_name)
+                    self.fix_csv(pathname, config, config_name)
                     break
             else:
-                raise AttributeError('config not found for filename:{}'.format(filename))
+                raise AttributeError('config not found for pathname:{}'.format(pathname))
 
-    def fix_csv(self, filename, config, config_name):
-        filename_new = self.csv_fixer.fix_csv(filename, config, config_name, filereader=self.filereader, filewriter=self.filewriter)
-        print(filename_new)
+    def fix_csv(self, pathname, config, config_name):
+        pathname_new = self.csv_fixer.fix_csv(pathname, config, config_name, filereader=self.filereader, filewriter=self.filewriter)
+        print(pathname_new)
 
 if __name__ == '__main__':
     from configurations2 import config_lookup
