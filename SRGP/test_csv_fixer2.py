@@ -4,12 +4,14 @@ Created on 7 Feb 2016
 
 @author: julian
 '''
+from datetime import datetime
 import unittest
 from unittest.mock import MagicMock
 
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Volunteer as VL, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
+
 
 class TestAddressHandler(unittest.TestCase):
     '''
@@ -225,6 +227,13 @@ class TestMember(unittest.TestCase):
         expected = '12/31/1956'
         self.assertEqual(actual, expected)
         
+    def test_fix_date_cancelled(self):
+        status='Cancelled'
+        party_status_map={'Cancelled':'canceled'}
+        actual = MB.fix_date(date='2020-01-01', party_status_map=party_status_map, status=status)
+        expected = datetime.now().strftime('%m/%d/%Y')
+        self.assertEqual(actual, expected)
+        
     def test_fix_date_empty(self):
         actual = MB.fix_date(date='')
         expected = ''
@@ -264,10 +273,28 @@ class TestMember(unittest.TestCase):
                 'Expired':'expired',
                 'Grace':'grace period',
                 'New':'active',
+                'Pending':'grace period',
                 }
+        end_date = datetime.now().strftime('%Y-%m-%d')
         for (status,v) in status_map.items():
-            actual = MB.get_status(status_map, status=status)
+            actual = MB.get_status(status_map, status=status, end_date=end_date)
             expected = v
+            self.assertEqual(actual, expected)
+
+    def test_get_status_end_date_in_past(self):
+        status_map={
+                'Current':'active',
+                'Cancelled':'canceled',
+                'Deceased':'deceased',
+                'Expired':'expired',
+                'Grace':'grace period',
+                'New':'active',
+                'Pending':'grace period',
+                }
+        end_date = '2016-01-01'
+        for (status,v) in status_map.items():
+            actual = MB.get_status(status_map, status=status, end_date=end_date)
+            expected = 'grace period' if v == 'active' else v
             self.assertEqual(actual, expected)
 
     def test_get_support_level(self):
@@ -302,15 +329,6 @@ class TestRegister(unittest.TestCase):
     def setUp(self):
         self.kwargs = {'add1':'A', 'add2':'B', 'add3':'C', 'add4':'D', 'add5':'E', }
 
-    def test_tags_add_voter(self):
-        tag_map_voter = {'K':'k', 'E':'European', }
-        pd = 'EA'
-        status = 'K'
-        franchise = 'E'
-        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
-        expected = 'Franchise=European,PD=EA,Status=k'
-        self.assertEqual(actual, expected)
-
     def test_country_code_get(self):
         self.assertEqual(RG.country_code_get(), 'GB')
 
@@ -322,6 +340,12 @@ class TestRegister(unittest.TestCase):
         self.assertEqual(RG.ward_get(ward_lookup, pd='EA'), 'Broomhill')
         self.assertRaises(KeyError, RG.ward_get, ward_lookup, pd='9')
         self.assertRaises(IndexError, RG.ward_get, ward_lookup, pd='')
+
+    def test_ward_get_slash_eno(self):
+        ward_lookup = {'E': 'Broomhill', }
+        self.assertEqual(RG.ward_get_slash_eno(ward_lookup, pd_slash_eno='EA/123'), 'Broomhill')
+        self.assertRaises(KeyError, RG.ward_get_slash_eno, ward_lookup, pd_slash_eno='9/123')
+        self.assertRaises(IndexError, RG.ward_get_slash_eno, ward_lookup, pd_slash_eno='/123')
 
 class TestTableFixer(unittest.TestCase):
 
@@ -445,6 +469,12 @@ class TestVoter(unittest.TestCase):
     def test_merge_pd_eno_bad_eno(self):
         self.assertRaises(TypeError, VT.merge_pd_eno, pd=self.pd, eno=None)
 
+    def test_merge_pd_slash_eno(self):
+        pd_slash_eno='EA/123'
+        actual = VT.merge_pd_slash_eno(pd_slash_eno=pd_slash_eno)
+        expected = 'EA0123'
+        self.assertEqual(actual, expected)
+
     def test_eno_pad_bad_eno(self):
         self.assertRaises(TypeError, VT.eno_pad, eno=None)
 
@@ -457,6 +487,23 @@ class TestVoter(unittest.TestCase):
         actual = VT.fix_support_level(self.support_level_map, 'LD')
         expected = 5
         self.assertEqual(actual, expected)
+
+    def test_tags_add_voter(self):
+        tag_map_voter = {'K':'k', 'E':'European', }
+        pd = 'EA'
+        status = 'K'
+        franchise = 'E'
+        actual = VT.tags_add_voter(tag_map_voter, PD=pd, Status=status, Franchise=franchise)
+        expected = 'Franchise=European,PD=EA,Status=k'
+        self.assertEqual(actual, expected)
+
+    def test_tags_add_postal(self):
+        av_map={'Postal':'Postal16','Postal Proxy':'Postal16,Proxy16','Proxy':'Proxy16',}
+        for (av_type, av_tag) in av_map.items():
+            actual = VT.tags_add_postal(av_map, av_type, pd_slash_eno='EA/123')
+            expected = 'PD=EA,'+ av_tag
+            self.assertEqual(actual, expected)
+    
 
 if __name__ == "__main__":
     unittest.main()

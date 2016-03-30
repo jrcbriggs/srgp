@@ -42,7 +42,7 @@ class Member(object):
         ('membership_type', 'Membership Type'),
         ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status', })),
         ('started_at', (MB.fix_date, [], {'date':'Member Since', })),
-        ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', 'end_date':'End Date'})),
+        ('membership_status', (MB.get_status, [party_status_map], {'end_date':'End Date', 'status':'Status', })),
         ('address_address1', (AD.address_get, ['address1'], address_headers)),
         ('address_address2', (AD.address_get, ['address2'], address_headers)),
         ('address_address3', (AD.address_get, ['address3'], address_headers)),
@@ -60,19 +60,45 @@ class Member(object):
         ('registered_state', (GN.state_get, [], {})),
         ]
     
+class Postal(object): 
+    '''AV Type,PD/ENO,Elector Surname,Elector Forename,Elector Initials,Elector Suffix,Elector Title,
+    Corres Address Line 1,Corres Address Line 2,Corres Address Line 3,Corres Address Line 4,Corres Address Line 5,
+    Corres Address Postcode,Corres Address Country,Proxy Name,Send Address Line 1,Send Address Line 2,Send Address Line 3,
+    Send Address Line 4,Send Address Line 5,Send Address Postcode  
+    '''  
+    address_headers = {'add{}'.format(n):'Corres Address Line {}'.format(n) for n in range(1, 6)}
+    ward_map = {'E': 'Broomhill',
+                'G': 'City',
+                'H': 'Crookes & Crosspool',
+                'L': 'Ecclesall',
+                'O': 'Gleadless Valley',
+                'R': 'Manor Castle',
+                'T': 'Nether Edge & Sharrow',
+                'Z': 'Walkley',
+                    }
+    av_map={'Postal':'Postal16','Postal Proxy':'Postal16,Proxy16','Proxy':'Proxy16',}
+    config = [
+        ('state_file_id', (VT.merge_pd_slash_eno, [], {'pd_slash_eno':'PD/ENO',},)),
+        ('prefix', 'Elector Title'),
+        ('first_name', 'Elector Forename'),
+        ('middle_name', 'Elector Initials'),
+        ('last_name', 'Elector Surname'),
+        ('suffix', 'Elector Suffix'),
+        ('registered_address1', (AD.address_get, ['address1'], address_headers)),
+        ('registered_address2', (AD.address_get, ['address2'], address_headers)),
+        ('registered_address3', (AD.address_get, ['address3'], address_headers)),
+        ('registered_city', (AD.address_get, ['city'], address_headers)),
+        ('registered_zip', 'Corres Address Postcode'),
+        ('registered_state', (GN.state_get, [], {})),
+        ('registered_country', 'Corres Address Country'),
+        ('ward', (RG.ward_get_slash_eno, [ward_map], {'pd_slash_eno':'PD/ENO', })),
+        ('tag_list', (VT.tags_add_postal, [av_map], {'av_type':'AV Type','pd_slash_eno': 'PD/ENO',})),
+        ]
+    
 class Register(object):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
                      'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
     address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
-#     ward_map = {'E': 'Broomhill',
-#                 'G': 'Central',
-#                 'H': 'Crookes',
-#                 'L': 'Ecclesall',
-#                 'O': 'Gleadless Valley',
-#                 'R': 'Manor Castle',
-#                 'T': 'Nether Edge',
-#                 'Z': 'Walkley',
-#                     }
     ward_map = {'E': 'Broomhill',
                 'G': 'City',
                 'H': 'Crookes & Crosspool',
@@ -288,7 +314,7 @@ class YoungGreens(object):
         ('civicrm_id', 'Contact ID'),
         ('started_at', (MB.fix_date, [], {'date':'Start Date', })),
         ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status', })),
-        ('membership_status', (MB.get_status, [party_status_map], {'status':'Status', 'end_date':'End Date'})),
+        ('membership_status', (MB.get_status, [party_status_map], {'end_date':'End Date', 'status':'Status', })),
         ('membership_type', (GN.value_get, ['YoungGreen'], {})),
         ]
     
@@ -318,6 +344,7 @@ config_lookup = [
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
      ('TTWRegisters', Register.config, 'Register.config',),
      ('Register2015', Register2015.config, 'Register2015.config',),
+     ('RegisterPostal', Postal.config, 'Postal.config',),
      ('Register', Register.config, 'Register.config',),
      ('nationbuilder-people-export', NB.config, 'NB.config',),
      ('SRGP_MembersAll', Member.config, 'Member.config',),

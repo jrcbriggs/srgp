@@ -365,6 +365,11 @@ class Register(object):
     def ward_get(cls, ward_lookup, pd=None):
         return ward_lookup[pd[0]]
 
+    @classmethod
+    def ward_get_slash_eno(cls, ward_lookup, pd_slash_eno=None):
+        (pd, unused) = pd_slash_eno.split('/')
+        return ward_lookup[pd[0]]
+
 class TableFixer(object):
     
     def __init__(self, config=None, config_name=None):
@@ -437,6 +442,13 @@ class Voter(object):
             raise
 
     @classmethod
+    def merge_pd_slash_eno(cls, pd_slash_eno=None):
+        '''Merged PD/ENO.Splits pd and eno and calls merge_pd_eno
+        '''
+        (pd, eno) = pd_slash_eno.split('/')
+        return cls.merge_pd_eno(pd, eno)
+
+    @classmethod
     def eno_pad(cls, eno):
         return '%04d' % (int(eno),)
 
@@ -447,6 +459,13 @@ class Voter(object):
     @classmethod
     def fix_support_level(cls, support_level_map, support_level=None):
         return support_level_map[support_level]
+
+    @classmethod
+    def tags_add_postal(cls, av_map, av_type=None, pd_slash_eno=None):
+        '''Eg kwargs = {'pd_slash_eno':'EA/123'
+        '''
+        (pd, unused) = pd_slash_eno.split('/')
+        return 'PD={},{}'.format(pd, av_map[av_type])
 
     @classmethod
     def tags_add_voter(cls, tag_map_voter, **kwargs):
@@ -474,7 +493,7 @@ class Main():
         for pathname in pathnames:  # skip scriptname in argv[0]
             # Find config varname to match csv filename
             for (name, config, config_name) in self.config_lookup:
-                #if search(name, filename):
+                # if search(name, filename):
                 basename = path.basename(pathname)
                 if basename.startswith(name):
                     print('Using: {}'.format(config_name))
@@ -489,15 +508,6 @@ class Main():
 
 if __name__ == '__main__':
     from configurations2 import config_lookup
-    argv += [
-#             '/home/julian/SRGP/canvassing/2014_15/broomhill/csv/BroomhillCanvassData2015-03EA-H.csv',
-#             '/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyRegisterUpdate2016-02-01.csv',
-#             '/home/julian/SRGP/register/2015_16/CentralConstituency/CentralConstituencyWardRegisters2015-12-01.csv',
-#             '/home/julian/SRGP/civi/20160217/SRGP_MembersAll_20160217-1738.csv',
-#             '/home/julian/SRGP/civi/20160217/SRGP_SupportersAll_20160217-2031.csv',
-#             '/home/julian/SRGP/civi/20160217/SRGP_VolunteersAll_20160217-2039.csv',
-#             '/home/julian/SRGP/civi/20160217/SRGP_YoungGreens_20160217-2055.csv',
-            ]
     Main(config_lookup=config_lookup).main(argv[1:])
     print('Done')
       
