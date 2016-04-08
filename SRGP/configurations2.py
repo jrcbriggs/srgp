@@ -129,6 +129,40 @@ class Register(object):
                                                     })),
         ]
 
+#~ class Register(object):   
+    #~ tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
+                     #~ 'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
+    #~ address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
+    #~ ward_map = {'E': 'Broomhill',
+                #~ 'G': 'City',
+                #~ 'H': 'Crookes & Crosspool',
+                #~ 'L': 'Ecclesall',
+                #~ 'O': 'Gleadless Valley',
+                #~ 'R': 'Manor Castle',
+                #~ 'T': 'Nether Edge & Sharrow',
+                #~ 'Z': 'Walkley',
+                    #~ }
+    #~ config = [
+        #~ ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
+        #~ ('prefix', 'Title'),
+        #~ ('first_name', 'First Name'),
+        #~ ('middle_name', 'Initials'),
+        #~ ('last_name', 'Surname'),
+        #~ ('suffix', 'Suffix'),
+        #~ ('dob', (GN.doa2dob, [], {'doa': 'Date Of Attainment'})),
+        #~ ('registered_address1', (AD.address_get, ['address1'], address_headers)),
+        #~ ('registered_address2', (AD.address_get, ['address2'], address_headers)),
+        #~ ('registered_address3', (AD.address_get, ['address3'], address_headers)),
+        #~ ('registered_city', (AD.address_get, ['city'], address_headers)),
+        #~ ('registered_zip', (AD.address_get, ['postcode'], address_headers)),
+        #~ ('registered_state', (GN.state_get, [], {})),
+        #~ ('ward', (RG.ward_get, [ward_map], {'pd':'PD', })),
+        #~ ('tag_list', (VT.tags_add_voter, [tag_map], {'PD': 'PD',
+                                                    #~ 'Status': 'Status',
+                                                    #~ 'Franchise': 'Franchise Flag',
+                                                    #~ })),
+        #~ ]
+
 class Register2015(Register):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
                      'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
