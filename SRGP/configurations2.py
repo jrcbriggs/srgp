@@ -27,6 +27,7 @@ Most classes have maps which provide a lookup from old value to new value.
 
 '''
 from collections import OrderedDict
+from copy import deepcopy
 
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
 
@@ -36,7 +37,7 @@ class Member(object):
     party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', 'Pending':'G', }
     party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, 'Pending':True, }
     party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', 'Pending':'grace period', }
-    support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, 'Pending':1,}
+    support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, 'Pending':1, }
     config = OrderedDict([
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
@@ -78,9 +79,9 @@ class Postal(object):
                 'T': 'Nether Edge & Sharrow',
                 'Z': 'Walkley',
                     }
-    av_map={'Postal':'Postal16','Postal Proxy':'Postal16,Proxy16','Proxy':'Proxy16',}
+    av_map = {'Postal':'Postal16', 'Postal Proxy':'Postal16,Proxy16', 'Proxy':'Proxy16', }
     config = OrderedDict([
-        ('state_file_id', (VT.merge_pd_slash_eno, [], {'pd_slash_eno':'PD/ENO',},)),
+        ('state_file_id', (VT.merge_pd_slash_eno, [], {'pd_slash_eno':'PD/ENO', },)),
         ('prefix', 'Elector Title'),
         ('first_name', 'Elector Forename'),
         ('middle_name', 'Elector Initials'),
@@ -94,7 +95,7 @@ class Postal(object):
         ('registered_state', (GN.state_get, [], {})),
         ('registered_country', 'Corres Address Country'),
         ('ward', (RG.ward_get_slash_eno, [ward_map], {'pd_slash_eno':'PD/ENO', })),
-        ('tag_list', (VT.tags_add_postal, [av_map], {'av_type':'AV Type','pd_slash_eno': 'PD/ENO',})),
+        ('tag_list', (VT.tags_add_postal, [av_map], {'av_type':'AV Type', 'pd_slash_eno': 'PD/ENO', })),
         ])
     
 class Register(object):   
@@ -131,39 +132,13 @@ class Register(object):
                                                     })),
         ])
 
-#~ class Register(object):   
-    #~ tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
-                     #~ 'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
-    #~ address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
-    #~ ward_map = {'E': 'Broomhill',
-                #~ 'G': 'City',
-                #~ 'H': 'Crookes & Crosspool',
-                #~ 'L': 'Ecclesall',
-                #~ 'O': 'Gleadless Valley',
-                #~ 'R': 'Manor Castle',
-                #~ 'T': 'Nether Edge & Sharrow',
-                #~ 'Z': 'Walkley',
-                    #~ }
-    #~ config = OrderedDict([
-        #~ ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
-        #~ ('prefix', 'Title'),
-        #~ ('first_name', 'First Name'),
-        #~ ('middle_name', 'Initials'),
-        #~ ('last_name', 'Surname'),
-        #~ ('suffix', 'Suffix'),
-        #~ ('dob', (GN.doa2dob, [], {'doa': 'Date Of Attainment'})),
-        #~ ('registered_address1', (AD.address_get, ['address1'], address_headers)),
-        #~ ('registered_address2', (AD.address_get, ['address2'], address_headers)),
-        #~ ('registered_address3', (AD.address_get, ['address3'], address_headers)),
-        #~ ('registered_city', (AD.address_get, ['city'], address_headers)),
-        #~ ('registered_zip', (AD.address_get, ['postcode'], address_headers)),
-        #~ ('registered_state', (GN.state_get, [], {})),
-        #~ ('ward', (RG.ward_get, [ward_map], {'pd':'PD', })),
-        #~ ('tag_list', (VT.tags_add_voter, [tag_map], {'PD': 'PD',
-                                                    #~ 'Status': 'Status',
-                                                    #~ 'Franchise': 'Franchise Flag',
-                                                    #~ })),
-        #~ ]
+class RegisterCentralConstituency20160401(Register):
+    tag_map = Register.tag_map 
+    address_headers = deepcopy(Register.address_headers) 
+    ward_map = Register.ward_map 
+    config = deepcopy(Register.config)
+    config['registered_zip'] = (AD.address_get, ['postcode'], address_headers)
+    config['state_file_id'] = (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)
 
 class Register2015(Register):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
@@ -379,6 +354,7 @@ config_lookup = [
      ('CentralConstituencyRegister', Register.config, 'Register.config',),
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
      ('TTWRegisters', Register.config, 'Register.config',),
+     ('RegisterCentralConstituency20160401', RegisterCentralConstituency20160401.config, 'RegisterCentralConstituency20160401.config',),
      ('Register2015', Register2015.config, 'Register2015.config',),
      ('RegisterPostal', Postal.config, 'Postal.config',),
      ('Register', Register.config, 'Register.config',),
