@@ -8,6 +8,7 @@ from datetime import datetime
 import unittest
 from unittest.mock import MagicMock
 
+from collections import OrderedDict
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Volunteer as VL, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
@@ -90,9 +91,9 @@ class TestCsvFixer(unittest.TestCase):
         self.pathname = '/tmp/test.csv'
         self.pathname1 = '/tmp/testNB.csv'
         self.config_name = 'config_test'
-        self.config = [
+        self.config = OrderedDict([
                           ('AA', 'A'),
-                          ('BB', 'B'), ]
+                          ('BB', 'B'), ])
         self.table0 = [{'A':'a', 'B':'b', },
                       {'A':'c', 'B':'d', }]
 
@@ -366,14 +367,14 @@ class TestTableFixer(unittest.TestCase):
                     'tag_list': 'a,b,c,d',
                     }
         self.tag_map = {'':'', 'A':'a', 'B':'b', 'C':'c', 'D':'d', }
-        self.config = [
+        self.config = OrderedDict([
                             # 1st element in tuple is class method
                             ('statefile_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
                             ('first_name', 'First name'),
                             ('tag_list', (GN.tags_add, [self.tag_map], {'k0': 'TagCol0',
                                                                         'k1': 'TagCol1',
                                                                          })),
-                          ]
+                          ])
         self.table0 = [self.row0]
         self.table1 = [self.row1]
         self.tf = TF(config=self.config)

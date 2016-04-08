@@ -26,8 +26,10 @@ Most classes have maps which provide a lookup from old value to new value.
  
 
 '''
+from collections import OrderedDict
 
 from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
+
 
 class Member(object):
     address_headers = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k2':'Supplemental Address 2', 'k3':'City', 'k4':'Postal Code'}
@@ -35,7 +37,7 @@ class Member(object):
     party_member_map = {'Current':True, 'Cancelled':False, 'Deceased':False, 'Expired':False, 'Grace':True, 'New':True, 'Pending':True, }
     party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', 'Pending':'grace period', }
     support_level_map = {'Current':1, 'Cancelled':4, 'Deceased':None, 'Expired':2, 'Grace':1, 'New':1, 'Pending':1,}
-    config = [
+    config = OrderedDict([
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
@@ -58,7 +60,7 @@ class Member(object):
         ('party_member', (MB.get_party_member, [party_member_map], {'status':'Status', })),
         ('support_level', (MB.get_support_level, [support_level_map], {'status':'Status', })),
         ('registered_state', (GN.state_get, [], {})),
-        ]
+        ])
     
 class Postal(object): 
     '''AV Type,PD/ENO,Elector Surname,Elector Forename,Elector Initials,Elector Suffix,Elector Title,
@@ -77,7 +79,7 @@ class Postal(object):
                 'Z': 'Walkley',
                     }
     av_map={'Postal':'Postal16','Postal Proxy':'Postal16,Proxy16','Proxy':'Proxy16',}
-    config = [
+    config = OrderedDict([
         ('state_file_id', (VT.merge_pd_slash_eno, [], {'pd_slash_eno':'PD/ENO',},)),
         ('prefix', 'Elector Title'),
         ('first_name', 'Elector Forename'),
@@ -93,7 +95,7 @@ class Postal(object):
         ('registered_country', 'Corres Address Country'),
         ('ward', (RG.ward_get_slash_eno, [ward_map], {'pd_slash_eno':'PD/ENO', })),
         ('tag_list', (VT.tags_add_postal, [av_map], {'av_type':'AV Type','pd_slash_eno': 'PD/ENO',})),
-        ]
+        ])
     
 class Register(object):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
@@ -108,7 +110,7 @@ class Register(object):
                 'T': 'Nether Edge & Sharrow',
                 'Z': 'Walkley',
                     }
-    config = [
+    config = OrderedDict([
         ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
         ('prefix', 'Title'),
         ('first_name', 'First Name'),
@@ -127,7 +129,7 @@ class Register(object):
                                                     'Status': 'Status',
                                                     'Franchise': 'Franchise Flag',
                                                     })),
-        ]
+        ])
 
 #~ class Register(object):   
     #~ tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
@@ -142,7 +144,7 @@ class Register(object):
                 #~ 'T': 'Nether Edge & Sharrow',
                 #~ 'Z': 'Walkley',
                     #~ }
-    #~ config = [
+    #~ config = OrderedDict([
         #~ ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
         #~ ('prefix', 'Title'),
         #~ ('first_name', 'First Name'),
@@ -185,7 +187,7 @@ class Register2015(Register):
                 'T': 'Nether Edge & Sharrow',
                 'Z': 'Walkley',
                     }
-    config = [
+    config = OrderedDict([
         ('state_file_id', (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)),
         ('prefix', 'Title'),
         ('first_name', 'First Names'),
@@ -204,7 +206,7 @@ class Register2015(Register):
                                                     'Status': 'Status',
                                                     'Franchise': 'Franchise Flag',
                                                     })),
-        ]
+        ])
 
     
 class RobinLatimer(object):
@@ -232,7 +234,7 @@ class RobinLatimer(object):
         'Vote14': 'Voted14',
         'Vote12': 'Voted12',
                 }
-    config = [
+    config = OrderedDict([
         ('state_file_id', (VT.merge_pd_eno, [], {'pd':'polldist', 'eno':'elect no', },)),
         ('dob', (GN.doa2dob, [], {'doa': 'Date18'})),
         ('last_name', 'Surname'),
@@ -262,12 +264,12 @@ class RobinLatimer(object):
                                                  }
                       )
          ),
-      ]
+      ])
 
 class Supporter(object):
     address_headers = {'k0':'Street Address', 'k1':'Supplemental Address 1', 'k3':'City', 'k4':'Postal Code'}
     party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
-    config = [
+    config = OrderedDict([
         ('name', 'Contact Name'),
         ('civicrm_id', 'Contact ID'),
         ('address_address1', (AD.address_get, ['address1'], address_headers)),
@@ -282,7 +284,7 @@ class Supporter(object):
         ('precinct_name', 'Ward'),
         ('party', (MB.get_party_green, [], {})),
         ('registered_state', (GN.state_get, [], {})),
-        ]
+        ])
 
 class Volunteer(object):
     status_map = {"I've not been contacted":"volunteer_not_contacted", "I've been contacted but not yet helping":"volunteer_contacted", "I'm already helping":"volunteer_helping", }
@@ -321,7 +323,7 @@ class Volunteer(object):
     tag_map.update(availability_map)
     tag_map.update(action_map)
     tag_map.update(skill_map)
-    config = [
+    config = OrderedDict([
         ('name', 'Contact Name'),
         ('civicrm_id', 'Contact ID'),
         ('email', 'Email'),
@@ -338,11 +340,11 @@ class Volunteer(object):
                                         'volunteer_skills':'Skills',
     #                                       'volunteer_skills_other':'Skills: Other',
                                           })),
-        ]
+        ])
     
 class YoungGreens(object):
     party_status_map = {'Current':'active', 'Cancelled':'canceled', 'Deceased':'expired', 'Expired':'expired', 'Grace':'grace period', 'New':'active', 'Pending':'grace period', }
-    config = [
+    config = OrderedDict([
         ('first_name', 'First Name'),
         ('last_name', 'Last Name'),
         ('civicrm_id', 'Contact ID'),
@@ -350,7 +352,7 @@ class YoungGreens(object):
         ('expires_on', (MB.fix_date, [party_status_map], {'date':'End Date', 'status':'Status', })),
         ('membership_status', (MB.get_status, [party_status_map], {'end_date':'End Date', 'status':'Status', })),
         ('membership_type', (GN.value_get, ['YoungGreen'], {})),
-        ]
+        ])
     
 class NB(object):
     fields = ('nationbuilder_id',
@@ -369,7 +371,7 @@ class NB(object):
                 'precinct_name',
                 'tag_list',
             )
-    config = [(f, f) for f in fields]
+    config = OrderedDict([(f, f) for f in fields])
 
 
 config_lookup = [

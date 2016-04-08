@@ -183,7 +183,7 @@ class CsvFixer(object):
 
         # Write the table to a new csv file for import to NB.
         pathname_new = pathname.replace('.csv', 'NB.csv')
-        fieldnames = [k for (k, unused) in config]
+        fieldnames = [k for k in config.keys()]
         # Enusre tag_list is in keys
         if not 'tag_list' in fieldnames:
             fieldnames.append('tag_list')
@@ -385,7 +385,7 @@ class TableFixer(object):
         '''Creates new row from old row
         '''
         return {fieldname1: self.fix_field(row0, arg0)
-                    for (fieldname1, arg0) in self.config}
+                    for (fieldname1, arg0) in self.config.items()}
 
     def fix_field(self, row0, arg0):
         '''Creates new field from old field(s)
