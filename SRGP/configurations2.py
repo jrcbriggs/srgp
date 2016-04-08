@@ -106,7 +106,9 @@ class Register(object):
                 'G': 'City',
                 'H': 'Crookes & Crosspool',
                 'L': 'Ecclesall',
+                'N': 'Fullwood',
                 'O': 'Gleadless Valley',
+                'Q': 'Hillsborough',
                 'R': 'Manor Castle',
                 'T': 'Nether Edge & Sharrow',
                 'Z': 'Walkley',
@@ -132,13 +134,12 @@ class Register(object):
                                                     })),
         ])
 
-class RegisterCentralConstituency20160401(Register):
+class RegisterCentralConstituencyUpdate(Register):
     tag_map = Register.tag_map 
     address_headers = deepcopy(Register.address_headers) 
     ward_map = Register.ward_map 
     config = deepcopy(Register.config)
     config['registered_zip'] = (AD.address_get, ['postcode'], address_headers)
-    config['state_file_id'] = (VT.merge_pd_eno, [], {'pd':'PD', 'eno':'ENO', },)
 
 class Register2015(Register):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
@@ -354,7 +355,7 @@ config_lookup = [
      ('CentralConstituencyRegister', Register.config, 'Register.config',),
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
      ('TTWRegisters', Register.config, 'Register.config',),
-     ('RegisterCentralConstituency20160401', RegisterCentralConstituency20160401.config, 'RegisterCentralConstituency20160401.config',),
+     ('RegisterCentralConstituencyUpdate', RegisterCentralConstituencyUpdate.config, 'RegisterCentralConstituencyUpdate.config',),
      ('Register2015', Register2015.config, 'Register2015.config',),
      ('RegisterPostal', Postal.config, 'Postal.config',),
      ('Register', Register.config, 'Register.config',),
