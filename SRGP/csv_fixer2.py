@@ -362,6 +362,10 @@ class Register(object):
         return 'GB'
     
     @classmethod
+    def franchise_get(cls, tag_map, franchise_flag=''):
+        return tag_map[franchise_flag]
+
+    @classmethod
     def ward_get(cls, ward_lookup, pd=None):
         return ward_lookup[pd[0]]
 

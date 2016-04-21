@@ -63,6 +63,25 @@ class Member(object):
         ('registered_state', (GN.state_get, [], {})),
         ])
     
+class NB(object):
+    fields = ('nationbuilder_id',
+              'state_file_id',
+                'prefix',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'suffix',
+                'registered_address1',
+                'registered_address2',
+                'registered_address3',
+                'registered_city',
+                'registered_zip',
+                'registered_state',
+                'precinct_name',
+                'tag_list',
+            )
+    config = OrderedDict([(f, f) for f in fields])
+
 class Postal(object): 
     '''AV Type,PD/ENO,Elector Surname,Elector Forename,Elector Initials,Elector Suffix,Elector Title,
     Corres Address Line 1,Corres Address Line 2,Corres Address Line 3,Corres Address Line 4,Corres Address Line 5,
@@ -100,7 +119,7 @@ class Postal(object):
     
 class Register(object):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
-                     'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
+                     'E':'European', 'F':'UK_EU', 'G':'Local_Scots', 'K':'Local_Scots_EU', 'L':'Local', }
     address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
     ward_map = {'E': 'Broomhill',
                 'G': 'City',
@@ -127,7 +146,9 @@ class Register(object):
         ('registered_city', (AD.address_get, ['city'], address_headers)),
         ('registered_zip', 'Postcode'),
         ('registered_state', (GN.state_get, [], {})),
+        ('PD', 'PD'),
         ('ward', (RG.ward_get, [ward_map], {'pd':'PD', })),
+        ('franchise', (RG.franchise_get, [tag_map], {'franchise_flag':'Franchise Flag', })),
         ('tag_list', (VT.tags_add_voter, [tag_map], {'PD': 'PD',
                                                     'Status': 'Status',
                                                     'Franchise': 'Franchise Flag',
@@ -135,15 +156,13 @@ class Register(object):
         ])
 
 class RegisterCentralConstituencyUpdate(Register):
-    tag_map = Register.tag_map 
     address_headers = deepcopy(Register.address_headers) 
-    ward_map = Register.ward_map 
     config = deepcopy(Register.config)
     config['registered_zip'] = (AD.address_get, ['postcode'], address_headers)
 
 class Register2015(Register):   
     tag_map = {'':'', 'A':'Added', 'D':'Deleted', 'M':'Modified', 'K':'K',
-                     'E':'European', 'F':'UK EU', 'G':'Local Scots', 'K':'Local Scots EU', 'L':'Local', }
+                     'E':'European', 'F':'UK_EU', 'G':'Local_Scots', 'K':'Local_Scots_EU', 'L':'Local', }
     address_headers = {'add{}'.format(n):'Address {}'.format(n) for n in range(1, 8)}
 #     ward_map = {'E': 'Broomhill',
 #                 'G': 'Central',
@@ -183,7 +202,6 @@ class Register2015(Register):
                                                     'Franchise': 'Franchise Flag',
                                                     })),
         ])
-
     
 class RobinLatimer(object):
     ''' Robin Latimer (Broomhill canvassing ) Database'''
@@ -329,26 +347,6 @@ class YoungGreens(object):
         ('membership_status', (MB.get_status, [party_status_map], {'end_date':'End Date', 'status':'Status', })),
         ('membership_type', (GN.value_get, ['YoungGreen'], {})),
         ])
-    
-class NB(object):
-    fields = ('nationbuilder_id',
-              'state_file_id',
-                'prefix',
-                'first_name',
-                'middle_name',
-                'last_name',
-                'suffix',
-                'registered_address1',
-                'registered_address2',
-                'registered_address3',
-                'registered_city',
-                'registered_zip',
-                'registered_state',
-                'precinct_name',
-                'tag_list',
-            )
-    config = OrderedDict([(f, f) for f in fields])
-
 
 config_lookup = [
      ('BroomhillCanvassData', RobinLatimer.config, 'RobinLatimer.config',),
