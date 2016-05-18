@@ -29,7 +29,8 @@ Most classes have maps which provide a lookup from old value to new value.
 from collections import OrderedDict
 from copy import deepcopy
 
-from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
+from csv_fixer2 import AddressHandler as AD, Backup, Canvass as CN, Generic as GN, Member as MB, Register as RG, Volunteer as VL, Voter as VT
+
 
 
 class Member(object):
@@ -63,7 +64,53 @@ class Member(object):
         ('registered_state', (GN.state_get, [], {})),
         ])
     
-class NB(object):
+class NationBuilder(object):
+    ''' NB export to usable CSV file.
+    Manually: 
+    1. sort on state_file_id
+    2. split by PD
+    3. upload to G drive
+    Julian 22-april-2016
+    (was called Backup)
+    '''
+    fields = (
+                'state_file_id',
+                'nationbuilder_id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'address_address1',
+                'address_address2',
+                'address_address3',
+                'address_city',
+                'address_zip',
+                'registered_address1',
+                'registered_address2',
+                'registered_address3',
+                'registered_city',
+                'registered_zip',
+                'support_level',
+                'do_not_call',
+                'do_not_contact',
+                'email',
+                'email_opt_in',
+                'external_id',
+                'is_deceased',
+                'is_supporter',
+                'is_volunteer',
+                'mobile_number',
+                'mobile_opt_in',
+                'note',
+                'party',
+                'party_member',
+                'phone_number',
+                'precinct_name',
+                'tag_list',
+            )
+    config = OrderedDict([(f, f) for f in fields])
+    config['tag_list'] = (Backup.tags_select, ['^(PD=|Status=|stake16|stake16_up)'], {'tag_list': 'tag_list'},)
+
+class NationBuilder2(object):
     fields = ('nationbuilder_id',
               'state_file_id',
                 'prefix',
@@ -77,16 +124,26 @@ class NB(object):
                 'registered_city',
                 'registered_zip',
                 'registered_state',
+                'phone_number',
+                'mobile_number',
                 'precinct_name',
                 'tag_list',
             )
     config = OrderedDict([(f, f) for f in fields])
 
 class Postal(object): 
-    '''AV Type,PD/ENO,Elector Surname,Elector Forename,Elector Initials,Elector Suffix,Elector Title,
+    '''
+    2016-04-01
+    AV Type,PD/ENO,Elector Surname,Elector Forename,Elector Initials,Elector Suffix,Elector Title,
     Corres Address Line 1,Corres Address Line 2,Corres Address Line 3,Corres Address Line 4,Corres Address Line 5,
     Corres Address Postcode,Corres Address Country,Proxy Name,Send Address Line 1,Send Address Line 2,Send Address Line 3,
     Send Address Line 4,Send Address Line 5,Send Address Postcode  
+    
+    2016-04-22
+    AV Type,PD/ENO,Elector Surname,Elector Forename,Elector Initials,Elector Suffix,Elector Title,Corres Address Line 1,
+    Corres Address Line 2,Corres Address Line 3,Corres Address Line 4,Corres Address Line 5,Corres Address Postcode,
+    Corres Address Country,Proxy Name,Send Address Line 1,Send Address Line 2,Send Address Line 3,Send Address Line 4,
+    Send Address Line 5,Send Address Postcode
     '''  
     address_headers = {'add{}'.format(n):'Corres Address Line {}'.format(n) for n in range(1, 6)}
     ward_map = {'E': 'Broomhill',
@@ -349,6 +406,7 @@ class YoungGreens(object):
         ])
 
 config_lookup = [
+     ('nationbuilder-people-export', NationBuilder.config, 'NationBuilder.config',),
      ('BroomhillCanvassData', RobinLatimer.config, 'RobinLatimer.config',),
      ('CentralConstituencyRegister', Register.config, 'Register.config',),
      ('CentralConstituencyWardRegisters', Register.config, 'Register.config',),
@@ -357,10 +415,8 @@ config_lookup = [
      ('Register2015', Register2015.config, 'Register2015.config',),
      ('RegisterPostal', Postal.config, 'Postal.config',),
      ('Register', Register.config, 'Register.config',),
-     ('nationbuilder-people-export', NB.config, 'NB.config',),
      ('SRGP_MembersAll', Member.config, 'Member.config',),
      ('SRGP_SupportersAll', Supporter.config, 'Supporter.config',),
      ('SRGP_VolunteersAll', Volunteer.config, 'Volunteer.config',),
      ('SRGP_YoungGreens', YoungGreens.config, 'YoungGreens.config',),
-     ('nationbuilder-people-export', NB.config, 'NB.config',),
      ]

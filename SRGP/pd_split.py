@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 '''
 Created on 21 Apr 2016
 
@@ -12,10 +13,11 @@ import sys
 
 class Main(object):
     
-    def __init__(self,pathname):
+    def __init__(self,pathname, pd_re='^(\w\w)'):
         self.fh_lookup = {}
         self.fh_in = open(pathname, 'r')
         self.dirname=dirname(pathname)
+        self.pd_re = pd_re
     
     def main(self):
         self.header = self.fh_in.readline()
@@ -23,7 +25,8 @@ class Main(object):
             self.line_handler(line)
             
     def line_handler(self, line):
-        pd = findall('^(\w\w)', line)[0]
+        found = findall(self.pd_re, line)
+        pd = found[0] if found else 'UNKNOWN'
         
         fh = self.fh_lookup.get(pd)
         if not fh:
@@ -39,5 +42,7 @@ if __name__ == '__main__':
         pathname=sys.argv[1]
     else:      
         pathname = '/home/julian/SRGP/test/test.csv'
+#     m = Main(pathname, pd_re=',(\w\w)/\d+,')
     m = Main(pathname)
+    #~ m.main()
     m.main()

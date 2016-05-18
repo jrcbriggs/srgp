@@ -4,12 +4,12 @@ Created on 7 Feb 2016
 
 @author: julian
 '''
+from collections import OrderedDict
 from datetime import datetime
 import unittest
 from unittest.mock import MagicMock
 
-from collections import OrderedDict
-from csv_fixer2 import AddressHandler as AD, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Volunteer as VL, Voter as VT
+from csv_fixer2 import AddressHandler as AD, Backup, Canvass as CN, Generic as GN, Member as MB, Register as RG, TableFixer as TF, Volunteer as VL, Voter as VT
 from csv_fixer2 import CsvFixer, FileHandler, Main
 import csv_fixer2
 
@@ -46,7 +46,7 @@ class TestAddressHandler(unittest.TestCase):
                 {'address1': '5 - 15 Market Place', 'address2': 'Flat 110 Watsons Chambers', 'address3': 'City Centre', 'city':'Sheffield', 'postcode':'S1 1AB', },
                 {'address1': 'Arundel Lane', 'address2': 'Flat 4 108, Sellers Wheel', 'city':'Sheffield', 'postcode':'S1 1AB', },
                 {'address1': '220 Stannington View Road', 'city':'Sheffield', 'postcode':'S10 1ST', },
-                {'address1': '220 Stannington View Road', 'city':'Sheffield',  },
+                {'address1': '220 Stannington View Road', 'city':'Sheffield', },
                 ]
 
     def test_address_get(self):
@@ -55,6 +55,14 @@ class TestAddressHandler(unittest.TestCase):
                 actual = AD.address_get(key, **kwargs)
                 self.assertEqual(actual, expected.get(key), 'key:{}  kwargs:{}'.format(key, kwargs))
     
+class TestBackup(unittest.TestCase):
+    def test_tags_select(self):
+        tag_list = 'Register,PD=EA, Status=E'
+        tags_re = '^(PD=|Status=)'
+        actual = Backup.tags_select(tags_re, tag_list)
+        expected = 'PD=EA,Status=E'
+        self.assertEqual(actual, expected)
+
 class TestCanvass(unittest.TestCase):
     def setUp(self):
         self.housename = 'Avalon'
@@ -98,7 +106,7 @@ class TestCsvFixer(unittest.TestCase):
                       {'A':'c', 'B':'d', }]
 
         self.table1 = [{'AA':'a', 'BB':'b', 'tag_list':'test', },
-                      {'AA':'c', 'BB':'d', 'tag_list':'test', },]
+                      {'AA':'c', 'BB':'d', 'tag_list':'test', }, ]
 
     def test_csv_read(self):
         self.fh.csv_write(self.table0, self.pathname, ['A', 'B'])
@@ -154,8 +162,8 @@ class TestGeneric(unittest.TestCase):
         self.assertEqual(actual, expected)
     
     def test_tags_add_key_error(self):
-        actual=GN.tags_add(self.tag_map, k0='A,B,XXX')
-        expected ='a,b'
+        actual = GN.tags_add(self.tag_map, k0='A,B,XXX')
+        expected = 'a,b'
         self.assertEqual(actual, expected)
 
     def test_tags_split(self):
@@ -166,12 +174,12 @@ class TestGeneric(unittest.TestCase):
 
     def test_tags_split_bad_key(self):
         k0 = 'A,B,XXX'
-        actual=GN.tags_split(self.tag_map, k0)
-        expected =['a', 'b']
+        actual = GN.tags_split(self.tag_map, k0)
+        expected = ['a', 'b']
         self.assertEqual(actual, expected)
         
     def test_value_get(self):
-        value='asdf'
+        value = 'asdf'
         actual = GN.value_get(value)
         expected = value
         self.assertEqual(actual, expected, actual)
@@ -215,7 +223,7 @@ class TestMain(unittest.TestCase):
     def test_fix_csv(self):
         self.main.csv_fixer.fix_csv = MagicMock()
         self.main.fix_csv(self.filename, self.config_test, self.config_name)
-        self.main.csv_fixer.fix_csv.assert_called_once_with(self.filename, self.config_test,self.config_name,
+        self.main.csv_fixer.fix_csv.assert_called_once_with(self.filename, self.config_test, self.config_name,
                                                             filereader=self.main.filereader, filewriter=self.main.filewriter)
 
 #########################################################################################################
@@ -229,8 +237,8 @@ class TestMember(unittest.TestCase):
         self.assertEqual(actual, expected)
         
     def test_fix_date_cancelled(self):
-        status='Cancelled'
-        party_status_map={'Cancelled':'canceled'}
+        status = 'Cancelled'
+        party_status_map = {'Cancelled':'canceled'}
         actual = MB.fix_date(date='2020-01-01', party_status_map=party_status_map, status=status)
         expected = datetime.now().strftime('%m/%d/%Y')
         self.assertEqual(actual, expected)
@@ -242,7 +250,7 @@ class TestMember(unittest.TestCase):
 
     def test_get_party(self):
         party_map = {'Current':'G', 'Cancelled':None, 'Deceased':None, 'Expired':None, 'Grace':'G', 'New':'G', }
-        for (status,v) in party_map.items():
+        for (status, v) in party_map.items():
             actual = MB.get_party(party_map, status)
             expected = v
             self.assertEqual(actual, expected)
@@ -253,7 +261,7 @@ class TestMember(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_get_party_member(self):
-        party_member_map={
+        party_member_map = {
                 'Current':True,
                 'Cancelled':False,
                 'Deceased':False,
@@ -261,13 +269,13 @@ class TestMember(unittest.TestCase):
                 'Grace':True,
                 'New':True,
                 }
-        for (k,v) in party_member_map.items():
+        for (k, v) in party_member_map.items():
             actual = MB.get_party_member(party_member_map, status=k)
             expected = v
             self.assertEqual(actual, expected)
 
     def test_get_status(self):
-        status_map={
+        status_map = {
                 'Current':'active',
                 'Cancelled':'canceled',
                 'Deceased':'deceased',
@@ -277,13 +285,13 @@ class TestMember(unittest.TestCase):
                 'Pending':'grace period',
                 }
         end_date = datetime.now().strftime('%Y-%m-%d')
-        for (status,v) in status_map.items():
+        for (status, v) in status_map.items():
             actual = MB.get_status(status_map, status=status, end_date=end_date)
             expected = v
             self.assertEqual(actual, expected)
 
     def test_get_status_end_date_in_past(self):
-        status_map={
+        status_map = {
                 'Current':'active',
                 'Cancelled':'canceled',
                 'Deceased':'deceased',
@@ -293,13 +301,13 @@ class TestMember(unittest.TestCase):
                 'Pending':'grace period',
                 }
         end_date = '2016-01-01'
-        for (status,v) in status_map.items():
+        for (status, v) in status_map.items():
             actual = MB.get_status(status_map, status=status, end_date=end_date)
             expected = 'grace period' if v == 'active' else v
             self.assertEqual(actual, expected)
 
     def test_get_support_level(self):
-        support_level_map={
+        support_level_map = {
                 'Current':1,
                 'Cancelled':4,
                 'Deceased':None,
@@ -307,13 +315,13 @@ class TestMember(unittest.TestCase):
                 'Grace':1,
                 'New':1,
                 }
-        for (k,v) in support_level_map.items():
-            actual = MB.get_support_level(support_level_map,status=k)
+        for (k, v) in support_level_map.items():
+            actual = MB.get_support_level(support_level_map, status=k)
             expected = v
             self.assertEqual(actual, expected)
 
     def test_is_deceased(self):
-        for (k,v) in {
+        for (k, v) in {
                 'Current':False,
                 'Cancelled':False,
                 'Deceased':True,
@@ -386,8 +394,8 @@ class TestTableFixer(unittest.TestCase):
 
     def test_fix_table_bad(self):
         self.row0['TagCol0'] = 'XXX'
-        actual=self.tf.fix_table(table0=self.table0)
-        self.table1[0]['tag_list']= 'c,d'
+        actual = self.tf.fix_table(table0=self.table0)
+        self.table1[0]['tag_list'] = 'c,d'
         expected = self.table1
         self.assertListEqual(actual, expected)
 
@@ -399,7 +407,7 @@ class TestTableFixer(unittest.TestCase):
     def test_fix_row_bad(self):
         self.row0['TagCol0'] = 'XXX'
         actual = self.tf.fix_row(self.row0)
-        self.row1['tag_list']= 'c,d'
+        self.row1['tag_list'] = 'c,d'
         expected = self.row1
         self.assertDictEqual(actual, expected)
 
@@ -471,7 +479,7 @@ class TestVoter(unittest.TestCase):
         self.assertRaises(TypeError, VT.merge_pd_eno, pd=self.pd, eno=None)
 
     def test_merge_pd_slash_eno(self):
-        pd_slash_eno='EA/123'
+        pd_slash_eno = 'EA/123'
         actual = VT.merge_pd_slash_eno(pd_slash_eno=pd_slash_eno)
         expected = 'EA0123'
         self.assertEqual(actual, expected)
@@ -499,10 +507,10 @@ class TestVoter(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_tags_add_postal(self):
-        av_map={'Postal':'Postal16','Postal Proxy':'Postal16,Proxy16','Proxy':'Proxy16',}
+        av_map = {'Postal':'Postal16', 'Postal Proxy':'Postal16,Proxy16', 'Proxy':'Proxy16', }
         for (av_type, av_tag) in av_map.items():
             actual = VT.tags_add_postal(av_map, av_type, pd_slash_eno='EA/123')
-            expected = 'PD=EA,'+ av_tag
+            expected = 'PD=EA,' + av_tag
             self.assertEqual(actual, expected)
     
 

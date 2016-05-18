@@ -142,6 +142,14 @@ class AddressHandler():
         
         return address  
 
+class Backup(object):
+    @classmethod
+    def tags_select(cls, tags_re, tag_list=''):
+        '''tag_list is string of raw, comma-separated tags
+        tags_re is regex to search for wanted tags, eg: '^\s*(PD=|Status=)'
+        '''
+        return ','.join(sorted([tag.strip() for tag in tag_list.split(',') if search(tags_re, tag.strip())]))
+
 class Canvass():
     @classmethod
     def background_merge(cls, notes='', comments=''):
@@ -511,6 +519,7 @@ class Main():
         print(pathname_new)
 
 if __name__ == '__main__':
+#     argv += ['/home/julian/SRGP/test/backup-nationbuilder-people-export-433-2016-04-22head.csv']
     from configurations2 import config_lookup
     Main(config_lookup=config_lookup).main(argv[1:])
     print('Done')
